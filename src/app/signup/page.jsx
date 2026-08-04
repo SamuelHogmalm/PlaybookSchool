@@ -8,7 +8,7 @@ import { supabaseConfigStatus } from "@/lib/supabase/config";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signUp, configured, loading } = useAuth();
+  const { signUp, configured, loading, configError } = useAuth();
   const [team, setTeam] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +36,7 @@ export default function SignupPage() {
     });
     setWorking(false);
     if (err) {
-      setError(err.message);
+      setError(err.message ?? String(err));
       return;
     }
     setMessage("Check your email to confirm, then log in.");
@@ -52,6 +52,11 @@ export default function SignupPage() {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md border border-rule p-6 bg-paper">
           <h1 className="font-display text-2xl font-bold mb-1">Create account</h1>
+          {configError && (
+            <p className="text-sm text-flag mb-4">
+              Supabase connection error: {configError}. Check Vercel env vars and redeploy.
+            </p>
+          )}
           <p className="text-sm text-ink-soft mb-6">
             {configured
               ? "Free pilot — quiz progress syncs when you sign in."

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   applyAttempt,
   buildProgressFromAttempts,
@@ -18,7 +18,7 @@ function mapRow(row) {
 
 /** Load recent attempts for a signed-in user and rebuild weakness maps. */
 export async function loadQuizProgressRemote(userId) {
-  const supabase = createClient();
+  const supabase = await getSupabaseBrowserClient();
   if (!supabase || !userId) return emptyProgress();
 
   const { data, error } = await supabase
@@ -39,7 +39,7 @@ export async function loadQuizProgressRemote(userId) {
 
 /** Insert attempt — mastery updated by DB trigger. */
 export async function recordQuizAttemptRemote(userId, playerRole, payload, currentProgress) {
-  const supabase = createClient();
+  const supabase = await getSupabaseBrowserClient();
   if (!supabase || !userId) return currentProgress ?? emptyProgress();
 
   const { questionId, category, playName, correct } = payload;
@@ -68,7 +68,7 @@ export async function recordQuizAttemptRemote(userId, playerRole, payload, curre
 
 /** Coach dashboard — team play miss rates. */
 export async function fetchTeamForgottenPlays(teamId, limit = 5) {
-  const supabase = createClient();
+  const supabase = await getSupabaseBrowserClient();
   if (!supabase || !teamId) return [];
 
   const { data, error } = await supabase
@@ -92,7 +92,7 @@ export async function fetchTeamForgottenPlays(teamId, limit = 5) {
 
 /** Player mastery list for /player/me. */
 export async function fetchUserMastery(userId) {
-  const supabase = createClient();
+  const supabase = await getSupabaseBrowserClient();
   if (!supabase || !userId) return [];
 
   const { data, error } = await supabase
