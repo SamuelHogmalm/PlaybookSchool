@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, DM_Mono, Instrument_Sans } from "next/font/google";
+import Providers from "@/components/Providers";
 import "./globals.css";
 
 /** Archivo variable wdth axis at 62 — closest to Archivo Condensed in next/font. */
@@ -32,7 +33,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${archivoDisplay.variable} ${instrumentSans.variable} ${dmMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-paper text-ink">{children}</body>
+      <body className="min-h-full flex flex-col bg-paper text-ink">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

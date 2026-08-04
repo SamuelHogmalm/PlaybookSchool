@@ -65,15 +65,14 @@ Counter {
 - When `path` is present, the diagram renders the actual curve (e.g. curl vs flare can share an endpoint but differ semantically)
 - Player quiz questions are generated from frame transitions and actions — don't hardcode quiz content
 - Coach mode edits the model; Player mode quizzes from it
-- **No localStorage** — persistence will come from Supabase (not set up yet)
-- **No auth, payments, or AI APIs yet** — add only when the feature needs them
+- **Quiz progress:** Supabase `attempts` + `mastery` when signed in; **localStorage demo fallback** when logged out (`ps-quiz-progress-demo`)
+- **Auth:** Supabase email/password — see `supabase/README.md`
+- **AI import pipeline:** `services/importer` (parse → interpret → breakdown) — not on Vercel; runs locally
 
 ## What not to build yet
 
-- Supabase / database
-- Clerk / auth
+- Clerk / alternate auth
 - Stripe / billing
-- AI API integrations
 
 ## File map
 

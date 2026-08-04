@@ -26,7 +26,7 @@ import {
   DAILY_CATEGORY_ORDER,
   getTodayQuizLabel,
 } from "@/lib/dailyQuiz";
-import { recordQuizAttempt } from "@/lib/quizProgress";
+import { useQuizProgress } from "@/hooks/useQuizProgress";
 import { spotDrawFeedback, spotDrawSuccess } from "@/lib/quizVoice";
 
 function enrichPlayForQuiz(play) {
@@ -88,6 +88,7 @@ export default function PlayerQuizSession({
   const [lineTool, setLineTool] = useState(null);
   const [draftPoints, setDraftPoints] = useState([]);
   const [progressTick, setProgressTick] = useState(0);
+  const { progress, ready, modeLabel, isDemo, recordAttempt } = useQuizProgress(myId);
 
   const svgRef = useRef(null);
   const drawing = useRef(false);
@@ -96,10 +97,20 @@ export default function PlayerQuizSession({
   const quizPlay = useMemo(() => (play ? enrichPlayForQuiz(play) : null), [play]);
 
   const preview = useMemo(() => {
-    if (isDaily) return generateDailyQuizDeck(plays, myId, { maxCards: maxQuestions });
+    if (!ready) {
+      return {
+        deck: [],
+        buckets: {},
+        available: [],
+        weakSummary: { hasHistory: false },
+        reviewCount: 0,
+        seed: 0,
+      };
+    }
+    if (isDaily) return generateDailyQuizDeck(plays, myId, { maxCards: maxQuestions, progress });
     if (!quizPlay) return { deck: [], buckets: {}, available: [] };
     return generateFlashcardDeck(quizPlay, myId, { maxCards: maxQuestions });
-  }, [isDaily, plays, quizPlay, myId, maxQuestions, progressTick]);
+  }, [isDaily, plays, quizPlay, myId, maxQuestions, progress, ready, progressTick]);
 
   const resetQuestion = useCallback(() => {
     setGuess(null);
@@ -118,7 +129,10 @@ export default function PlayerQuizSession({
         setPhase("empty");
         return;
       }
-      const { deck: cards } = generateDailyQuizDeck(plays, myId, { maxCards: maxQuestions });
+      const { deck: cards } = generateDailyQuizDeck(plays, myId, {
+        maxCards: maxQuestions,
+        progress,
+      });
       setDeck(cards);
       setN(0);
       setResults([]);
@@ -214,7 +228,7 @@ export default function PlayerQuizSession({
     setResult(right);
     setRevealDone(Boolean(q.skipReveal));
     setResults((prev) => [...prev, { kind: q.kind, category: q.category, correct: right }]);
-    recordQuizAttempt(myId, {
+    recordAttempt({
       questionId: q.id,
       category: q.category,
       playName: q.playName ?? activePlay?.name,
@@ -323,6 +337,11 @@ export default function PlayerQuizSession({
                 ? `Adaptive quiz from all ${plays.length} plays — missed questions come back. Pick your number.`
                 : "Mixed drills — spot, draw, watch the play, ball, and coach notes. Every run shuffles."}
             </p>
+            {isDemo && (
+              <p className="text-xs text-flag border border-flag/30 bg-flag/5 px-3 py-2 mb-4">
+                {modeLabel}
+              </p>
+            )}
             <div className="mb-4">
               <p className="ps-label">{isDaily ? "Your number — whole playbook" : "Your number"}</p>
               <div className="flex gap-1 flex-wrap">

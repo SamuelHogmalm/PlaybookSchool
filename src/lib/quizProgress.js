@@ -1,114 +1,57 @@
-/** Client-side quiz history — localStorage for now; swap for Supabase later. */
+/**
+ * Quiz progress — Supabase when signed in, localStorage demo fallback otherwise.
+ */
 
-const STORAGE_KEY = "ps-quiz-progress";
-const MAX_ATTEMPTS = 400;
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { emptyProgress } from "@/lib/quizProgressCore";
+import {
+  loadQuizProgressLocal,
+  recordQuizAttemptLocal,
+} from "@/lib/quizProgressLocal";
+import {
+  loadQuizProgressRemote,
+  recordQuizAttemptRemote,
+} from "@/lib/quizProgressSupabase";
 
-function emptyProgress() {
-  return {
-    attempts: [],
-    byQuestion: {},
-    byCategory: {},
-    byPlay: {},
-  };
+export {
+  emptyProgress,
+  buildProgressFromAttempts,
+  weaknessScore,
+  getWeakSummary,
+  countReviewCandidates,
+  MAX_ATTEMPTS,
+} from "@/lib/quizProgressCore";
+
+export { fetchTeamForgottenPlays, fetchUserMastery } from "@/lib/quizProgressSupabase";
+
+/** @deprecated Prefer useQuizProgress hook — sync demo-only load. */
+export function loadQuizProgress(playerRole) {
+  return loadQuizProgressLocal(playerRole);
 }
 
-export function loadQuizProgress(myId) {
-  if (typeof window === "undefined") return emptyProgress();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const all = raw ? JSON.parse(raw) : {};
-    return all[myId] ?? emptyProgress();
-  } catch {
-    return emptyProgress();
+export async function loadQuizProgressForUser(userId, playerRole) {
+  if (userId && isSupabaseConfigured()) {
+    return loadQuizProgressRemote(userId);
   }
+  return loadQuizProgressLocal(playerRole);
 }
 
-function saveQuizProgress(myId, progress) {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const all = raw ? JSON.parse(raw) : {};
-    all[myId] = progress;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  } catch {
-    /* ignore quota errors */
+export async function recordQuizAttempt(ctx, payload) {
+  const { userId, playerRole, progress } = ctx;
+  if (userId && isSupabaseConfigured()) {
+    return recordQuizAttemptRemote(userId, playerRole, payload, progress);
   }
+  return recordQuizAttemptLocal(playerRole, payload);
 }
 
-/** Record one answered question. Wrong answers weigh heavier for future decks. */
-export function recordQuizAttempt(myId, { questionId, category, playName, correct }) {
-  if (!questionId || !myId) return loadQuizProgress(myId);
-
-  const progress = loadQuizProgress(myId);
-  const at = Date.now();
-
-  progress.attempts.push({ questionId, category, playName, correct, at });
-  if (progress.attempts.length > MAX_ATTEMPTS) {
-    progress.attempts = progress.attempts.slice(-MAX_ATTEMPTS);
-  }
-
-  const bump = (map, key, wrongDelta, rightDelta = -1) => {
-    if (!key) return;
-    const cur = map[key] ?? 0;
-    map[key] = Math.max(0, cur + (correct ? rightDelta : wrongDelta));
-  };
-
-  bump(progress.byQuestion, questionId, 8, -2);
-  bump(progress.byCategory, category, 3, -1);
-  bump(progress.byPlay, playName, 2, -1);
-
-  saveQuizProgress(myId, progress);
-  return progress;
+export function progressMode(userId) {
+  if (userId && isSupabaseConfigured()) return "cloud";
+  if (isSupabaseConfigured()) return "demo-login";
+  return "demo-offline";
 }
 
-/** Higher = struggled more recently. Correct answers add a little; wrong adds a lot. */
-export function weaknessScore(entry, progress) {
-  if (!progress) return 0;
-  let score = 0;
-
-  if (entry.id) score += (progress.byQuestion[entry.id] ?? 0) * 3;
-  if (entry.category) score += progress.byCategory[entry.category] ?? 0;
-  if (entry.playName) score += (progress.byPlay[entry.playName] ?? 0) * 0.6;
-
-  const recent = progress.attempts.filter((a) => {
-    if (entry.id && a.questionId === entry.id) return true;
-    if (entry.playName && a.playName === entry.playName && a.category === entry.category) return true;
-    return false;
-  });
-
-  for (const a of recent.slice(-6)) {
-    if (!a.correct) score += 8;
-    else score -= 1;
-  }
-
-  return Math.max(0, score);
-}
-
-export function getWeakSummary(progress, categories = {}) {
-  if (!progress?.attempts?.length) {
-    return { hasHistory: false, weakCategories: [], weakPlays: [], missedCount: 0 };
-  }
-
-  const missed = progress.attempts.filter((a) => !a.correct).length;
-
-  const weakCategories = Object.entries(progress.byCategory ?? {})
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([cat, weight]) => ({
-      category: cat,
-      label: categories[cat]?.label ?? cat,
-      weight,
-    }));
-
-  const weakPlays = Object.entries(progress.byPlay ?? {})
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([play, weight]) => ({ play, weight }));
-
-  return { hasHistory: true, weakCategories, weakPlays, missedCount: missed };
-}
-
-export function countReviewCandidates(pool, progress, minScore = 4) {
-  if (!progress) return 0;
-  return pool.filter((q) => weaknessScore(q, progress) >= minScore).length;
+export function progressModeLabel(mode) {
+  if (mode === "cloud") return "Progress saved to your account.";
+  if (mode === "demo-login") return "Demo mode — log in to save progress across devices.";
+  return "Demo mode — progress saved on this device only.";
 }

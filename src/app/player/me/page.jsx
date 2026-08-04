@@ -1,42 +1,79 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthProvider";
+import { fetchUserMastery } from "@/lib/quizProgress";
 import { CURRENT_PLAYER, PLAYER_MASTERY } from "@/data/mockTeam";
 
 export default function PlayerMePage() {
-  const weakest = [...PLAYER_MASTERY].sort((a, b) => a.pct - b.pct).slice(0, 3);
+  const { user, profile, signOut, configured } = useAuth();
+  const [mastery, setMastery] = useState(null);
+
+  useEffect(() => {
+    if (!user) {
+      setMastery(null);
+      return;
+    }
+    fetchUserMastery(user.id).then((rows) => {
+      setMastery(rows.length ? rows : null);
+    });
+  }, [user]);
+
+  const displayName = profile?.full_name ?? CURRENT_PLAYER.name;
+  const jersey = profile?.jersey ?? CURRENT_PLAYER.jersey;
+  const position = profile?.position ?? CURRENT_PLAYER.position;
+  const rows = mastery ?? PLAYER_MASTERY;
+  const weakest = [...rows].sort((a, b) => a.pct - b.pct).slice(0, 3);
 
   return (
     <div>
-      <h1 className="font-display text-xl font-bold mb-1">{CURRENT_PLAYER.name}</h1>
-      <p className="font-data text-sm text-ink-soft mb-6">
-        #{CURRENT_PLAYER.jersey} · {CURRENT_PLAYER.position}
+      <h1 className="font-display text-xl font-bold mb-1">{displayName}</h1>
+      <p className="font-data text-sm text-ink-soft mb-2">
+        #{jersey} · {position}
       </p>
+      {user ? (
+        <button type="button" onClick={() => signOut()} className="text-xs text-chalk mb-6">
+          Sign out
+        </button>
+      ) : (
+        <p className="text-xs text-ink-soft mb-6">
+          <Link href="/login" className="text-chalk">
+            Log in
+          </Link>{" "}
+          {configured ? "to sync progress" : "(Supabase not configured — demo data below)"}
+        </p>
+      )}
 
       <section className="mb-6">
         <p className="font-data text-[10px] uppercase tracking-widest text-ink-soft mb-2">Mastery</p>
-        <div className="space-y-2">
-          {PLAYER_MASTERY.map((m) => (
-            <div key={m.play}>
-              <div className="flex justify-between text-sm mb-0.5">
-                <span className="font-display font-semibold">{m.play}</span>
-                <span className="font-data text-ink-soft">{m.pct}%</span>
+        {rows.length === 0 ? (
+          <p className="text-sm text-ink-soft">Take a quiz to start building mastery.</p>
+        ) : (
+          <div className="space-y-2">
+            {rows.map((m) => (
+              <div key={m.play}>
+                <div className="flex justify-between text-sm mb-0.5">
+                  <span className="font-display font-semibold">{m.play}</span>
+                  <span className="font-data text-ink-soft">{m.pct}%</span>
+                </div>
+                <div className="h-1.5 bg-rule">
+                  <div
+                    className={`h-full ${m.status === "mastered" ? "bg-go" : "bg-chalk"}`}
+                    style={{ width: `${m.pct}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-ink-soft mt-0.5">
+                  {m.status === "mastered" ? "Mastered" : "Still learning"}
+                </p>
               </div>
-              <div className="h-1.5 bg-rule">
-                <div
-                  className={`h-full ${m.status === "mastered" ? "bg-go" : "bg-chalk"}`}
-                  style={{ width: `${m.pct}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-ink-soft mt-0.5">
-                {m.status === "mastered" ? "Mastered" : "Still learning"}
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mb-6">
-        <p className="font-data text-[10px] uppercase tracking-widest text-ink-soft mb-2">
-          Focus next
-        </p>
+        <p className="font-data text-[10px] uppercase tracking-widest text-ink-soft mb-2">Focus next</p>
         <ul className="border border-rule divide-y divide-rule">
           {weakest.map((m) => (
             <li key={m.play} className="px-3 py-2 text-sm flex justify-between">
