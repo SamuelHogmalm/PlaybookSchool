@@ -58,8 +58,43 @@ function passRoute(action, prevFrame, nextFrame) {
   return [from, to].map((p) => ({ ...p }));
 }
 
+/** Animate players along action paths during a beat transition (cuts, dribbles, handoffs). */
+export function getTransitionPositions(prevFrame, nextFrame, f) {
+  const out = {};
+  IDS.forEach((id) => {
+    out[id] = {
+      x: lerp(prevFrame.pos[id].x, nextFrame.pos[id].x, f),
+      y: lerp(prevFrame.pos[id].y, nextFrame.pos[id].y, f),
+    };
+  });
+
+  for (let i = 0; i < nextFrame.actions.length; i++) {
+    const a = nextFrame.actions[i];
+    if (!["cut", "dribble", "screen", "handoff"].includes(a.type)) continue;
+
+    const prior = nextFrame.actions.slice(0, i);
+    const atPos = effectivePositions(prevFrame.pos, nextFrame.pos, prior);
+    const from = atPos[a.by] ?? prevFrame.pos[a.by];
+    const end = a.path?.length ? a.path[a.path.length - 1] : nextFrame.pos[a.by];
+    const route = a.path?.length >= 2 ? a.path : [from, end];
+    out[a.by] = samplePolyline(route, f);
+  }
+
+  return out;
+}
+
+const HANDOFF_BALL_MEET = 0.88;
+
 function resolveBall(prevFrame, nextFrame, f) {
-  const pass = nextFrame.actions.find((a) => a.type === "pass" || a.type === "handoff");
+  const handoff = nextFrame.actions.find((a) => a.type === "handoff");
+  if (handoff) {
+    if (f < HANDOFF_BALL_MEET) {
+      return { ballCarrier: handoff.by, ballInAir: null };
+    }
+    return { ballCarrier: handoff.for, ballInAir: null };
+  }
+
+  const pass = nextFrame.actions.find((a) => a.type === "pass");
 
   if (pass) {
     const route = passRoute(pass, prevFrame, nextFrame);
@@ -116,12 +151,7 @@ export function getPlaybackState(frames, elapsedMs, speed) {
       if (elapsedMs < t + trans) {
         const raw = (elapsedMs - t) / trans;
         const f = easeInOut(raw);
-        const a = frames[i].pos;
-        const b = frames[i + 1].pos;
-        const out = {};
-        IDS.forEach((id) => {
-          out[id] = { x: lerp(a[id].x, b[id].x, f), y: lerp(a[id].y, b[id].y, f) };
-        });
+        const out = getTransitionPositions(frames[i], frames[i + 1], f);
         const { ballCarrier, ballInAir } = resolveBall(frames[i], frames[i + 1], f);
         return {
           pos: out,
@@ -158,3 +188,47 @@ export function playerHasBall(playback, frame, playerId) {
   const carrier = playback?.ballCarrier ?? playback?.ball ?? frame?.ball;
   return carrier === playerId;
 }
+
+/** Animate one beat transition (quiz reveal, etc.) */
+export function getBeatTransitionState(prevFrame, nextFrame, elapsedMs, opts = {}) {
+  const hold = (opts.holdMs ?? BEAT_HOLD_MS) / (opts.speed ?? 1);
+  const trans = (opts.transMs ?? BEAT_DURATION_MS) / (opts.speed ?? 1);
+  const total = hold + trans;
+
+  if (elapsedMs <= hold) {
+    return {
+      pos: prevFrame.pos,
+      ball: prevFrame.ball,
+      ballCarrier: prevFrame.ball,
+      ballInAir: null,
+      done: false,
+      totalMs: total,
+    };
+  }
+
+  if (elapsedMs <= hold + trans) {
+    const f = easeInOut((elapsedMs - hold) / trans);
+    const out = getTransitionPositions(prevFrame, nextFrame, f);
+    const { ballCarrier, ballInAir } = resolveBall(prevFrame, nextFrame, f);
+    return {
+      pos: out,
+      ball: nextFrame.ball,
+      ballCarrier,
+      ballInAir,
+      done: false,
+      totalMs: total,
+    };
+  }
+
+  return {
+    pos: nextFrame.pos,
+    ball: nextFrame.ball,
+    ballCarrier: nextFrame.ball,
+    ballInAir: null,
+    done: true,
+    totalMs: total,
+  };
+}
+
+export const QUIZ_REVEAL_HOLD_MS = 500;
+export const QUIZ_REVEAL_TRANS_MS = 1600;

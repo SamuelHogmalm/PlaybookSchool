@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { C } from "@/app/court/Court";
 import { enrichPlayFromImport } from "@/lib/enrichReview";
 import PlayReview from "@/app/play/PlayReview";
 import { useImportSession } from "../ImportContext";
 
 export default function ImportReviewListPage() {
   const router = useRouter();
-  const { session } = useImportSession();
+  const { session, setSession } = useImportSession();
   const [selected, setSelected] = useState(null);
   const [verified, setVerified] = useState({});
 
@@ -24,7 +24,7 @@ export default function ImportReviewListPage() {
 
   if (!session?.plays?.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: C.bg, color: C.muted }}>
+      <div className="flex-1 flex items-center justify-center text-ink-soft">
         Loading…
       </div>
     );
@@ -45,6 +45,7 @@ export default function ImportReviewListPage() {
           }));
         }}
         showCropCompare={Object.keys(session.crops ?? {}).length > 0}
+        theme="paper"
       />
     );
   }
@@ -53,37 +54,34 @@ export default function ImportReviewListPage() {
   const reviewCount = session.needsReview?.length ?? 0;
 
   return (
-    <div className="min-h-screen p-4 md:p-6" style={{ background: C.bg, color: C.text }}>
-      <header className="mb-6 max-w-3xl mx-auto">
-        <p className="text-xs font-mono mb-1" style={{ color: C.dim, letterSpacing: "0.12em" }}>REVIEW QUEUE</p>
-        <h1 className="text-2xl font-bold">{session.filename}</h1>
-        <p className="text-sm mt-1" style={{ color: C.muted }}>
+    <div className="flex-1 flex flex-col min-h-0">
+      <header className="px-4 py-3 border-b border-rule bg-paper-2">
+        <p className="font-data text-[10px] uppercase tracking-widest text-ink-soft mb-0.5">Review queue</p>
+        <h1 className="font-display text-xl font-bold truncate">{session.filename}</h1>
+        <p className="text-sm text-ink-soft mt-1">
           {plays.length} plays · {session.meta?.beat_count} beats
           {session.aiUsed && session.usage && (
             <> · AI tokens {session.usage.input_tokens + session.usage.output_tokens}</>
           )}
-          {reviewCount > 0 && <span style={{ color: C.bad }}> · {reviewCount} beats flagged</span>}
+          {reviewCount > 0 && <span className="text-flag"> · {reviewCount} beats flagged</span>}
         </p>
-        <p className="text-xs mt-2" style={{ color: C.ok }}>{verifiedCount} of {plays.length} verified</p>
-        <a href="/import" className="text-xs mt-2 inline-block" style={{ color: C.ball }}>← Import another</a>
+        <p className="font-data text-xs text-go mt-2">{verifiedCount} of {plays.length} verified</p>
+        <Link href="/import" className="text-xs text-chalk mt-2 inline-block hover:underline">← Import another</Link>
       </header>
 
-      <ul className="max-w-3xl mx-auto flex flex-col gap-2">
+      <ul className="flex-1 overflow-auto p-4 max-w-3xl w-full mx-auto flex flex-col gap-2">
         {plays.map((p, i) => (
           <li key={p.name}>
             <button
               type="button"
               onClick={() => setSelected(i)}
-              className="w-full text-left rounded-lg px-4 py-3 flex items-center justify-between gap-3"
-              style={{ background: C.panel, border: `1px solid ${C.line}` }}
+              className="w-full text-left border border-rule px-4 py-3 flex items-center justify-between gap-3 bg-paper hover:bg-paper-2 transition-colors duration-[120ms]"
             >
               <div>
-                <span className="font-semibold">{p.name}</span>
-                <span className="text-xs ml-2" style={{ color: C.muted }}>
-                  {p.frames.length} beats
-                </span>
+                <span className="font-display font-semibold">{p.name}</span>
+                <span className="font-data text-xs ml-2 text-ink-soft">{p.frames.length} beats</span>
               </div>
-              <span className="text-xs shrink-0" style={{ color: verified[p.name] ? C.ok : C.dim }}>
+              <span className={`text-xs shrink-0 font-data ${verified[p.name] ? "text-go" : "text-ink-soft"}`}>
                 {verified[p.name] ? "✓ verified" : "Review →"}
               </span>
             </button>
@@ -91,8 +89,8 @@ export default function ImportReviewListPage() {
         ))}
       </ul>
 
-      <p className="text-xs text-center max-w-md mx-auto mt-8" style={{ color: C.dim }}>
-        Edit lines and player spots on each play, then verify. Changes stay in this session until you import again.
+      <p className="text-xs text-center max-w-md mx-auto p-4 text-ink-soft">
+        Edit lines and player spots inline, then verify. Changes stay in this session until you import again.
       </p>
     </div>
   );

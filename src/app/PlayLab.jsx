@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { C, W, H, COURT_MAX_W, IDS, CourtSurface, Token, ActionLayer, FlyingBall, toSvg } from "./court/Court";
+import QuizRevealCourt, { questionBeatRange } from "./play/QuizRevealCourt";
 import { getPlaybackState, playerHasBall, SPEED_OPTIONS, timelineDuration } from "@/lib/playback";
+import { generateQuestions, POS_NAME, shuffle } from "@/lib/quiz";
 
 /* ============================================================
    PlayLab — basketball play editor + auto-generated player quiz
    The point: a play is a SEMANTIC MODEL, not a drawing.
    Everything the player app asks is derived from that model.
    ============================================================ */
-
-const POS_NAME = { 1: "PG", 2: "SG", 3: "SF", 4: "PF", 5: "C" };
 
 const ACTION_TYPES = [
   { id: "screen", label: "Screen", needs: ["by", "for"] },
@@ -411,104 +411,6 @@ function Editor({ play, setPlay }) {
 }
 
 /* ============================================================
-   QUIZ GENERATION — derived entirely from the play model
-   ============================================================ */
-function shuffle(a) {
-  const r = [...a];
-  for (let i = r.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [r[i], r[j]] = [r[j], r[i]];
-  }
-  return r;
-}
-
-function generateQuestions(play, myId) {
-  const qs = [];
-  const F = play.frames;
-
-  for (let i = 1; i < F.length; i++) {
-    const prev = F[i - 1];
-    const cur = F[i];
-
-    // 1. spatial recall — the differentiated one
-    IDS.forEach((pid) => {
-      if (dist(prev.pos[pid], cur.pos[pid]) > 45) {
-        qs.push({
-          kind: "spot",
-          weight: pid === myId ? 3 : 1,
-          player: pid,
-          frameIdx: i,
-          prompt: `You're #${pid}. Beat ${i + 1} — put yourself where you need to be.`,
-          target: cur.pos[pid],
-          from: prev,
-        });
-      }
-    });
-
-    cur.actions.forEach((a) => {
-      if (a.type === "screen") {
-        qs.push({
-          kind: "mc",
-          weight: a.for === myId || a.by === myId ? 3 : 1,
-          prompt: `Beat ${i + 1}: who sets the screen for #${a.for}?`,
-          correct: `#${a.by} (${POS_NAME[a.by]})`,
-          options: IDS.filter((x) => x !== a.for).map((x) => `#${x} (${POS_NAME[x]})`),
-          from: F[i - 1],
-        });
-      }
-      if (a.type === "pass") {
-        qs.push({
-          kind: "mc",
-          weight: a.by === myId ? 3 : 1,
-          prompt: `Beat ${i + 1}: #${a.by} has it. Where's the ball going?`,
-          correct: `#${a.for} (${POS_NAME[a.for]})`,
-          options: IDS.filter((x) => x !== a.by).map((x) => `#${x} (${POS_NAME[x]})`),
-          from: F[i - 1],
-        });
-      }
-    });
-
-    // 3. sequence recall
-    if (cur.note && i < F.length) {
-      const others = F.filter((f, j) => j !== i && f.note).map((f) => f.note);
-      if (others.length >= 2) {
-        qs.push({
-          kind: "mc",
-          weight: 1,
-          prompt: `The play is on beat ${i}. What happens next?`,
-          correct: cur.note,
-          options: [cur.note, ...others],
-          from: F[i - 1],
-        });
-      }
-    }
-  }
-
-  // 4. coach-authored counters — the read questions
-  play.counters.forEach((c) => {
-    qs.push({
-      kind: "mc",
-      weight: 2,
-      prompt: c.trigger + ". What's the read?",
-      correct: c.answer,
-      options: [c.answer, ...play.counters.filter((x) => x !== c).map((x) => x.answer)],
-      from: F[1] || F[0],
-    });
-  });
-
-  const weighted = qs.flatMap((q) => Array(q.weight).fill(q));
-  const picked = [];
-  const seen = new Set();
-  for (const q of shuffle(weighted)) {
-    if (seen.has(q.prompt)) continue;
-    seen.add(q.prompt);
-    picked.push(q);
-    if (picked.length >= 8) break;
-  }
-  return picked;
-}
-
-/* ============================================================
    PLAYER MODE
    ============================================================ */
 function Player({ play }) {
@@ -518,12 +420,13 @@ function Player({ play }) {
   const [n, setN] = useState(0);
   const [guess, setGuess] = useState(null);
   const [result, setResult] = useState(null);
+  const [revealDone, setRevealDone] = useState(false);
   const [score, setScore] = useState(0);
   const svgRef = useRef(null);
 
   const begin = () => {
-    setQs(generateQuestions(play, myId));
-    setN(0); setScore(0); setGuess(null); setResult(null); setStarted(true);
+    setQs(generateQuestions(play, myId, { maxQuestions: 8 }));
+    setN(0); setScore(0); setGuess(null); setResult(null); setRevealDone(false); setStarted(true);
   };
 
   const q = qs[n];
@@ -534,13 +437,16 @@ function Player({ play }) {
     if (q.kind === "spot") right = dist(guess, q.target) <= 48;
     else right = guess === q.correct;
     setResult(right);
+    setRevealDone(false);
     if (right) setScore((s) => s + 1);
   };
 
   const next = () => {
     if (n + 1 >= qs.length) { setStarted(false); return; }
-    setN(n + 1); setGuess(null); setResult(null);
+    setN(n + 1); setGuess(null); setResult(null); setRevealDone(false);
   };
+
+  const beatRange = q ? questionBeatRange(q, play.frames.length) : null;
 
   const options = useMemo(() => (q && q.kind === "mc" ? shuffle([...new Set(q.options)]).slice(0, 4).includes(q.correct)
     ? shuffle([...new Set(q.options)]).slice(0, 4)
@@ -596,36 +502,50 @@ function Player({ play }) {
   return (
     <div className="flex flex-col lg:flex-row gap-4 p-4">
       <div className="flex-1 min-w-0">
-        <div className={`rounded-lg overflow-hidden border w-full ${COURT_MAX_W}`} style={{ borderColor: C.line }}>
-          <CourtSurface
-            svgRef={svgRef}
-            onPointerDown={(e) => {
-              if (q.kind !== "spot" || result !== null) return;
-              setGuess(toSvg(svgRef.current, e));
-            }}
-          >
-            {IDS.map((id) => (
-              <Token
-                key={id}
-                id={id}
-                p={q.from.pos[id]}
-                hasBall={q.from.ball === id}
-                faded={q.kind === "spot" && id === q.player}
-                highlight={q.kind === "spot" && id === q.player && result === null}
+        <div className={`w-full ${COURT_MAX_W}`}>
+          {result !== null && beatRange ? (
+            <>
+              <p className="text-xs mb-2 font-mono" style={{ color: result ? C.ok : C.bad }}>
+                {result ? "✓ Correct — watch it run" : "✗ Here's what happens"}
+              </p>
+              <QuizRevealCourt
+                key={`${n}-${result}`}
+                play={play}
+                fromIdx={beatRange.fromIdx}
+                toIdx={beatRange.toIdx}
+                active
+                result={result}
+                highlightPlayer={q.kind === "spot" ? q.player : undefined}
+                wrongSpot={q.kind === "spot" && !result ? guess : null}
+                correctSpot={q.kind === "spot" ? q.target : null}
+                onFinished={() => setRevealDone(true)}
               />
-            ))}
-            {q.kind === "spot" && guess && (
-              <circle cx={guess.x} cy={guess.y} r="15" fill="none" stroke={result === false ? C.bad : C.ok} strokeWidth="3" strokeDasharray="4 3" />
-            )}
-            {q.kind === "spot" && result !== null && (
-              <g>
-                <circle cx={q.target.x} cy={q.target.y} r="18" fill="none" stroke={C.ok} strokeWidth="2.5" />
-                <text x={q.target.x} y={q.target.y + 5} textAnchor="middle" fontSize="14" fontWeight="700" fill={C.ok} style={{ fontFamily: "ui-monospace, monospace" }}>
-                  {q.player}
-                </text>
-              </g>
-            )}
-          </CourtSurface>
+            </>
+          ) : (
+            <div className="rounded-lg overflow-hidden border w-full" style={{ borderColor: C.line }}>
+              <CourtSurface
+                svgRef={svgRef}
+                onPointerDown={(e) => {
+                  if (q.kind !== "spot" || result !== null) return;
+                  setGuess(toSvg(svgRef.current, e));
+                }}
+              >
+                {IDS.map((id) => (
+                  <Token
+                    key={id}
+                    id={id}
+                    p={q.from.pos[id]}
+                    hasBall={q.from.ball === id}
+                    faded={q.kind === "spot" && id !== q.player}
+                    highlight={q.kind === "spot" && id === q.player}
+                  />
+                ))}
+                {q.kind === "spot" && guess && (
+                  <circle cx={guess.x} cy={guess.y} r="15" fill="none" stroke={C.ball} strokeWidth="3" strokeDasharray="4 3" />
+                )}
+              </CourtSurface>
+            </div>
+          )}
         </div>
       </div>
 
@@ -673,20 +593,28 @@ function Player({ play }) {
               {result ? "That's it." : "Not quite."}
             </div>
             {q.kind === "spot" ? play.frames[q.frameIdx].note : q.correct}
+            {!revealDone && (
+              <p className="text-xs mt-2" style={{ color: C.muted }}>Watch the court…</p>
+            )}
           </div>
         )}
 
         <button
           onClick={result === null ? submit : next}
-          disabled={guess == null}
+          disabled={guess == null || (result !== null && !revealDone)}
           className="px-6 py-3 rounded-lg font-semibold"
           style={{
-            background: guess == null ? C.panel : C.ball,
-            color: guess == null ? C.dim : "#0E1116",
+            background: guess == null || (result !== null && !revealDone) ? C.panel : C.ball,
+            color: guess == null || (result !== null && !revealDone) ? C.dim : "#0E1116",
           }}
         >
-          {result === null ? "Check" : n + 1 >= qs.length ? "Finish" : "Next"}
+          {result === null ? "Check" : !revealDone ? "Playing…" : n + 1 >= qs.length ? "Finish" : "Next"}
         </button>
+        {result !== null && !revealDone && (
+          <button type="button" onClick={() => setRevealDone(true)} className="text-xs mt-2" style={{ color: C.muted }}>
+            Skip animation
+          </button>
+        )}
       </div>
     </div>
   );

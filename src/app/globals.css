@@ -1,24 +1,319 @@
 @import "tailwindcss";
 
+/* ── Playbook School design tokens ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm stat-sheet paper — shaded, not stark white (easier under gym lights) */
+  --paper: #edeae4;
+  --paper-2: #e3dfd8;
+  --ink: #12100e;
+  --ink-soft: #5c5750;
+  --rule: #cfc9c0;
+  --court: #16181c;
+  --jersey: #e8560f;
+  --chalk: #3e82c4;
+  --go: #2e8b57;
+  --flag: #c4362e;
+
+  --radius: 4px;
+  --motion: 120ms ease-out;
+
+  /* Tool density — fits more on screen, reads like software not a landing page */
+  --text-base: 15px;
+  --text-coach: 16px;
+  --line-tight: 1.4;
+  --space-page: 1rem;
+  --space-section: 1.5rem;
+  --content-max: 90rem;
+
+  --font-display: var(--font-archivo-condensed), "Arial Narrow", sans-serif;
+  --font-body: var(--font-instrument-sans), system-ui, sans-serif;
+  --font-data: var(--font-dm-mono), ui-monospace, monospace;
+
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-court: var(--court);
+  --color-jersey: var(--jersey);
+  --color-chalk: var(--chalk);
+  --color-go: var(--go);
+  --color-flag: var(--flag);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-data: var(--font-data);
+
+  --radius-sm: 4px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+}
+
+html {
+  height: 100%;
 }
 
 body {
   margin: 0;
+  min-height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--line-tight);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App shell — full-width tool chrome, not a centered marketing column */
+.ps-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+.ps-app-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0 var(--space-page);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+  font-size: 0.8125rem;
+}
+
+.ps-app-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-section) var(--space-page);
+}
+
+/* Focus — visible rings on all interactive elements */
+:focus-visible {
+  outline: 2px solid var(--chalk);
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variation-settings: "wdth" 62;
+  letter-spacing: -0.02em;
+}
+
+.font-data {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Shared primitives (used by styleguide; app shells adopt in step 2) */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.875rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity var(--motion), background-color var(--motion), border-color var(--motion);
+}
+
+.ps-btn-primary {
+  background: var(--jersey);
+  color: var(--paper);
+  border-color: var(--jersey);
+}
+
+.ps-btn-primary:hover {
+  opacity: 0.92;
+}
+
+.ps-btn-secondary {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.ps-btn-secondary:hover {
+  background: var(--paper-2);
+}
+
+.ps-btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border-color: var(--rule);
+}
+
+.ps-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.5rem 0.625rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  transition: border-color var(--motion);
+}
+
+.ps-input::placeholder {
+  color: var(--ink-soft);
+}
+
+.ps-input:focus-visible {
+  border-color: var(--chalk);
+}
+
+.ps-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ps-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.ps-table th,
+.ps-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ps-table th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  background: var(--paper-2);
+}
+
+.ps-table tbody tr:hover {
+  background: var(--paper-2);
+}
+
+.ps-play-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background-color var(--motion);
+  text-align: left;
+  padding: 0;
+  width: 100%;
+}
+
+.ps-play-card:hover {
+  background: var(--paper-2);
+}
+
+.ps-play-card:focus-visible {
+  outline: 2px solid var(--chalk);
+  outline-offset: -2px;
+}
+
+.ps-court-frame {
+  background: var(--court);
+  border-radius: 0;
+}
+
+/* Editor chrome — paper theme (court stays dark inside) */
+.ps-editor-toolbar {
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: 0.75rem;
+}
+
+.ps-editor-tool-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  min-width: 72px;
+  min-height: 44px;
+  border: 2px solid var(--rule);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background-color var(--motion), border-color var(--motion);
+}
+
+.ps-editor-tool-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ps-editor-tool-btn.is-active {
+  border-color: var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ps-editor-tool-btn.is-active-jersey {
+  border-color: var(--jersey);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ps-editor-side {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 0.75rem;
+}
+
+.ps-editor-beat-btn {
+  padding: 0.375rem 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  color: var(--ink-soft);
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.ps-editor-beat-btn.is-active {
+  background: var(--jersey);
+  border-color: var(--jersey);
+  color: var(--paper);
+}
+
+.ps-panel {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 1rem;
 }

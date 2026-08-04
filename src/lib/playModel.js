@@ -15,7 +15,7 @@ export const LINE_TOOLS = [
   { id: "dribble", label: "Dribble", sample: "wavy", color: "ball", hint: "Draw the dribble path" },
   { id: "pass", label: "Pass", sample: "dashed", color: "ball", hint: "Draw from passer to receiver" },
   { id: "screen", label: "Screen", sample: "screen", color: "screen", hint: "Draw screener's path — ends with T-bar" },
-  { id: "handoff", label: "Handoff", sample: "short-dash", color: "ball", hint: "Draw from handler to receiver" },
+  { id: "handoff", label: "Handoff", sample: "short-dash", color: "cut", hint: "Draw the handler's cut to the meeting spot — not a pass" },
 ];
 
 /** @deprecated use LINE_TOOLS — kept for imports */
@@ -122,11 +122,27 @@ export function nearestPlayer(pos, point, maxDist = 42) {
 export function effectivePositions(prevPos, curPos, actions = []) {
   const pos = { ...curPos };
   for (const a of actions) {
-    if ((a.type === "cut" || a.type === "dribble" || a.type === "screen") && a.path?.length) {
+    if (
+      (a.type === "cut" || a.type === "dribble" || a.type === "screen" || a.type === "handoff") &&
+      a.path?.length
+    ) {
       pos[a.by] = a.path[a.path.length - 1];
     }
   }
   return pos;
+}
+
+/** End-of-beat spots after all actions (for editor destination preview). */
+export function beatEndPositions(prevPos, frame) {
+  if (!frame) return {};
+  if (!prevPos) return { ...frame.pos };
+  return effectivePositions(prevPos, frame.pos, frame.actions ?? []);
+}
+
+/** Start-of-beat spots (after previous beat, before this beat's actions). */
+export function beatStartPositions(prevPos, frame) {
+  if (!prevPos) return { ...(frame?.pos ?? {}) };
+  return { ...prevPos.pos };
 }
 
 /**
@@ -166,7 +182,7 @@ export function actionFromStroke({ tool, points, prevPos, curPos, ball, existing
   const action = { id: uid(), type: tool, by, path: [...path] };
   const patch = {};
 
-  if (tool === "pass" || tool === "handoff" || tool === "screen") {
+  if (tool === "pass" || tool === "screen") {
     let forId = nearestPlayer(effective, end, 70) || nearestPlayer(curPos, end, 70);
     if (!forId && tool === "screen") forId = nearestPlayer(prevPos, end, 70);
     if (!forId || forId === by) {
@@ -178,11 +194,25 @@ export function actionFromStroke({ tool, points, prevPos, curPos, ball, existing
     action.path = path;
   }
 
+  if (tool === "handoff") {
+    let forId = nearestPlayer(effective, end, 70) || nearestPlayer(curPos, end, 70);
+    if (!forId || forId === by) {
+      return { error: "End the line near the player receiving the handoff." };
+    }
+    action.for = forId;
+    const meet = clampCourt(end);
+    path[path.length - 1] = meet;
+    action.path = path;
+    patch.pos = { ...curPos, [by]: meet };
+    patch.ball = forId;
+    return { action, patch };
+  }
+
   if (tool === "cut" || tool === "dribble" || tool === "screen") {
     patch.pos = { ...curPos, [by]: clampCourt(end) };
   }
 
-  if (tool === "pass" || tool === "handoff") {
+  if (tool === "pass") {
     patch.ball = action.for;
   }
 
@@ -216,11 +246,11 @@ export function createEmptyPlay(name = "Untitled play", category = "Set") {
 }
 
 export function actionLabel(a) {
-  if (a.type === "screen") return `${a.by} screens for ${a.for}`;
-  if (a.type === "pass") return `${a.by} passes to ${a.for}`;
-  if (a.type === "handoff") return `${a.by} hands off to ${a.for}`;
-  if (a.type === "cut") return `${a.by} cuts`;
-  return `${a.by} dribbles`;
+  if (a.type === "screen") return `#${a.by} screens for #${a.for}`;
+  if (a.type === "pass") return `#${a.by} passes to #${a.for}`;
+  if (a.type === "handoff") return `#${a.by} cuts to hand off to #${a.for}`;
+  if (a.type === "cut") return `#${a.by} cuts`;
+  return `#${a.by} dribbles`;
 }
 
 /**

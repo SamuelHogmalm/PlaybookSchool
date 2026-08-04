@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import {
   C,
   W,
+  H,
   COURT_MAX_W,
   IDS,
   CourtSurface,
@@ -17,6 +18,8 @@ import {
   actionFromStroke,
   actionLabel,
   applyBeatChange,
+  beatEndPositions,
+  beatStartPositions,
   clampCourt,
   effectivePositions,
   sampleStroke,
@@ -84,7 +87,9 @@ export default function PlayDrawEditor({
   showPlayback = true,
   showNote = true,
   runLabel = "RUN PLAY",
+  theme = "dark",
 }) {
+  const paper = theme === "paper";
   const [internalIdx, setInternalIdx] = useState(1);
   const idx = controlledIdx ?? internalIdx;
   const setIdx = onBeatIdxChange ?? setInternalIdx;
@@ -325,30 +330,34 @@ export default function PlayDrawEditor({
       ? LINE_TOOLS.find((t) => t.id === lineTool)?.hint
       : "Drag any player to move them. Pick a line type below to draw cuts, passes, screens.";
 
+  const startPos = prev ? beatStartPositions(prev, frame) : frame.pos;
+  const endPos = prev ? beatEndPositions(prev, frame) : frame.pos;
+
+  const distPt = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Line tools — horizontal, always visible */}
-      <div className="rounded-lg p-3" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
-        <div className="text-xs mb-2 font-mono" style={{ color: C.dim, letterSpacing: "0.1em" }}>
-          LINE TOOLS {safeIdx === 0 && <span style={{ color: C.ball }}>— switch to Beat 2+ to draw</span>}
+      <div className={paper ? "ps-editor-toolbar" : "rounded-lg p-3"} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}` }}>
+        <div className={`text-xs mb-2 font-mono ${paper ? "text-ink-soft uppercase tracking-widest" : ""}`} style={paper ? undefined : { color: C.dim, letterSpacing: "0.1em" }}>
+          LINE TOOLS {safeIdx === 0 && <span className={paper ? "text-jersey" : ""} style={paper ? undefined : { color: C.ball }}>— switch to Beat 2+ to draw</span>}
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <button
             type="button"
             onClick={undo}
             disabled={!history.length || !canEdit}
-            className="px-3 py-2 rounded text-xs font-semibold disabled:opacity-35 mr-1"
-            style={{ border: `1px solid ${C.line}`, color: history.length ? C.text : C.dim }}
+            className={paper ? "ps-btn ps-btn-ghost py-0 min-h-[36px] text-xs mr-1 disabled:opacity-35" : "px-3 py-2 rounded text-xs font-semibold disabled:opacity-35 mr-1"}
+            style={paper ? undefined : { border: `1px solid ${C.line}`, color: history.length ? C.text : C.dim }}
             title="Undo last change"
           >
             ↩ Undo
           </button>
-          <span style={{ color: C.line }}>|</span>
+          {!paper && <span style={{ color: C.line }}>|</span>}
           <button
             type="button"
             onClick={() => setLineTool(null)}
-            className="flex flex-col items-center gap-1 px-3 py-2 rounded min-w-[72px]"
-            style={{
+            className={paper ? `ps-editor-tool-btn ${lineTool === null ? "is-active" : ""}` : "flex flex-col items-center gap-1 px-3 py-2 rounded min-w-[72px]"}
+            style={paper ? undefined : {
               background: lineTool === null ? C.panel2 : "transparent",
               border: `2px solid ${lineTool === null ? C.text : C.line}`,
               color: lineTool === null ? C.text : C.muted,
@@ -367,12 +376,22 @@ export default function PlayDrawEditor({
                 type="button"
                 disabled={disabled}
                 onClick={() => setLineTool(t.id)}
-                className="flex flex-col items-center gap-1 px-3 py-2 rounded min-w-[72px] disabled:opacity-35"
-                style={{
-                  background: active ? C.panel2 : "transparent",
-                  border: `2px solid ${active ? stroke : C.line}`,
-                  color: active ? C.text : C.muted,
-                }}
+                className={
+                  paper
+                    ? `ps-editor-tool-btn disabled:opacity-35 ${active ? "is-active" : ""}`
+                    : "flex flex-col items-center gap-1 px-3 py-2 rounded min-w-[72px] disabled:opacity-35"
+                }
+                style={
+                  paper
+                    ? active
+                      ? { borderColor: stroke }
+                      : undefined
+                    : {
+                        background: active ? C.panel2 : "transparent",
+                        border: `2px solid ${active ? stroke : C.line}`,
+                        color: active ? C.text : C.muted,
+                      }
+                }
               >
                 <svg width="40" height="12" aria-hidden>
                   <ToolSample sample={t.sample} color={t.color} />
@@ -387,13 +406,13 @@ export default function PlayDrawEditor({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Court */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm mb-2" style={{ color: msg ? C.ball : C.muted }}>
+          <p className={`text-sm mb-2 ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: msg ? C.ball : C.muted }}>
             {msg || activeHint}
           </p>
 
           <div
-            className={`rounded-lg overflow-hidden border w-full ${COURT_MAX_W} ${canDraw ? "cursor-crosshair" : ""}`}
-            style={{ borderColor: C.line, background: C.wood }}
+            className={`overflow-hidden border w-full ${COURT_MAX_W} ${canDraw ? "cursor-crosshair" : ""} ${paper ? "ps-court-frame" : "rounded-lg"}`}
+            style={paper ? undefined : { borderColor: C.line, background: C.wood }}
           >
             <CourtSurface
               svgRef={svgRef}
@@ -417,7 +436,43 @@ export default function PlayDrawEditor({
                     />
                   ))}
                   <text x={W / 2} y={16} textAnchor="middle" fontSize="11" fill={C.muted} style={{ userSelect: "none" }}>
-                    ghost = where they were last beat
+                    faded = last beat
+                  </text>
+                </g>
+              )}
+              {canEdit && !isPlaying && !viewingScrub && prev && (
+                <g style={{ pointerEvents: "none" }}>
+                  {IDS.map((id) => {
+                    const from = startPos[id];
+                    const to = endPos[id];
+                    if (!from || !to || distPt(from, to) < 8) return null;
+                    return (
+                      <g key={`dest-${id}`} opacity="0.85">
+                        <circle
+                          cx={to.x}
+                          cy={to.y}
+                          r="15"
+                          fill="none"
+                          stroke="#E8560F"
+                          strokeWidth="2.5"
+                          strokeDasharray="5 3"
+                        />
+                        <text
+                          x={to.x}
+                          y={to.y + 4}
+                          textAnchor="middle"
+                          fontSize="12"
+                          fontWeight="700"
+                          fill="#E8560F"
+                          style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}
+                        >
+                          {id}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  <text x={W / 2} y={H - 12} textAnchor="middle" fontSize="10" fill="#E8560F" style={{ userSelect: "none" }}>
+                    orange dashed = where they run to this beat
                   </text>
                 </g>
               )}
@@ -441,8 +496,8 @@ export default function PlayDrawEditor({
           </div>
 
           {captionNote && isPlaying && (
-            <div className="mt-2 px-3 py-2 rounded text-sm" style={{ background: C.panel, border: `1px solid ${C.line}`, color: C.text, maxWidth: 420 }}>
-              <span className="text-xs font-mono mr-2" style={{ color: C.ball }}>BEAT {(playback?.beatIdx ?? 0) + 1}</span>
+            <div className={`mt-2 px-3 py-2 text-sm max-w-md ${paper ? "border border-rule bg-paper-2" : "rounded"}`} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}`, color: C.text, maxWidth: 420 }}>
+              <span className={`text-xs font-mono mr-2 ${paper ? "text-jersey font-data" : ""}`} style={paper ? undefined : { color: C.ball }}>BEAT {(playback?.beatIdx ?? 0) + 1}</span>
               {captionNote}
             </div>
           )}
@@ -461,8 +516,8 @@ export default function PlayDrawEditor({
                       setPlaying(true);
                     }
                   }}
-                  className="px-4 py-2 rounded text-xs font-bold tracking-wide"
-                  style={{ background: playing ? C.panel2 : C.ball, color: playing ? C.text : "#0E1116" }}
+                  className={paper ? "ps-btn ps-btn-primary py-0 min-h-[36px] text-xs" : "px-4 py-2 rounded text-xs font-bold tracking-wide"}
+                  style={paper ? undefined : { background: playing ? C.panel2 : C.ball, color: playing ? C.text : "#0E1116" }}
                 >
                   {playing ? "■ STOP" : `▶ ${runLabel}`}
                 </button>
@@ -471,8 +526,8 @@ export default function PlayDrawEditor({
                     key={s}
                     type="button"
                     onClick={() => setSpeed(s)}
-                    className="px-2 py-1 rounded text-xs font-mono"
-                    style={{
+                    className={paper ? `ps-editor-beat-btn ${speed === s ? "is-active" : ""}` : "px-2 py-1 rounded text-xs font-mono"}
+                    style={paper ? undefined : {
                       background: speed === s ? C.panel2 : "transparent",
                       border: `1px solid ${speed === s ? C.ball : C.line}`,
                       color: speed === s ? C.text : C.muted,
@@ -484,14 +539,14 @@ export default function PlayDrawEditor({
               </div>
 
               <div className="flex items-center gap-1 mt-3 flex-wrap">
-                <span className="text-xs mr-1" style={{ color: C.dim }}>Beat:</span>
+                <span className={`text-xs mr-1 ${paper ? "font-data text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>Beat:</span>
                 {play.frames.map((f, i) => (
                   <button
                     key={f.id}
                     type="button"
                     onClick={() => { setPlaying(false); setIdx(i); setElapsedMs(0); }}
-                    className="px-3 py-1.5 rounded text-xs font-mono"
-                    style={{
+                    className={paper ? `ps-editor-beat-btn ${i === safeIdx && !playing ? "is-active" : ""}` : "px-3 py-1.5 rounded text-xs font-mono"}
+                    style={paper ? undefined : {
                       background: i === safeIdx && !playing ? C.ball : C.panel2,
                       color: i === safeIdx && !playing ? "#0E1116" : C.muted,
                       border: `1px solid ${i === safeIdx && !playing ? C.ball : C.line}`,
@@ -500,9 +555,9 @@ export default function PlayDrawEditor({
                     {i + 1}
                   </button>
                 ))}
-                <button type="button" onClick={addBeat} className="px-3 py-1.5 rounded text-xs" style={{ border: `1px solid ${C.line}`, color: C.muted }}>+ Add beat</button>
+                <button type="button" onClick={addBeat} className={paper ? "ps-btn ps-btn-ghost py-0 min-h-[36px] text-xs" : "px-3 py-1.5 rounded text-xs"} style={paper ? undefined : { border: `1px solid ${C.line}`, color: C.muted }}>+ Add beat</button>
                 {play.frames.length > 1 && (
-                  <button type="button" onClick={removeBeat} className="px-3 py-1.5 rounded text-xs" style={{ border: `1px solid ${C.line}`, color: C.bad }}>Delete</button>
+                  <button type="button" onClick={removeBeat} className={paper ? "ps-btn ps-btn-ghost py-0 min-h-[36px] text-xs text-flag" : "px-3 py-1.5 rounded text-xs"} style={paper ? undefined : { border: `1px solid ${C.line}`, color: C.bad }}>Delete</button>
                 )}
               </div>
 
@@ -514,38 +569,37 @@ export default function PlayDrawEditor({
                 value={Math.min(elapsedMs, totalMs)}
                 onChange={(e) => { setPlaying(false); setElapsedMs(Number(e.target.value)); }}
                 className="w-full max-w-md mt-2 h-1 cursor-pointer"
-                style={{ accentColor: C.ball }}
+                style={{ accentColor: paper ? "var(--jersey)" : C.ball }}
               />
             </>
           )}
         </div>
 
-        {/* Side panel */}
         <div className="w-full lg:w-64 flex flex-col gap-3 shrink-0">
           {showNote && (
-            <div className="rounded-lg p-3" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
-              <div className="text-xs mb-2" style={{ color: C.dim }}>BEAT {safeIdx + 1} NOTE</div>
+            <div className={paper ? "ps-editor-side" : "rounded-lg p-3"} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}` }}>
+              <div className={`text-xs mb-2 ${paper ? "font-data uppercase tracking-widest text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>BEAT {safeIdx + 1} NOTE</div>
               <textarea
                 value={frame.note}
                 onChange={(e) => updateFrame({ note: e.target.value })}
                 rows={2}
                 placeholder="What happens?"
-                className="w-full bg-transparent outline-none text-sm resize-none"
-                style={{ color: C.text }}
+                className={`w-full bg-transparent outline-none text-sm resize-none ${paper ? "text-ink ps-input border-0 p-0 min-h-0" : ""}`}
+                style={paper ? undefined : { color: C.text }}
               />
             </div>
           )}
 
-          <div className="rounded-lg p-3" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
-            <div className="text-xs mb-2" style={{ color: C.dim }}>BALL</div>
+          <div className={paper ? "ps-editor-side" : "rounded-lg p-3"} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}` }}>
+            <div className={`text-xs mb-2 ${paper ? "font-data uppercase tracking-widest text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>BALL</div>
             <div className="flex gap-1">
               {IDS.map((id) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => updateFrame({ ball: id })}
-                  className="w-9 h-9 rounded text-sm font-bold font-mono"
-                  style={{
+                  className={paper ? `font-data w-9 h-9 border text-sm font-bold min-h-[36px] ${frame.ball === id ? "border-jersey bg-jersey/10 text-jersey" : "border-rule text-ink-soft"}` : "w-9 h-9 rounded text-sm font-bold font-mono"}
+                  style={paper ? undefined : {
                     background: frame.ball === id ? C.ball : C.panel2,
                     color: frame.ball === id ? "#0E1116" : C.text,
                     border: `1px solid ${frame.ball === id ? C.ball : C.line}`,
@@ -557,33 +611,59 @@ export default function PlayDrawEditor({
             </div>
           </div>
 
-          <div className="rounded-lg p-3" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
-            <div className="text-xs mb-2 flex items-center justify-between" style={{ color: C.dim }}>
-              <span>LINES ON THIS BEAT</span>
+          <div className={paper ? "ps-editor-side" : "rounded-lg p-3"} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}` }}>
+            <div className={`text-xs mb-2 flex items-center justify-between ${paper ? "font-data uppercase tracking-widest text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>
+              <span>Movements this beat</span>
               {frame.actions.length > 0 && (
-                <button type="button" onClick={removeLastAction} className="text-xs" style={{ color: C.ball }}>
-                  Undo line
+                <button type="button" onClick={removeLastAction} className={`text-xs ${paper ? "text-chalk font-semibold" : ""}`} style={paper ? undefined : { color: C.ball }}>
+                  Undo last
                 </button>
               )}
             </div>
             {safeIdx === 0 ? (
-              <p className="text-xs" style={{ color: C.muted }}>Starting alignment — no lines yet.</p>
+              <p className={`text-xs ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>Starting alignment — drag players into spots.</p>
             ) : frame.actions.length === 0 ? (
-              <p className="text-xs" style={{ color: C.muted }}>Draw a line to add one.</p>
+              <p className={`text-xs ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>No movements yet — draw a line or drag a player.</p>
             ) : (
-              frame.actions.map((a) => (
-                <div key={a.id} className="flex justify-between text-sm py-1 gap-2">
-                  <span style={{ color: C.text }}>{actionLabel(a)}</span>
-                  <button
-                    type="button"
-                    onClick={() => updateFrame({ actions: frame.actions.filter((x) => x.id !== a.id) })}
-                    className="text-xs shrink-0"
-                    style={{ color: C.dim }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))
+              <ul className="space-y-2">
+                {frame.actions.map((a, i) => (
+                  <li key={a.id} className="flex justify-between gap-2 text-sm border-b border-rule/50 pb-1.5 last:border-0">
+                    <span className={paper ? "text-ink font-data text-xs" : ""} style={paper ? undefined : { color: C.text }}>
+                      <span className={paper ? "text-ink-soft" : ""} style={paper ? undefined : { color: C.dim }}>{i + 1}. </span>
+                      {actionLabel(a)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateFrame({ actions: frame.actions.filter((x) => x.id !== a.id) })}
+                      className={`text-xs shrink-0 ${paper ? "text-ink-soft" : ""}`}
+                      style={paper ? undefined : { color: C.dim }}
+                      aria-label="Remove movement"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {safeIdx > 0 && prev && (
+              <div className={`mt-3 pt-3 border-t ${paper ? "border-rule" : ""}`} style={paper ? undefined : { borderColor: C.line }}>
+                <p className={`text-[10px] mb-1.5 uppercase tracking-widest ${paper ? "font-data text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>
+                  End spots
+                </p>
+                <ul className="space-y-0.5">
+                  {IDS.map((id) => {
+                    const from = startPos[id];
+                    const to = endPos[id];
+                    const moved = from && to && distPt(from, to) >= 8;
+                    return (
+                      <li key={id} className={`font-data text-[11px] ${moved ? (paper ? "text-jersey" : "") : (paper ? "text-ink-soft" : "")}`} style={paper ? undefined : { color: moved ? C.ball : C.dim }}>
+                        #{id} {moved ? `→ (${Math.round(to.x)}, ${Math.round(to.y)})` : "holds"}
+                        {frame.ball === id && (paper ? " · ball" : "")}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             )}
           </div>
         </div>

@@ -177,7 +177,10 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
   const effPos = (actionIndex) => {
     const out = { ...frame.pos };
     for (const a of frame.actions.slice(0, actionIndex)) {
-      if ((a.type === "cut" || a.type === "dribble" || a.type === "screen") && a.path?.length) {
+      if (
+        (a.type === "cut" || a.type === "dribble" || a.type === "screen" || a.type === "handoff") &&
+        a.path?.length
+      ) {
         out[a.by] = a.path[a.path.length - 1];
       }
     }
@@ -209,7 +212,7 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
           const [p, q] = shorten(from, to, 15, 15);
           return <line key={a.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={C.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
         }
-        if (a.type === "pass" || a.type === "handoff") {
+        if (a.type === "pass") {
           const target = frame.pos[a.for];
           const passFrom = route ? route[0] : from;
           if (route) {
@@ -222,7 +225,7 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
                 fill="none"
                 stroke={C.ball}
                 strokeWidth="2.5"
-                strokeDasharray={a.type === "pass" ? "9 7" : "2 5"}
+                strokeDasharray="9 7"
                 markerEnd={ballMarker}
               />
             );
@@ -234,9 +237,40 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
               x1={p.x} y1={p.y} x2={q.x} y2={q.y}
               stroke={C.ball}
               strokeWidth="2.5"
-              strokeDasharray={a.type === "pass" ? "9 7" : "2 5"}
+              strokeDasharray="9 7"
               markerEnd={ballMarker}
             />
+          );
+        }
+        if (a.type === "handoff") {
+          const meet = route ? route[route.length - 1] : to;
+          const handRoute = route?.length >= 2 ? route : [from, meet];
+          const end = pathArrowEnd(handRoute);
+          const trimmed = end ? handRoute.slice(0, -1).concat([end]) : handRoute;
+          const receiver = frame.pos[a.for];
+          return (
+            <g key={a.id}>
+              <path
+                d={pathToSvgD(trimmed)}
+                fill="none"
+                stroke={C.cut}
+                strokeWidth="2.5"
+                markerEnd={cutMarker}
+              />
+              <circle cx={meet.x} cy={meet.y} r="6" fill="none" stroke={C.ball} strokeWidth="2" />
+              {receiver && (
+                <line
+                  x1={meet.x}
+                  y1={meet.y}
+                  x2={receiver.x}
+                  y2={receiver.y}
+                  stroke={C.ball}
+                  strokeWidth="1.5"
+                  strokeDasharray="2 4"
+                  opacity="0.45"
+                />
+              )}
+            </g>
           );
         }
         if (a.type === "screen") {
@@ -259,6 +293,74 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
           );
         }
         return null;
+      })}
+    </g>
+  );
+}
+
+/** Cut arrows from beat-to-beat position changes (imported plays often have no actions). */
+export function MovementArrows({
+  prev,
+  frame,
+  suffix = "",
+  highlightPlayer,
+  minDist = 12,
+  dimOthers = false,
+}) {
+  if (!prev?.pos || !frame?.pos) return null;
+
+  const cutMarker = `url(#arrowCut${suffix})`;
+  const ballMarker = `url(#arrowBall${suffix})`;
+  const actionMovers = new Set(
+    (frame.actions ?? [])
+      .filter((a) => ["cut", "dribble", "screen", "handoff"].includes(a.type))
+      .map((a) => a.by)
+  );
+
+  let passLine = null;
+  if (prev.ball && frame.ball && prev.ball !== frame.ball) {
+    const from = prev.pos[prev.ball];
+    const to = frame.pos[frame.ball];
+    if (from && to && dist(from, to) >= minDist) {
+      const [p, q] = shorten(from, to, 16, 18);
+      passLine = (
+        <line
+          x1={p.x}
+          y1={p.y}
+          x2={q.x}
+          y2={q.y}
+          stroke={C.ball}
+          strokeWidth="2.5"
+          strokeDasharray="9 7"
+          markerEnd={ballMarker}
+        />
+      );
+    }
+  }
+
+  return (
+    <g>
+      {passLine}
+      {IDS.map((id) => {
+        if (actionMovers.has(id)) return null;
+        const from = prev.pos[id];
+        const to = frame.pos[id];
+        if (!from || !to || dist(from, to) < minDist) return null;
+        const highlighted = highlightPlayer === id;
+        const [p, q] = shorten(from, to, 15, 15);
+        return (
+          <line
+            key={id}
+            x1={p.x}
+            y1={p.y}
+            x2={q.x}
+            y2={q.y}
+            stroke={highlighted ? C.ok : C.cut}
+            strokeWidth={highlighted ? 3 : 2.5}
+            markerEnd={cutMarker}
+            opacity={dimOthers && highlightPlayer && !highlighted ? 0.45 : 0.95}
+          />
+        );
       })}
     </g>
   );

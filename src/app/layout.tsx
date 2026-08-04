@@ -1,29 +1,38 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, DM_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/** Archivo variable wdth axis at 62 — closest to Archivo Condensed in next/font. */
+const archivoDisplay = Archivo({
   subsets: ["latin"],
+  weight: "variable",
+  axes: ["wdth"],
+  variable: "--font-archivo-condensed",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
+  variable: "--font-instrument-sans",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
 });
 
 export const metadata: Metadata = {
-  title: "PlayLab",
-  description: "Basketball play editor and player quiz",
+  title: "Playbook School",
+  description: "Upload your playbook. Every player gets a tutor that drills them on their assignment.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivoDisplay.variable} ${instrumentSans.variable} ${dmMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-paper text-ink">{children}</body>
     </html>
   );
 }

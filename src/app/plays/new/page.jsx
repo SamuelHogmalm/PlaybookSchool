@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { C } from "@/app/court/Court";
 import PlayDrawEditor from "@/app/play/PlayDrawEditor";
 import {
   ALIGNMENT_PRESETS,
@@ -11,7 +11,6 @@ import {
   savePlayToSession,
 } from "@/lib/playModel";
 
-/** Single-screen play builder — drag players, draw lines, run animation. */
 export default function CreatePlayPage() {
   const router = useRouter();
   const [play, setPlay] = useState(() => createEmptyPlay());
@@ -22,53 +21,41 @@ export default function CreatePlayPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: C.bg, color: C.text, fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
-      <header className="flex items-center justify-between px-4 py-3 border-b gap-3 flex-wrap" style={{ borderColor: C.line }}>
+    <div className="flex flex-col flex-1 min-h-0">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-rule bg-paper-2 gap-3 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap min-w-0">
-          <a href="/" className="text-xs shrink-0 px-2 py-1 rounded" style={{ color: C.muted, border: `1px solid ${C.line}` }}>
-            ← Home
-          </a>
+          <Link href="/coach/playbook" className="ps-btn ps-btn-ghost py-0 min-h-[36px] text-xs shrink-0">
+            ← Playbook
+          </Link>
           <input
             value={play.name}
             onChange={(e) => setPlay((p) => ({ ...p, name: e.target.value }))}
-            className="bg-transparent outline-none text-lg font-bold min-w-[140px]"
-            style={{ color: C.text }}
+            className="bg-transparent outline-none font-display text-lg font-bold min-w-[140px] text-ink"
             placeholder="Play name"
           />
           <select
             value={play.category}
             onChange={(e) => setPlay((p) => ({ ...p, category: e.target.value }))}
-            className="text-xs rounded px-2 py-1 outline-none"
-            style={{ background: C.panel2, border: `1px solid ${C.line}`, color: C.muted }}
+            className="ps-input w-auto min-h-[36px] text-xs py-0"
           >
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="px-4 py-2 rounded text-sm font-semibold shrink-0"
-          style={{ background: C.ball, color: "#0E1116" }}
-        >
+        <button type="button" onClick={handleSave} className="ps-btn ps-btn-primary py-0 min-h-[36px] text-xs shrink-0">
           Save play
         </button>
       </header>
 
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="rounded-lg px-4 py-3 mb-4 text-sm leading-relaxed" style={{ background: C.panel, border: `1px solid ${C.line}`, color: C.muted }}>
-          <strong style={{ color: C.text }}>How it works:</strong> Each beat is one moment in the play.
-          <strong style={{ color: C.text }}> Beat 1</strong> — drag players into your starting alignment.
-          <strong style={{ color: C.text }}> Beat 2+</strong> — pick a line type, draw on the court (start on a player).
-          The line type is the action: <span style={{ color: C.cut }}>cut</span>,{" "}
-          <span style={{ color: C.ball }}>pass / dribble</span>,{" "}
-          <span style={{ color: C.screen }}>screen</span>.
-          Drawing moves players and sets who has the ball. Hit <strong style={{ color: C.text }}>RUN PLAY</strong> to watch it animate.
+      <div className="flex-1 overflow-auto max-w-6xl mx-auto p-4 w-full">
+        <div className="ps-panel mb-4 text-sm text-ink-soft leading-relaxed">
+          <strong className="text-ink">How it works:</strong> Beat 1 — drag players into alignment.
+          Beat 2+ — pick a line type and draw on the court. Hit <strong className="text-ink">Run play</strong> to animate.
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className="text-xs self-center" style={{ color: C.dim }}>Quick start:</span>
+          <span className="font-data text-[10px] uppercase tracking-widest text-ink-soft self-center">Quick start</span>
           {Object.keys(ALIGNMENT_PRESETS).map((name) => (
             <button
               key={name}
@@ -80,15 +67,14 @@ export default function CreatePlayPage() {
                   frames: p.frames.map((f, i) => (i === 0 ? { ...f, pos, note: `${name} alignment.` } : f)),
                 }));
               }}
-              className="px-3 py-1 rounded text-xs"
-              style={{ background: C.panel2, border: `1px solid ${C.line}`, color: C.text }}
+              className="ps-btn ps-btn-secondary py-0 min-h-[32px] text-xs"
             >
               {name}
             </button>
           ))}
         </div>
 
-        <PlayDrawEditor play={play} setPlay={setPlay} />
+        <PlayDrawEditor play={play} setPlay={setPlay} theme="paper" />
       </div>
     </div>
   );

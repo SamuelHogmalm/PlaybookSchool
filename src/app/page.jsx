@@ -1,5 +1,5 @@
-import PlayLab from "./PlayLab";
+import LandingPage from "@/components/landing/LandingPage";
 
 export default function Home() {
-  return <PlayLab />;
+  return <LandingPage />;
 }
