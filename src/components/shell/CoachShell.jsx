@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TEAM } from "@/data/mockTeam";
+import { useAuth } from "@/contexts/AuthProvider";
+import { TEAM as DEMO_TEAM } from "@/data/mockTeam";
 
 const NAV = [
   { href: "/coach/playbook", label: "Playbook" },
@@ -14,6 +15,10 @@ const NAV = [
 
 export default function CoachShell({ children }) {
   const pathname = usePathname();
+  const { user, profile, team, signOut, configured } = useAuth();
+
+  const teamName = team?.name ?? (configured && user ? "Setting up team…" : DEMO_TEAM.name);
+  const joinCode = team?.join_code ?? (configured && user ? "…" : DEMO_TEAM.joinCode);
 
   return (
     <div className="ps-app min-h-screen">
@@ -46,16 +51,25 @@ export default function CoachShell({ children }) {
           </nav>
 
           <div className="px-3 py-3 border-t border-rule mt-auto">
-          <p className="text-xs text-ink-soft truncate">{TEAM.name}</p>
-          <p className="font-data text-sm font-medium mt-1">{TEAM.joinCode}</p>
-          <p className="font-data text-[10px] text-ink-soft mt-0.5">Join code</p>
-          <Link
-            href="/player/today"
-            className="block mt-3 text-xs font-semibold text-chalk hover:underline"
-          >
-            Player view →
-          </Link>
-        </div>
+            <p className="text-xs text-ink-soft truncate">{teamName}</p>
+            <p className="font-data text-sm font-medium mt-1">{joinCode}</p>
+            <p className="font-data text-[10px] text-ink-soft mt-0.5">Join code</p>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="block mt-3 text-xs font-semibold text-ink-soft hover:text-ink"
+              >
+                Sign out
+              </button>
+            ) : null}
+            <Link
+              href="/player/today"
+              className="block mt-2 text-xs font-semibold text-chalk hover:underline"
+            >
+              Player view →
+            </Link>
+          </div>
         </aside>
 
         <div className="flex-1 flex flex-col min-w-0">{children}</div>
