@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# poppler binaries (local only — too large for git)
+/tools/poppler/

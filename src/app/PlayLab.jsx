@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { C, W, H, COURT_MAX_W, IDS, CourtSurface, Token, ActionLayer, FlyingBall, toSvg } from "./court/Court";
+import { getPlaybackState, playerHasBall, SPEED_OPTIONS, timelineDuration } from "@/lib/playback";
 
 /* ============================================================
    PlayLab — basketball play editor + auto-generated player quiz
@@ -8,27 +10,6 @@ import { useState, useRef, useEffect, useMemo } from "react";
    Everything the player app asks is derived from that model.
    ============================================================ */
 
-const C = {
-  bg: "#0E1116",
-  panel: "#161B22",
-  panel2: "#1C232D",
-  line: "#2A323E",
-  text: "#E6EAF0",
-  muted: "#8B95A5",
-  dim: "#5A6474",
-  ball: "#FF7A2F",
-  screen: "#4CC2FF",
-  cut: "#C9A227",
-  ok: "#3FD68C",
-  bad: "#FF5C5C",
-  wood: "#15130E",
-};
-
-const W = 500;
-const H = 470;
-const COURT_MAX_W = "max-w-[400px]";
-const HOOP = { x: 250, y: 52.5 };
-const IDS = ["1", "2", "3", "4", "5"];
 const POS_NAME = { 1: "PG", 2: "SG", 3: "SF", 4: "PF", 5: "C" };
 
 const ACTION_TYPES = [
@@ -38,10 +19,6 @@ const ACTION_TYPES = [
   { id: "pass", label: "Pass", needs: ["by", "for"] },
   { id: "handoff", label: "Handoff", needs: ["by", "for"] },
 ];
-
-const BEAT_DURATION_MS = 2000;
-const BEAT_HOLD_MS = 600;
-const SPEED_OPTIONS = [0.5, 1, 2];
 
 const SEED = {
   name: "Horns Down",
@@ -121,269 +98,6 @@ const SEED = {
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const lerp = (a, b, t) => a + (b - a) * t;
 const uid = () => Math.random().toString(36).slice(2, 9);
-
-function squigglePath(a, b, amp = 7, waves = 6) {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const px = -dy / len;
-  const py = dx / len;
-  let d = `M ${a.x} ${a.y}`;
-  for (let i = 1; i <= waves; i++) {
-    const t1 = (i - 0.5) / waves;
-    const t2 = i / waves;
-    const s = (i % 2 ? 1 : -1) * amp;
-    d += ` Q ${a.x + dx * t1 + px * s} ${a.y + dy * t1 + py * s} ${a.x + dx * t2} ${a.y + dy * t2}`;
-  }
-  return d;
-}
-
-function shorten(a, b, padA = 16, padB = 16) {
-  const len = dist(a, b) || 1;
-  const ux = (b.x - a.x) / len;
-  const uy = (b.y - a.y) / len;
-  return [
-    { x: a.x + ux * padA, y: a.y + uy * padA },
-    { x: b.x - ux * padB, y: b.y - uy * padB },
-  ];
-}
-
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-}
-
-function pathToSvgD(points) {
-  if (!points?.length) return "";
-  return points.reduce((d, p, i) => d + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`), "");
-}
-
-function pathArrowEnd(points, pad = 15) {
-  if (!points?.length) return null;
-  if (points.length < 2) return points[0];
-  const a = points[points.length - 2];
-  const b = points[points.length - 1];
-  return shorten(a, b, 0, pad)[1];
-}
-
-function timelineDuration(frames, speed) {
-  const n = frames.length;
-  if (n <= 1) return BEAT_HOLD_MS / speed;
-  return (n * BEAT_HOLD_MS + (n - 1) * BEAT_DURATION_MS) / speed;
-}
-
-function beatHoldStartMs(beatIdx, speed) {
-  const unit = (BEAT_HOLD_MS + BEAT_DURATION_MS) / speed;
-  return beatIdx * unit;
-}
-
-function getPlaybackState(frames, elapsedMs, speed) {
-  if (!frames.length) return null;
-  const hold = BEAT_HOLD_MS / speed;
-  const trans = BEAT_DURATION_MS / speed;
-  let t = 0;
-
-  for (let i = 0; i < frames.length; i++) {
-    if (elapsedMs < t + hold) {
-      return {
-        pos: frames[i].pos,
-        ball: frames[i].ball,
-        beatIdx: i,
-        note: frames[i].note,
-        inTransition: false,
-      };
-    }
-    t += hold;
-
-    if (i < frames.length - 1) {
-      if (elapsedMs < t + trans) {
-        const raw = (elapsedMs - t) / trans;
-        const f = easeInOut(raw);
-        const a = frames[i].pos;
-        const b = frames[i + 1].pos;
-        const out = {};
-        IDS.forEach((id) => {
-          out[id] = { x: lerp(a[id].x, b[id].x, f), y: lerp(a[id].y, b[id].y, f) };
-        });
-        return {
-          pos: out,
-          ball: frames[f < 0.5 ? i : i + 1].ball,
-          beatIdx: i + 1,
-          note: frames[i + 1].note,
-          inTransition: true,
-        };
-      }
-      t += trans;
-    }
-  }
-
-  const last = frames.length - 1;
-  return {
-    pos: frames[last].pos,
-    ball: frames[last].ball,
-    beatIdx: last,
-    note: frames[last].note,
-    inTransition: false,
-  };
-}
-
-/* ---------- court ---------- */
-function CourtBase() {
-  const r3 = 197.5; // HS three: 19'9"
-  const ax = Math.sqrt(r3 * r3 - (HOOP.y - 0) * (HOOP.y - 0));
-  return (
-    <g>
-      <rect x="0" y="0" width={W} height={H} fill={C.wood} />
-      <rect x="1" y="1" width={W - 2} height={H - 2} fill="none" stroke={C.line} strokeWidth="2" />
-      <rect x="170" y="0" width="160" height="190" fill="none" stroke={C.line} strokeWidth="2" />
-      <circle cx="250" cy="190" r="60" fill="none" stroke={C.line} strokeWidth="2" />
-      <path
-        d={`M ${250 + ax} 0 A ${r3} ${r3} 0 0 1 ${250 - ax} 0`}
-        fill="none"
-        stroke={C.line}
-        strokeWidth="2"
-      />
-      <line x1="190" y1="8" x2="310" y2="8" stroke={C.line} strokeWidth="3" />
-      <circle cx={HOOP.x} cy={HOOP.y} r="9" fill="none" stroke={C.dim} strokeWidth="2.5" />
-      <circle cx="250" cy={H} r="60" fill="none" stroke={C.line} strokeWidth="2" />
-    </g>
-  );
-}
-
-function Defs() {
-  return (
-    <defs>
-      <marker id="arrowCut" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill={C.cut} />
-      </marker>
-      <marker id="arrowBall" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill={C.ball} />
-      </marker>
-    </defs>
-  );
-}
-
-function ActionLayer({ frame, prev }) {
-  if (!prev) return null;
-  return (
-    <g>
-      {frame.actions.map((a) => {
-        const from = prev.pos[a.by];
-        const to = frame.pos[a.by];
-        const route = a.path?.length >= 2 ? a.path : null;
-
-        if (a.type === "dribble") {
-          if (route) {
-            const end = pathArrowEnd(route);
-            const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={C.ball} strokeWidth="2.5" markerEnd="url(#arrowBall)" />;
-          }
-          return <path key={a.id} d={squigglePath(from, to)} fill="none" stroke={C.ball} strokeWidth="2.5" markerEnd="url(#arrowBall)" />;
-        }
-        if (a.type === "cut") {
-          if (route) {
-            const end = pathArrowEnd(route);
-            const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={C.cut} strokeWidth="2.5" markerEnd="url(#arrowCut)" />;
-          }
-          const [p, q] = shorten(from, to, 15, 15);
-          return <line key={a.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={C.cut} strokeWidth="2.5" markerEnd="url(#arrowCut)" />;
-        }
-        if (a.type === "pass" || a.type === "handoff") {
-          const target = frame.pos[a.for];
-          if (route) {
-            const end = pathArrowEnd(route);
-            const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return (
-              <path
-                key={a.id}
-                d={pathToSvgD(trimmed)}
-                fill="none"
-                stroke={C.ball}
-                strokeWidth="2.5"
-                strokeDasharray={a.type === "pass" ? "9 7" : "2 5"}
-                markerEnd="url(#arrowBall)"
-              />
-            );
-          }
-          const [p, q] = shorten(from, target, 16, 18);
-          return (
-            <line
-              key={a.id}
-              x1={p.x} y1={p.y} x2={q.x} y2={q.y}
-              stroke={C.ball} strokeWidth="2.5"
-              strokeDasharray={a.type === "pass" ? "9 7" : "2 5"}
-              markerEnd="url(#arrowBall)"
-            />
-          );
-        }
-        if (a.type === "screen") {
-          const target = frame.pos[a.for];
-          const moveRoute = route || [from, to];
-          const endPt = route ? route[route.length - 1] : to;
-          const [p, q] = shorten(moveRoute[0], endPt, 15, 2);
-          const len = dist(q, target) || 1;
-          const px = (-(target.y - q.y) / len) * 13;
-          const py = ((target.x - q.x) / len) * 13;
-          return (
-            <g key={a.id}>
-              {route ? (
-                <path d={pathToSvgD(moveRoute)} fill="none" stroke={C.screen} strokeWidth="2.5" />
-              ) : (
-                <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={C.screen} strokeWidth="2.5" />
-              )}
-              <line x1={q.x - px} y1={q.y - py} x2={q.x + px} y2={q.y + py} stroke={C.screen} strokeWidth="3.5" strokeLinecap="round" />
-            </g>
-          );
-        }
-        return null;
-      })}
-    </g>
-  );
-}
-
-function Token({ id, p, hasBall, highlight, faded, draggable, onDown }) {
-  return (
-    <g
-      transform={`translate(${p.x} ${p.y})`}
-      onPointerDown={draggable ? (e) => onDown(e, id) : undefined}
-      style={{ cursor: draggable ? "grab" : "default", opacity: faded ? 0.28 : 1 }}
-    >
-      {highlight && <circle r="24" fill="none" stroke={C.ok} strokeWidth="2" opacity="0.7" />}
-      <circle r="15" fill={C.panel2} stroke={hasBall ? C.ball : C.muted} strokeWidth={hasBall ? 3 : 2} />
-      <text textAnchor="middle" y="5.5" fontSize="15" fontWeight="700" fill={C.text} style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}>
-        {id}
-      </text>
-      {hasBall && <circle cx="12" cy="-12" r="5" fill={C.ball} />}
-    </g>
-  );
-}
-
-/* ---------- shared court surface ---------- */
-function CourtSurface({ children, onPointerDown, onPointerMove, onPointerUp, svgRef }) {
-  return (
-    <svg
-      ref={svgRef}
-      viewBox={`0 0 ${W} ${H}`}
-      className="w-full h-auto block touch-none select-none"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
-    >
-      <Defs />
-      <CourtBase />
-      {children}
-    </svg>
-  );
-}
-
-function toSvg(svgEl, e) {
-  const r = svgEl.getBoundingClientRect();
-  return {
-    x: ((e.clientX - r.left) / r.width) * W,
-    y: ((e.clientY - r.top) / r.height) * H,
-  };
-}
 
 /* ============================================================
    EDITOR
@@ -501,9 +215,14 @@ function Editor({ play, setPlay }) {
                 ))}
               </g>
             )}
-            {!inPlayback && <ActionLayer frame={frame} prev={prev} />}
+            {(() => {
+              const af = inPlayback && playback ? play.frames[playback.beatIdx] : frame;
+              const ap = inPlayback && playback && playback.beatIdx > 0 ? play.frames[playback.beatIdx - 1] : prev;
+              return ap ? <ActionLayer frame={af} prev={ap} /> : null;
+            })()}
+            {playback?.ballInAir && <FlyingBall x={playback.ballInAir.x} y={playback.ballInAir.y} />}
             {IDS.map((id) => (
-              <Token key={id} id={id} p={shown.pos[id]} hasBall={shown.ball === id} draggable={!inPlayback} onDown={onDown} />
+              <Token key={id} id={id} p={shown.pos[id]} hasBall={playerHasBall(playback, frame, id)} draggable={!inPlayback} onDown={onDown} />
             ))}
           </CourtSurface>
         </div>
@@ -976,18 +695,52 @@ function Player({ play }) {
 /* ============================================================
    SHELL
    ============================================================ */
-export default function PlayLab() {
-  const [play, setPlay] = useState(SEED);
+export default function PlayLab({ initialPlay = SEED, onBack, onPlayChange }) {
+  const [play, setPlayState] = useState(initialPlay);
   const [mode, setMode] = useState("coach");
+
+  const setPlay = (next) => {
+    setPlayState(next);
+    onPlayChange?.(next);
+  };
+
+  useEffect(() => {
+    setPlayState(initialPlay);
+    setMode("coach");
+  }, [initialPlay]);
 
   return (
     <div className="min-h-screen w-full" style={{ background: C.bg, color: C.text, fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
-      <header className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: C.line }}>
-        <div className="flex items-baseline gap-3">
-          <span className="font-bold tracking-tight text-lg">PlayLab</span>
-          <span className="text-xs font-mono" style={{ color: C.dim }}>{play.frames.length} BEATS · {play.counters.length} READS</span>
+      <header className="flex items-center justify-between px-4 py-3 border-b gap-3 flex-wrap" style={{ borderColor: C.line }}>
+        <div className="flex items-baseline gap-3 min-w-0 flex-wrap">
+          {onBack ? (
+            <>
+              <button
+                onClick={onBack}
+                className="text-xs font-medium shrink-0 px-2 py-1 rounded"
+                style={{ color: C.ball, border: `1px solid ${C.line}` }}
+              >
+                ← All plays
+              </button>
+              <div className="min-w-0">
+                <span className="font-bold tracking-tight text-lg block truncate">{play.name}</span>
+                <span className="text-xs font-mono" style={{ color: C.dim }}>
+                  {play.category} · {play.frames.length} BEATS · {play.counters.length} READS
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="font-bold tracking-tight text-lg">PlayLab</span>
+              <span className="text-xs font-mono" style={{ color: C.dim }}>{play.frames.length} BEATS · {play.counters.length} READS</span>
+              <a href="/plays/new" className="text-xs font-medium" style={{ color: C.ball }}>Create play →</a>
+              <a href="/import" className="text-xs font-medium ml-3" style={{ color: C.muted }}>Import</a>
+              <a href="/dev/review-demo" className="text-xs font-medium ml-3" style={{ color: C.muted }}>Review demo</a>
+              <a href="/dev/import-preview" className="text-xs font-medium ml-3" style={{ color: C.muted }}>Your plays</a>
+            </>
+          )}
         </div>
-        <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${C.line}` }}>
+        <div className="flex rounded-lg overflow-hidden shrink-0" style={{ border: `1px solid ${C.line}` }}>
           {[["coach", "Coach"], ["player", "Player"]].map(([k, l]) => (
             <button
               key={k}
