@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ASSIGNMENTS, CURRENT_PLAYER, REVIEW_QUEUE } from "@/data/mockTeam";
 import { getPlayByName } from "@/lib/plays";
+import { getTodayQuizLabel } from "@/lib/dailyQuiz";
 
 export default function PlayerTodayPage() {
   const router = useRouter();
@@ -16,6 +17,19 @@ export default function PlayerTodayPage() {
         <p className="font-data text-xs uppercase tracking-widest text-ink-soft">Streak</p>
         <p className="font-display text-5xl font-bold text-ink">{CURRENT_PLAYER.streak}d</p>
         <p className="text-sm text-ink-soft mt-1">Hey {CURRENT_PLAYER.name.split(" ")[0]} — keep it going.</p>
+      </div>
+
+      <div className="border border-jersey/40 bg-jersey/5 p-4 mb-4">
+        <p className="font-data text-[10px] uppercase tracking-widest text-jersey mb-1">
+          {getTodayQuizLabel()}
+        </p>
+        <h2 className="font-display text-xl font-bold mb-1">Team playbook quiz</h2>
+        <p className="text-sm text-ink-soft mb-4">
+          Adaptive quiz from every play — questions you miss come back until you know them.
+        </p>
+        <Link href="/player/today/quiz" className="ps-btn ps-btn-primary w-full">
+          Start today&apos;s quiz
+        </Link>
       </div>
 
       {showReview ? (

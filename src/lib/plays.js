@@ -1,10 +1,9 @@
-import importedPlays from "@/data/plays.json";
-import { normalizeImportedPlay } from "@/lib/normalizePlay";
+import { loadAllPlays, getPlayByName as findPlay } from "@/lib/playData";
 
-export const allPlays = importedPlays.map(normalizeImportedPlay);
+export const allPlays = loadAllPlays();
 
 export function getPlayByName(name) {
-  return allPlays.find((p) => p.name === name) ?? null;
+  return findPlay(name, allPlays);
 }
 
 export const heroPlay = getPlayByName("Alabama") ?? allPlays[0];

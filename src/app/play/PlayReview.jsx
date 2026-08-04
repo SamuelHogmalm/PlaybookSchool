@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { C, CourtFrameView } from "@/app/court/Court";
 import { cropKey } from "@/lib/enrichReview";
+import { markBreakdownStale } from "@/lib/normalizePlay";
 import PlayDrawEditor from "@/app/play/PlayDrawEditor";
 
 function Section({ label, children, wide = false, paper = false }) {
@@ -25,7 +26,7 @@ export default function PlayReview({
   onVerified,
   showCropCompare = true,
   runLabel = "RUN PLAY",
-  theme = "dark",
+  theme = "paper",
 }) {
   const paper = theme === "paper";
   const [play, setPlayState] = useState(initialPlay);
@@ -40,17 +41,20 @@ export default function PlayReview({
 
   const setPlay = (next) => {
     const updated = typeof next === "function" ? next(play) : next;
-    setPlayState(updated);
-    onPlayChange?.(updated);
+    const stale = updated !== play ? markBreakdownStale(updated) : updated;
+    setPlayState(stale);
+    onPlayChange?.(stale);
   };
 
-  const updateSummary = (summary) => setPlay((p) => ({ ...p, summary }));
-  const updatePurpose = (purpose) => setPlay((p) => ({ ...p, purpose }));
+  const updateSummary = (summary) => setPlay((p) => markBreakdownStale({ ...p, summary }));
+  const updatePurpose = (purpose) => setPlay((p) => markBreakdownStale({ ...p, purpose }));
   const updateBeatNote = (i, note) =>
-    setPlay((p) => ({
-      ...p,
-      frames: p.frames.map((f, j) => (j === i ? { ...f, note } : f)),
-    }));
+    setPlay((p) =>
+      markBreakdownStale({
+        ...p,
+        frames: p.frames.map((f, j) => (j === i ? { ...f, note } : f)),
+      })
+    );
 
   const cropB64 = crops[cropKey(play.name, compareBeat)];
   const compareFrame = play.frames[compareBeat];
@@ -122,20 +126,51 @@ export default function PlayReview({
                 </div>
                 <div>
                   <p className={`text-xs px-2 py-1 font-mono mb-0 ${paper ? "font-data bg-paper-2 text-ink-soft" : "rounded-t"}`} style={paper ? undefined : { color: C.dim, background: C.panel2 }}>Our model</p>
-                  <div className={paper ? "ps-court-frame border border-rule" : ""}>
+                  <div className="ps-court-frame border border-rule">
                     <CourtFrameView
                       frame={compareFrame}
                       prev={comparePrev}
                       suffix="-compare"
                       maxWidthClass="max-w-full"
-                      showGhost={compareBeat > 0}
-                      showActions={compareBeat > 0 && (compareFrame.actions?.length ?? 0) > 0}
+                      showGhost={false}
+                      showActions={compareBeat > 0}
+                      showMovementLines={compareBeat > 0}
+                      theme="paper"
                     />
                   </div>
                 </div>
               </div>
             </Section>
           )}
+
+          <Section label="What we're hunting" paper={paper}>
+            {play.breakdownStale && (
+              <p className="text-xs text-flag mb-2">You edited this play — breakdown may be outdated. Re-import to refresh AI breakdown.</p>
+            )}
+            {editing === "purpose" ? (
+              <textarea
+                autoFocus
+                rows={3}
+                value={play.purpose}
+                onChange={(e) => updatePurpose(e.target.value)}
+                onBlur={() => setEditing(null)}
+                className={`w-full outline-none text-sm leading-relaxed resize-none ${paper ? "ps-input border" : "bg-transparent"}`}
+                style={paper ? undefined : { color: C.text }}
+              />
+            ) : (
+              <p className={`text-sm leading-relaxed font-semibold ${paper ? "text-ink" : ""}`} style={paper ? undefined : { color: C.text }}>
+                {play.purpose}
+              </p>
+            )}
+            {play.breakdown?.advantage && (
+              <p className={`text-sm leading-relaxed mt-2 ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>
+                {play.breakdown.advantage}
+              </p>
+            )}
+            <button type="button" onClick={() => setEditing("purpose")} className={`text-xs mt-2 ${paper ? "text-chalk font-semibold" : ""}`} style={paper ? undefined : { color: C.ball }}>
+              Edit manually
+            </button>
+          </Section>
 
           <Section label="Play summary" paper={paper}>
             {editing === "summary" ? (

@@ -1,0 +1,1638 @@
+{
+ "Alabama": {
+  "intent": "1 coming off a down screen from 5 at the elbow for a layup or a pull-up in the lane, with 4 relocating to the wing as the secondary option",
+  "advantage": "We create it by forcing the defense to rotate through multiple cuts and ball reversals, then hitting 1's defender with a down screen when they're ball-watching. The constant weak-side movement occupies help defenders so they can't tag the screen.",
+  "entry": "1 dribbles left to the wing, which triggers 2 to cut up to the top. This gets the defense in rotation from the start and empties the right side for the finish.",
+  "beatPurposes": {
+   "b1": "Initial alignment and spacing \u2014 get 1 to the wing and clear the right side by bringing 2 up top",
+   "b2": "Ball reversal to the elbow \u2014 this shifts the defense and sets up the screening angle while 3's cut occupies weak-side help",
+   "b3": "Decision beat \u2014 5 reads what the defense gives with multiple options, keeps them rotating and prevents them from loading up on the screen",
+   "b4": "Payoff \u2014 down screen for 1 cutting to the rim, with 4 relocating as the kick option if help comes"
+  },
+  "reads": [
+   {
+    "playerId": "5",
+    "beatId": "b3",
+    "situation": "You have the ball at the elbow with the entire floor moving",
+    "progression": [
+     "First look: 4 popping to the top of the key if his defender helps early",
+     "Second look: 3 on the wing if the defense collapses middle",
+     "Third look: Hold it and let the cuts develop \u2014 this sets up the screen for 1"
+    ],
+    "trigger": "If 4's man steps in to help on you, hit him immediately. If 3's defender sinks, swing it. If they stay home, you're setting the screen next beat."
+   },
+   {
+    "playerId": "1",
+    "beatId": "b4",
+    "situation": "You're coming off 5's down screen from the elbow",
+    "progression": [
+     "First look: Attack the rim \u2014 you should have separation and the help is occupied",
+     "Second look: Pull up in the lane if your defender trails over the screen",
+     "Third look: Kick to 4 on the wing if help rotates from the right side"
+    ],
+    "trigger": "Read your defender. If he goes under, pull it. If he trails, you have the rim. If the tag comes hard from 2's man, 4 is open on the wing."
+   },
+   {
+    "playerId": "3",
+    "beatId": "b3",
+    "situation": "You just received the pass on the left wing",
+    "progression": [
+     "First look: Hit 5 immediately at the elbow \u2014 this is the primary action",
+     "Second look: If 5's defender denies, you can attack the closeout or reverse back to 4"
+    ],
+    "trigger": "5 should be open. If he's fronted hard, that means someone left their man \u2014 find the open player."
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You're the primary scorer. Start the play with the dribble to the wing, relocate to the right side, then come hard off 5's screen looking for your shot at the rim or in the lane.",
+    "keys": [
+     "Set up your cut \u2014 don't drift toward the screen early or your defender will beat you over it",
+     "Read the screen \u2014 if your man goes under, pull up; if he trails, attack the rim",
+     "Come off it at game speed \u2014 this isn't a jog, you're trying to score"
+    ],
+    "commonError": "Floating toward the screen too early instead of holding your spot, which lets your defender cheat over the top and kill the action"
+   },
+   "2": {
+    "job": "You start in the right corner, then cut to the top of the key to clear space and occupy your defender. After that, hold the right slot to provide a pressure release and keep the floor spaced.",
+    "keys": [
+     "Your cut in beat 1 clears the right side \u2014 don't be late or you'll clog 1's finishing space",
+     "Stay above the break after you relocate \u2014 if you drift down, you shrink the spacing for 1's cut",
+     "Be ready as an outlet if the play breaks down"
+    ],
+    "commonError": "Drifting back toward the wing after cutting up, which brings your defender into the driving lane and kills 1's angle to the rim"
+   },
+   "3": {
+    "job": "You're in the left corner. When the ball goes to 5, you cut along the three-point line to the wing, then make the pass to 5 at the elbow to trigger the down screen. Your movement occupies weak-side help.",
+    "keys": [
+     "Your cut in beat 2 keeps your defender honest \u2014 don't just stand and watch",
+     "Hit 5 quickly when you catch it on the wing \u2014 the timing of this pass triggers the screen",
+     "After you pass, stay wide and be ready for a skip if the defense collapses"
+    ],
+    "commonError": "Standing still in the corner instead of cutting, which lets your defender sink in and become the tag defender on 1's cut"
+   },
+   "4": {
+    "job": "You start at the right elbow, then relocate to the top as a passing option for 5. Finally, you cut to the right wing to be the kick option when 1 comes off the screen.",
+    "keys": [
+     "Don't leave the top too early in beat 3 \u2014 5 might need you as a pressure release",
+     "Time your cut to the wing with 1's screen \u2014 you're the safety valve if help rotates",
+     "Be shot-ready when you catch it on the wing \u2014 this should be a clean catch-and-shoot"
+    ],
+    "commonError": "Cutting to the wing too early, before 5 makes a decision, which eliminates you as a top-of-key option and makes the play predictable"
+   },
+   "5": {
+    "job": "You're the facilitator. Start at the left elbow, receive the pass from 1, read the defense with multiple options in beat 3, then set a solid down screen for 1 at the right elbow.",
+    "keys": [
+     "Read the defense in beat 3 \u2014 if they collapse, you have options; if they stay home, you're screening next",
+     "Set the screen at the elbow level \u2014 not too high or 1 has no driving angle, not too low or there's no separation",
+     "After you screen, slip to the basket if your man helps hard on 1"
+    ],
+    "commonError": "Setting the screen too high or at the wrong angle, which forces 1 away from the rim instead of creating a straight-line drive to the basket"
+   }
+  },
+  "spacingRules": [
+   "2 must stay above the break after cutting to the top \u2014 if you drift down, you clog the right side for 1's finish",
+   "3 stays wide on the left wing after the pass \u2014 your defender cannot be allowed to become the tag defender",
+   "4 holds the top of the key until beat 4 \u2014 your cut to the wing has to time with the screen, not before it",
+   "5's screen must be set at elbow level \u2014 too high and there's no driving angle, too low and there's no separation"
+  ],
+  "counters": [
+   {
+    "trigger": "1's defender fights over the top of the screen",
+    "response": "1 slows down and lets 5 seal \u2014 slip the screen and look for 5 on the short roll or dump-off",
+    "why": "If the defender is trailing over, he can't help on the roll and 5 has inside position to the rim"
+   },
+   {
+    "trigger": "1's defender goes under the screen",
+    "response": "1 pulls up immediately in the lane for the mid-range jumper",
+    "why": "Going under gives you the shot \u2014 take it, don't try to force the rim and run into help"
+   },
+   {
+    "trigger": "2's defender tags hard on 1's cut",
+    "response": "1 kicks to 4 on the right wing for the catch-and-shoot three",
+    "why": "If the tag comes, 4 is open and 2's defender is out of position to recover across the floor"
+   },
+   {
+    "trigger": "5's defender denies the pass from 3 in beat 3",
+    "response": "3 can reverse the ball back to 4 at the top, or attack the closeout if their defender is over-helping",
+    "why": "If 5 is fronted, someone rotated early \u2014 find the open man or exploit the overplay"
+   }
+  ],
+  "situations": [
+   "Need a quality look late in the shot clock \u2014 the multiple cuts and options give you outs if the first action doesn't develop",
+   "Against a team that doesn't communicate through screens \u2014 the down screen action will generate clean looks",
+   "After a timeout when you need a structured set to get your best player a look at the rim",
+   "When 1 has a speed or quickness advantage and can use the screen to attack downhill"
+  ],
+  "commonBreakdowns": [
+   "2 drifts down from the slot after the initial cut, bringing their defender into the lane and eliminating 1's driving space",
+   "5 sets the screen too high or flat, which pushes 1 away from the rim instead of creating a downhill angle",
+   "1 starts moving toward the screen too early, telegraphing the cut and allowing the defender to get over the top",
+   "4 cuts to the wing too early in beat 3, eliminating the top-of-key option and making 5's read predictable",
+   "3 stands still instead of cutting, which lets their defender sink in and become the tag defender on 1's action",
+   "5 holds the ball too long in beat 3 trying to make a perfect read instead of moving it and letting the play develop"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this primarily a play to get 1 a scoring look, or is it more about creating multiple options and taking what the defense gives?",
+   "In beat 3, what's your preferred read for 5 \u2014 are you looking for a specific option first, or is this a true read-and-react?",
+   "What's the specific situation you call this in \u2014 is this your primary scoring set, an ATO, or a late-clock bailout?",
+   "For the down screen in beat 4, do you want 5 to slip if the defense switches, or always set it solid and roll?",
+   "Is 4's cut to the wing meant to be a real catch-and-shoot option, or is that player primarily a spacing decoy?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Arkansas-Rip": {
+  "intent": "2 coming off a screen from 5 at the top of the key for a catch-and-shoot or drive middle, triggered after swing and reversal",
+  "advantage": "Ball reversal pulls help away from the strong side, then 5's screen creates separation for 2 cutting back to the ball with momentum and a numbers advantage",
+  "entry": "1 dribbles up, 5 cuts to the ball-side elbow area, 2 lifts from corner to wing \u2014 initial flow gets us into the swing",
+  "beatPurposes": {
+   "b1": "Get 5 to the elbow and 2 up the wing \u2014 establishing the strong-side triangle that allows the swing to start",
+   "b2": "First swing \u2014 1 to 5 shifts the defense and gets 2 cutting along the arc to occupy his defender",
+   "b3": "Reversal to the weak side \u2014 this is the key shift that pulls help away and sets up the screen action coming back",
+   "b4": "The money beat \u2014 5 screens for 2 cutting back to the ball from 4, creating separation with the defense stretched from the reversal"
+  },
+  "reads": [
+   {
+    "playerId": "5",
+    "beatId": "b2",
+    "situation": "You catch at the elbow from 1",
+    "progression": [
+     "First look is 2 if he's open cutting along the arc",
+     "Second look is swing to 3 in the corner to continue the reversal",
+     "If neither is there, reset back to 1"
+    ],
+    "trigger": "If 2's man trails the cut, hit him immediately. If help is home and 3's man hasn't rotated up yet, swing it"
+   },
+   {
+    "playerId": "3",
+    "beatId": "b3",
+    "situation": "You catch the reversal in the corner",
+    "progression": [
+     "First look is your own shot if the closeout is wild",
+     "Second look is immediately to 4 at the top to continue the swing",
+     "Third look is 5 diving if his man helped on your catch"
+    ],
+    "trigger": "If you catch with space and they're closing hard, shoot it. Otherwise your job is to move it to 4 quickly \u2014 don't let the defense recover"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b4",
+    "situation": "You catch at the top from 3",
+    "progression": [
+     "First look is 2 coming off 5's screen \u2014 this is what we want",
+     "Second look is 5 slipping if his man shows hard on the screen",
+     "Third look is 1 on the wing if the defense overplays 2"
+    ],
+    "trigger": "As soon as 2 clears the screen, deliver the pass. If 5's man jumps out early to hedge or switch, 5 should slip and you hit him"
+   },
+   {
+    "playerId": "2",
+    "beatId": "b4",
+    "situation": "You're coming off 5's screen from 4",
+    "progression": [
+     "First look is catch-and-shoot if you're open",
+     "Second look is drive middle if the closeout is high or late",
+     "Third look is kick back to 4 if help comes from the weak side"
+    ],
+    "trigger": "Read the catch \u2014 if your feet are set and you have space, shoot it. If the defender is running at you out of control, drive the closeout"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You initiate the play with the dribble entry and swing to 5, then relocate to the wing after the pass. You're a safety valve and potential shooter if the defense overrotates to 2.",
+    "keys": [
+     "Hit 5 on time at the elbow \u2014 don't let your defender get in the gap",
+     "After you pass, clear to the wing with purpose so you're a real threat",
+     "Read the defense on 2 \u2014 if they overplay the screen action, you should be open"
+    ],
+    "commonError": "Standing and watching after the pass to 5 instead of relocating to the wing, which kills the spacing and makes you useless as an outlet"
+   },
+   "2": {
+    "job": "You're the primary scorer. Lift from corner to wing on the entry, then work your way along the arc during the swings to set up your cut off 5's screen. Come off it hard and ready to shoot or drive.",
+    "keys": [
+     "Your cut along the arc in beat 2 and 3 has to sell \u2014 you're setting up your defender to go the wrong way when you come back",
+     "When you use 5's screen, rub shoulder to shoulder \u2014 don't drift away from it",
+     "Catch ready \u2014 this is your shot and the whole play is designed to get you this look"
+    ],
+    "commonError": "Drifting too far above the screen or coming off it lazy, which lets your defender stay connected and kills the separation we just created"
+   },
+   "3": {
+    "job": "You're the reversal man in the corner. Your job is to catch the swing from 5 and immediately move it to 4. You might get a shot if the closeout is bad, but your main responsibility is being the link that gets the ball to the second side.",
+    "keys": [
+     "Stay in the corner until the ball swings to you \u2014 don't drift up early",
+     "Catch and move it fast to 4 \u2014 the defense is rotating and we need to beat them",
+     "If 5's man helps on your catch, 5 diving is a real option"
+    ],
+    "commonError": "Creeping up out of the corner before the swing gets to you, which shrinks the floor and makes the pass to 4 harder"
+   },
+   "4": {
+    "job": "You're the trigger man. Start at the weak-side elbow, then relocate to the top of the key to receive from 3 and deliver the ball to 2 coming off 5's screen. Your pass timing is everything.",
+    "keys": [
+     "Get to the top on time \u2014 you need to be there when 3 catches so the swing is immediate",
+     "Read 5's defender \u2014 if he shows early, 5 is slipping and you need to see it",
+     "Deliver the pass on 2's hip as he clears the screen, not before or after"
+    ],
+    "commonError": "Being late to the top or delivering the pass too early before 2 clears the screen, which kills the timing and lets the defense recover"
+   },
+   "5": {
+    "job": "You're the engine. Cut to the elbow on the entry to catch from 1, swing it to 3, then get to the top of the key to set a solid screen for 2. If your defender helps early, slip it and dive.",
+    "keys": [
+     "Set the screen at the top of the key level, not too high \u2014 we want 2 coming downhill",
+     "Make contact on the screen, then read your defender \u2014 if he shows, slip; if he stays home, roll weak side",
+     "Your cut to the basket in beat 1 occupies your defender early so he can't help on the initial action"
+    ],
+    "commonError": "Setting the screen too high or at a bad angle, which forces 2 to go sideways instead of downhill with momentum toward the basket"
+   }
+  },
+  "spacingRules": [
+   "3 stays in the corner until the ball is swung to him \u2014 no drifting up early or the reversal angle dies",
+   "2 has to work along the arc during the swings to set up his cut back \u2014 standing still telegraphs the screen action",
+   "4 must get to the top of the key on time when 3 catches \u2014 late arrival kills the advantage the reversal just created",
+   "5's screen must be set at the top of the key level, not above the three-point line \u2014 too high and 2 has no downhill angle"
+  ],
+  "counters": [
+   {
+    "trigger": "5's defender hedges hard or shows early on the screen for 2",
+    "response": "5 slips the screen and dives to the basket, 4 hits him immediately",
+    "why": "The hedge opens up the lane for 5 because the help is pulled away by the reversal \u2014 his man is the only one who can stop the dive and he just committed away from it"
+   },
+   {
+    "trigger": "2's defender fights over the top of the screen and stays attached",
+    "response": "2 rejects the screen and cuts back door, or 4 skips to 1 on the wing",
+    "why": "If the defender is overplaying that hard to get over, either the back door is open or the weak-side help has to rotate up, which opens 1"
+   },
+   {
+    "trigger": "3 catches the reversal and the defense rotates hard to take away 4 at the top",
+    "response": "3 looks at 5 diving or takes his own shot if the closeout is out of control",
+    "why": "If they're rotating that aggressively to stop the swing, someone is open \u2014 either 5's man helped or 3's closeout is compromised"
+   },
+   {
+    "trigger": "Defense switches the screen between 5 and 2",
+    "response": "2 attacks the mismatch downhill or kicks back to 4 if help comes, 5 seals and posts if he has a smaller defender",
+    "why": "The switch gives us either a speed advantage for 2 or a size advantage for 5 \u2014 we take whichever one they give us"
+   }
+  ],
+  "situations": [
+   "After a timeout when you need a quality look \u2014 the ball movement and screen action are hard to defend cold",
+   "Against a team that doesn't rotate well on reversals \u2014 this exposes slow help recovery",
+   "When 2 is your best shooter or scorer and you want to get him a clean look with space",
+   "Late in the shot clock as a secondary option \u2014 if the initial action breaks down, this gets organized quickly"
+  ],
+  "commonBreakdowns": [
+   "3 drifts out of the corner early, which compresses the spacing and makes the pass from 5 harder and the swing to 4 more contested",
+   "4 is late getting to the top of the key, which allows the defense to recover from the reversal and takes away the advantage",
+   "5 sets the screen too high above the arc, forcing 2 to catch going sideways instead of downhill with momentum",
+   "2 doesn't rub off the screen tight, drifting away from 5 and letting his defender slip under or stay attached",
+   "The swings are too slow \u2014 if 5 holds it or 3 holds it, the defense rotates and the whole reversal advantage disappears",
+   "1 doesn't relocate after passing to 5, standing in the same spot and becoming a non-threat instead of spacing to the wing"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this play specifically designed to get 2 a shot, or is 2 just the first option with other progressions being equally important?",
+   "What do you call 5's initial cut to the elbow \u2014 is there a specific term you use for that action?",
+   "Is this primarily a catch-and-shoot look for 2, or are we equally hunting the drive middle off the closeout?",
+   "Do you have a specific counter call if the defense switches everything, or do we just play the mismatch?",
+   "Is there a progression if 4 gets pressure and can't deliver to 2 \u2014 does he look at 1 on the wing or reset?",
+   "What's the most common mistake you see players make running this \u2014 is it the screening angle, the timing of the swings, or something else?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Conn": {
+  "intent": "5 attacking downhill off a side ball screen, hunting a finish at the rim or a pitch to the corner shooter (2) on the tag",
+  "advantage": "We flip the floor twice to shift the defense, then hit 5 on the move with a ball screen already coming. The defense has to recover from rotation while 5 is already attacking.",
+  "entry": "1 passes to 2 and cuts to the opposite wing. 3 and 4 exchange across the top while 2 relocates to the corner.",
+  "beatPurposes": {
+   "b1": "Flip the floor and occupy all five defenders with cuts. We're shifting the defense and getting 5 the ball with advantage.",
+   "b2": "Get the ball to 5 in the middle while 1 cuts through to clear out and become the corner option. This sets up the screen.",
+   "b3": "The money beat. 4 screens for 5 attacking downhill. 2 relocates to the corner as the kick option, 1 drifts to the opposite corner, 3 stays weak side.",
+   "b4": "Continuity or reset. 3 cuts back up to the wing, we're back in formation to run it again or flow into something else."
+  },
+  "reads": [
+   {
+    "playerId": "5",
+    "beatId": "b3",
+    "situation": "You're coming off 4's ball screen attacking the middle",
+    "progression": [
+     "First look: turn the corner and finish at the rim if your man trails or goes under",
+     "Second look: pitch to 2 in the corner when the tag comes from the weak side",
+     "Third look: short roll pocket pass to 4 slipping if they hedge hard",
+     "Safety: kick back out to the top and reset if nothing is there"
+    ],
+    "trigger": "Read 5's defender first\u2014under or over. Then read the tag\u2014if weak-side help commits, 2 is open. If the hedge is aggressive, 4's slip is there."
+   },
+   {
+    "playerId": "2",
+    "beatId": "b2",
+    "situation": "You just passed to 5 from the wing",
+    "progression": [
+     "Relocate to the corner immediately as 1 cuts through",
+     "Get your feet set\u2014you're the kick option when 5 attacks off the screen"
+    ],
+    "trigger": "As soon as the ball leaves your hands, start moving to the corner. Don't wait to see what happens."
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start the action with the entry pass, cut to the opposite wing to pull your defender, then cut through to the corner in beat 2 to become a secondary kick option and clear space for 5's attack.",
+    "keys": [
+     "Make a real cut to the wing in beat 1\u2014sell it to move your defender",
+     "Cut through hard in beat 2 so you don't clog the middle when 5 is attacking",
+     "Settle in the opposite corner with your feet ready"
+    ],
+    "commonError": "Not cutting hard enough through the lane\u2014you stay in the middle and kill 5's driving lane or the passing angle to 2."
+   },
+   "2": {
+    "job": "You're the first receiver and the primary kick option. Catch on the wing, hit 5 in the middle, then relocate to the corner and be ready to shoot.",
+    "keys": [
+     "Get to the corner quickly after the pass to 5\u2014timing matters",
+     "Feet set, hands ready when 5 comes off the screen",
+     "Stay in the corner until the ball moves\u2014don't drift up"
+    ],
+    "commonError": "Relocating to the corner too slowly or drifting up toward the wing, which shrinks the floor and makes the tag easier."
+   },
+   "3": {
+    "job": "You cut across the top in beat 1 to occupy your defender and balance the floor, then stay weak side as a secondary outlet and to keep the defense honest.",
+    "keys": [
+     "Cross the top hard in beat 1 to pull your defender with you",
+     "Stay below the three-point line on the weak side\u2014don't drift to the corner",
+     "Be available but don't clog the strong side"
+    ],
+    "commonError": "Standing still on the weak side instead of making the initial cut matter, or drifting too far toward the baseline and taking away 1's corner spot."
+   },
+   "4": {
+    "job": "You cut across the top to the weak side in beat 1, then set the ball screen for 5 in beat 3. Your screen creates the whole play.",
+    "keys": [
+     "Get the angle right on the screen\u2014set it so 5 can attack downhill toward the middle",
+     "After the screen, read the hedge\u2014slip if they're aggressive, pop if they drop",
+     "Don't drift to the corner\u2014stay in the short roll area"
+    ],
+    "commonError": "Setting the screen too high or too flat, which sends 5 sideways instead of downhill. Also setting it too early before 5 is ready."
+   },
+   "5": {
+    "job": "You're the primary attacker. Catch in the middle with momentum, read the ball screen, and make the play\u2014finish, kick to 2, or hit 4 on the slip.",
+    "keys": [
+     "Catch the ball on the move\u2014don't be stationary",
+     "Attack downhill off the screen, not sideways",
+     "Read the tag and your defender at the same time\u2014that tells you finish or kick"
+    ],
+    "commonError": "Coming off the screen too flat and settling for a contested mid-range pull-up instead of turning the corner. Also being late to read the tag and missing 2 when they're wide open."
+   }
+  },
+  "spacingRules": [
+   "2 must get to the corner and stay there until 5 makes a decision\u2014no drifting up to the wing",
+   "1 must clear through to the opposite corner and not hang in the middle where 5 is attacking",
+   "4's screen angle is non-negotiable\u2014it has to send 5 downhill, not sideways",
+   "3 stays weak side and doesn't collapse toward the ball or drift into 1's corner space"
+  ],
+  "counters": [
+   {
+    "trigger": "5's defender goes under the screen",
+    "response": "5 pulls up for the mid-range jumper or keeps attacking if the big drops too far",
+    "why": "If they're going under, they're giving you the shot. Take it if you have it, or use the space to get downhill before the big can recover."
+   },
+   {
+    "trigger": "The defense hedges or blitzes the ball screen",
+    "response": "4 slips hard to the rim, 5 hits the pocket pass immediately",
+    "why": "If they're sending two to the ball, 4's man has to show, which means 4 is open on the slip. It's a numbers advantage for one second\u2014take it."
+   },
+   {
+    "trigger": "Weak-side help tags the roll or comes to 5 driving",
+    "response": "5 kicks to 2 in the corner for the open three",
+    "why": "That's exactly what we want. If the tag comes, 2 is wide open. Make the easy pass and get the best shot in the play."
+   },
+   {
+    "trigger": "They switch the ball screen",
+    "response": "5 attacks the mismatch immediately if it's a smaller defender, or 4 seals and posts if 5's defender switches onto them",
+    "why": "Switches create mismatches. Take whichever one is better\u20145 attacking small or 4 posting small."
+   }
+  ],
+  "situations": [
+   "Against teams that drop in ball screen coverage\u20145 gets downhill with space",
+   "When you need to get 5 involved as a scorer in the middle of the floor",
+   "When 2 is a strong shooter and you want to hunt a kick-out three",
+   "To change pace after running perimeter sets\u2014this attacks downhill quickly"
+  ],
+  "commonBreakdowns": [
+   "2 doesn't get to the corner fast enough, so when 5 is ready to kick it, the shot isn't there",
+   "1 doesn't clear through the middle hard enough and clogs 5's driving lane",
+   "4 sets the screen too high or at the wrong angle, so 5 goes sideways instead of downhill and the play dies into a contested pull-up",
+   "5 doesn't read the tag and forces a finish when 2 is wide open in the corner",
+   "The timing between the pass to 5 and 4's screen is off\u2014either 4 is too early and 5 isn't ready, or too late and 5 is standing still"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this play specifically designed to hunt 5's finish at the rim, or is the corner kick to 2 actually the primary look?",
+   "What do you want 4 to do after screening\u2014slip, pop, or short roll? The diagram shows cutting movement but the priority isn't clear.",
+   "Is beat 4 a true continuation of this play, or is it just a reset into a different action?",
+   "What's your specific terminology for the initial cuts in beat 1\u2014do you have a name for that exchange?",
+   "Against switching teams, do you want 5 to hunt the mismatch every time or is there a different counter?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Down": {
+  "intent": "1 coming off the baseline screen from 5 for a layup or mid-range look on the left block",
+  "advantage": "Series of screens and cuts that shift the defense, culminating in a baseline screen that seals 1's defender on the weak side while attention is occupied strong side",
+  "entry": "1 passes to 2 in the corner, triggering 4 to screen for 3 cutting across the lane while 5 cuts to the wing",
+  "beatPurposes": {
+   "b1": "Initial movement to shift the defense left and get 3 the ball on the wing while clearing 1's side for the eventual baseline action",
+   "b2": "Ball reversal through 4 at the top while 1 screens for 2, occupying weak-side help and continuing to move the defense away from where 1 will eventually cut",
+   "b3": "Payoff beat - 5 sets the baseline screen for 1 cutting to the basket while 4 has the ball with passing angle"
+  },
+  "reads": [
+   {
+    "playerId": "3",
+    "beatId": "b1",
+    "situation": "You've just caught off 4's screen on the wing",
+    "progression": [
+     "Look to attack if your defender trails the screen",
+     "Swing to 4 at the top to continue the play"
+    ],
+    "trigger": "If your defender is on your hip or behind, you have the drive. If they recover, hit 4"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b2",
+    "situation": "You receive from 3 at the top with the ball reversing",
+    "progression": [
+     "First look is 2 curling off 1's screen in the corner for a catch-and-shoot",
+     "Second is continuation to 5 or yourself creating"
+    ],
+    "trigger": "If 2's defender fights over and 2 is open on the curl, hit them immediately. If denied, keep it moving"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b3",
+    "situation": "You have the ball on the wing as 1 cuts off 5's baseline screen",
+    "progression": [
+     "First look is 1 coming off the screen for the layup",
+     "Second is 5 on the slip if their defender shows hard on 1",
+     "Safety is 2 in the corner or reset"
+    ],
+    "trigger": "Hit 1 if the defense goes under or trails. Hit 5 if 1's defender goes over the top and 5's man helps. Corner if the defense rotates and tags"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You initiate with the pass to 2, then screen for 2 on the reversal, then cut hard off 5's baseline screen looking for your shot",
+    "keys": [
+     "Screen for 2 with purpose - their defender has to feel you so they can't help on your cut",
+     "Time your baseline cut so 5 is set when you arrive",
+     "Come off the screen low and tight - don't drift to the perimeter"
+    ],
+    "commonError": "Cutting too early before 5 is set, or drifting away from the basket instead of staying tight to the screen for the finish"
+   },
+   "2": {
+    "job": "You receive the entry pass in the corner, occupy your defender, then cut off 1's screen on the reversal to occupy weak-side help",
+    "keys": [
+     "Stay in the corner until 3 has the ball - don't drift up early",
+     "Use 1's screen hard and be a threat - curl like you're getting the shot",
+     "End in the opposite corner to keep spacing"
+    ],
+    "commonError": "Floating up from the corner too early in beat 1, which shrinks the floor and lets your defender help on 3"
+   },
+   "3": {
+    "job": "You cut across off 4's screen to receive on the wing, then swing it to 4 to reverse the ball",
+    "keys": [
+     "Use 4's screen - don't cut early before it's set",
+     "Catch ready to attack if your defender trails",
+     "Quick decision - attack or swing, don't hold it"
+    ],
+    "commonError": "Cutting before 4 is in position to screen, which means you never get separation from your defender"
+   },
+   "4": {
+    "job": "You screen for 3 to start the play, then pop to the top as the reversal point, then deliver the pass to 1 cutting baseline",
+    "keys": [
+     "Set a solid screen for 3 - angle it so they can cut to the wing",
+     "After screening, get to the top with your hands ready",
+     "On the final beat, read whether 1 or 5 is open off the screen"
+    ],
+    "commonError": "Setting the screen for 3 too high or too soft, so 3 doesn't get clean separation on the catch"
+   },
+   "5": {
+    "job": "You cut to the wing on the entry, relocate as the ball reverses, then set the baseline screen for 1 and look for the slip or dive",
+    "keys": [
+     "Baseline screen must be set low and wide - give 1 room to curl tight",
+     "Hold the screen long enough for 1 to use it",
+     "After screening, seal and look for the slip if help comes"
+    ],
+    "commonError": "Setting the screen too high on the block instead of baseline, which gives 1's defender room to recover"
+   }
+  },
+  "spacingRules": [
+   "2 must stay in the corner on the entry until 3 catches - early drift kills the spacing and allows help",
+   "On beat 2, after screening for 2, you end in the opposite corner to keep the floor spread",
+   "5's baseline screen must be set low and wide - not at the block but closer to the baseline to create the angle for 1's cut"
+  ],
+  "counters": [
+   {
+    "trigger": "If 1's defender fights over the top of 5's baseline screen",
+    "response": "5 slips to the basket and 4 hits 5 on the dive",
+    "why": "When the defender goes over, they're out of position to stop the roll and 5's defender has to choose between helping on 1 or staying with 5"
+   },
+   {
+    "trigger": "If the defense switches 4's screen on 3 in beat 1",
+    "response": "3 attacks the mismatch immediately off the catch instead of reversing",
+    "why": "The switch likely puts a big on 3, and attacking early prevents the defense from recovering or switching back"
+   },
+   {
+    "trigger": "If weak-side help tags 1 coming off the baseline screen",
+    "response": "4 skips to 2 in the corner for the open three",
+    "why": "The tag means someone rotated from 2, leaving the corner wide open on a skip pass the defense can't recover to"
+   }
+  ],
+  "situations": [
+   "Need a high-percentage two late in the clock",
+   "Against a team that helps aggressively - the multiple cuts and screens create confusion about who to help off",
+   "When 1 has a finishing advantage and you want to get them downhill with a runway",
+   "After a timeout when you need an organized look"
+  ],
+  "commonBreakdowns": [
+   "2 drifts up from the corner early in beat 1, shrinking the spacing and allowing their defender to help on 3's catch or 1's eventual cut",
+   "3 cuts before 4's screen is set, so there's no separation and the defense stays attached",
+   "1 cuts too early before 5 is in position for the baseline screen, running into traffic instead of coming off a solid screen",
+   "5 sets the screen too high at the block instead of baseline, giving 1's defender an angle to recover over the top",
+   "4 delivers the pass to 1 too late after the cutting window has closed and the defense has recovered"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this designed primarily for 1's finish, or is 2 curling off 1's screen in beat 2 also a primary option?",
+   "Do you want 5 to slip the screen automatically on certain defensive reads, or only when tagged?",
+   "What's your terminology for the baseline screen action - do you call this a specific set name?",
+   "Is there a specific defense this is designed to attack, or is this a general motion set?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "gswhat": {
+  "intent": "A catch-and-shoot three for 4 on the right wing, coming off 5's down screen with 2 feeding from the slot",
+  "advantage": "5's down screen creates separation for 4 to get to the wing. The initial cuts by 3 and 2 to the corners pull the defense wide and occupy weak-side help, preventing them from bumping 4 off the screen",
+  "entry": "1 has it at the top. 3 and 2 cut to the corners simultaneously as 1 dribbles over and hits 4 on the wing",
+  "beatPurposes": {
+   "b1": "Get into the setup alignment\u2014corners filled, ball reversed to the wing, 5 stays high to set the main screen",
+   "b2": "Execute the primary action\u20145 screens down for 4, 2 delivers the pass for the catch-and-shoot look"
+  },
+  "reads": [
+   {
+    "playerId": "2",
+    "beatId": "b2",
+    "situation": "You've got the ball on the right side after 4 curls off 5's screen",
+    "progression": [
+     "First look is 4 coming to the wing for the three if his man trails the screen",
+     "Second look is 5 slipping or popping after the screen if his man helps hard on 4",
+     "Third is 1 relocating on the weak side if the defense rotates"
+    ],
+    "trigger": "Read 4's defender\u2014if he's chasing over the screen, hit 4. If the big steps up to help, 5 should be open. If the whole defense rotates, swing it weak side"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b2",
+    "situation": "You're coming off 5's down screen",
+    "progression": [
+     "Curl to the wing for the catch-and-shoot three if your man trails",
+     "Fade if your man cheats under and takes away the curl",
+     "Reject the screen and cut backdoor if your man top-locks you"
+    ],
+    "trigger": "Read your defender's position as you approach the screen\u2014trailing means curl, under means fade, denial means reject"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start with the ball at the top. Dribble over and hit 4 on the wing to initiate, then relocate weak side to keep your defender honest and provide a safety outlet",
+    "keys": [
+     "Move the ball quickly to get into the set\u2014don't let the defense get set",
+     "After you pass, relocate to the weak wing or slot so you're available if the defense rotates"
+    ],
+    "commonError": "Standing still after the pass instead of relocating\u2014your defender will then help on the main action"
+   },
+   "2": {
+    "job": "You cut to the right corner initially, then move up to receive the ball and deliver the pass to 4 coming off the screen. You're the trigger man",
+    "keys": [
+     "Time your movement from corner to slot so you're ready to catch when 4 is coming off the screen",
+     "Make the pass on time and on target\u20144 needs it in his shooting pocket"
+    ],
+    "commonError": "Being late getting from the corner to the slot, which delays the whole action and lets the defense recover"
+   },
+   "3": {
+    "job": "You cut to the left corner and stay there. Your job is to occupy your defender and keep the weak-side help from rotating to help on 4",
+    "keys": [
+     "Get to the corner early and stay there\u2014don't drift up",
+     "Be a threat\u2014hands ready, show you're an option if the ball swings"
+    ],
+    "commonError": "Drifting up toward the wing or watching the play\u2014if you come up, your defender helps on the screen and kills the shot"
+   },
+   "4": {
+    "job": "You start on the left wing, then relocate to set up the screen. Come hard off 5's down screen to the right wing for the catch-and-shoot three",
+    "keys": [
+     "Set your man up\u2014walk him down before you use the screen so you get separation",
+     "Come off the screen ready to shoot\u2014hands up, on balance, no wasted motion"
+    ],
+    "commonError": "Coming off the screen too early before it's set, or not being ready to shoot immediately on the catch"
+   },
+   "5": {
+    "job": "You stay at the high post initially to keep your defender from helping, then set a solid down screen for 4. After the screen, read whether to slip, pop, or roll based on how your defender plays it",
+    "keys": [
+     "Stay high until the action starts\u2014if you drop early, your man helps weak-side",
+     "Set the screen at the proper angle and depth\u2014elbow area, giving 4 room to come to the wing",
+     "After contact, read your defender and either slip to the rim or pop out if he helps hard on 4"
+    ],
+    "commonError": "Setting the screen too high or too shallow\u20144 needs space to come to the wing for the three, not jammed into the sideline"
+   }
+  },
+  "spacingRules": [
+   "3 stays in the left corner until the ball moves\u2014no drifting up or you bring your defender into the help",
+   "1 must relocate after the initial pass\u2014standing still allows your defender to help on the main screen",
+   "5 stays at the high post initially\u2014if you drop too early, your defender can help weak-side and then recover to the screen"
+  ],
+  "counters": [
+   {
+    "trigger": "4's defender goes under the screen and takes away the curl to the wing",
+    "response": "4 fades behind the screen for the three instead of curling\u20145 can adjust the angle to help create this",
+    "why": "If the defender goes under, he's taking away the curl but giving up the fade\u2014you get the same shot, different spot"
+   },
+   {
+    "trigger": "5's defender hedges hard or shows on 4 coming off the screen",
+    "response": "5 slips to the rim or pops back out\u20142 hits 5 instead of 4",
+    "why": "If 5's man helps on 4, he can't guard 5\u2014someone's open, and it's often 5 with a better look than 4 had"
+   },
+   {
+    "trigger": "4's defender top-locks or denies hard before the screen",
+    "response": "4 rejects the screen and cuts backdoor to the rim\u20142 delivers the pass for the layup",
+    "why": "Overplay always gives up the back cut\u2014if he's denying the catch, the basket is wide open"
+   },
+   {
+    "trigger": "The defense switches the screen",
+    "response": "4 takes the mismatch and either shoots over the smaller defender or 5 seals the smaller defender and posts up",
+    "why": "Switching creates a mismatch one way or the other\u2014take advantage of whoever has the size or speed advantage"
+   }
+  ],
+  "situations": [
+   "Need a three-point look",
+   "When you have a shooter at the 4 who can move without the ball",
+   "Against teams that don't switch or hedge hard on down screens",
+   "After a timeout when you need a clean look",
+   "To get your 4 going early in the game with a quality touch"
+  ],
+  "commonBreakdowns": [
+   "3 drifts out of the corner to watch\u2014brings the help defender right into the action and kills 4's shot",
+   "4 doesn't set up the screen properly\u2014just runs at it without walking his defender down, so there's no separation",
+   "5 sets the screen too high or at the wrong angle\u20144 gets jammed into the sideline with no room for the shot",
+   "2 is late rotating from the corner to the slot\u2014the timing is off and 4's defender recovers",
+   "1 doesn't relocate after the pass\u2014stands and watches, so 1's defender helps on the screen",
+   "4 isn't ready to shoot on the catch\u2014brings the ball down or takes an extra dribble and the defense recovers"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this primarily designed to get 4 the three, or is the slip/pop by 5 equally important?",
+   "Do you want 2 to come all the way up to the slot or stay lower near the wing?",
+   "What's your terminology for this screen action\u2014do you call it a down screen, pin down, or something else?",
+   "Is there a specific situation when you call this\u2014ATO, need-three, or is it part of regular flow?",
+   "How do you want 4 to set up the screen\u2014do you teach a specific setup move or just 'walk him down'?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Horns": {
+  "intent": "4 coming off a back screen from 5 for a layup at the rim, with 2 on the wing as the kick-out if help rotates",
+  "advantage": "We force the defense to make multiple rotations\u2014first on the cuts to reposition, then on the ball reversal, then on the back screen\u2014so help is late or out of position when 4 cuts to the basket",
+  "entry": "Horns alignment\u20141 at the top with the ball, 5 and 4 at the elbows, 2 and 3 in the corners. We initiate with 1 passing to 5 on the left elbow",
+  "beatPurposes": {
+   "b1": "Shift the defense with the pass to the elbow and use simultaneous cuts by 5, 4, and 2 to scramble help assignments and create confusion",
+   "b2": "Swing the ball quickly from 5 to 4 to 1 on the right side while 2 cuts through\u2014this reversal forces the defense to rotate and sets up the back screen with their help out of position",
+   "b3": "Deliver the primary action\u20145 back screens for 4 cutting to the rim while 1 hits 2 on the wing, creating a two-way threat of the dive or the kick"
+  },
+  "reads": [
+   {
+    "playerId": "1",
+    "beatId": "b3",
+    "situation": "You've received the ball on the right wing after the swing, and 5 is setting the back screen for 4",
+    "progression": [
+     "First look: 2 cutting to the wing for the catch-and-shoot if your defender helps on 4's cut",
+     "Second look: 4 diving to the rim off the back screen if the defense doesn't rotate",
+     "Third look: 5 slipping to the basket if his defender shows hard on 4"
+    ],
+    "trigger": "Read your defender\u2014if he steps in to tag 4, hit 2 immediately. If he stays home, look at 4's defender\u2014if he trails the screen, hit 4 on the dive. If 5's man jumps the screen early, 5 slips and you hit him"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b3",
+    "situation": "You're about to receive the back screen from 5",
+    "progression": [
+     "First look: Cut hard off the screen to the rim with your hands up",
+     "Second look: If the defense switches or hedges hard, short roll to the middle for the pocket pass"
+    ],
+    "trigger": "If your defender fights over the screen or there's no help, attack the rim. If you feel a body on your back or the lane clogs, plant and short roll"
+   },
+   {
+    "playerId": "5",
+    "beatId": "b3",
+    "situation": "You're setting the back screen for 4",
+    "progression": [
+     "First look: Set a solid screen and hold it",
+     "Second look: Slip to the rim if your defender shows early or switches onto 4",
+     "Third look: Roll to the left block after 4 clears for offensive rebound position"
+    ],
+    "trigger": "If 4's defender goes under and your man hedges or shows, slip immediately before contact. Otherwise, screen and dive"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start the play with the entry pass to 5, relocate to the right wing to receive the swing pass, then make the read on whether to hit 2 on the wing, 4 on the dive, or 5 on the slip",
+    "keys": [
+     "After your initial pass, sprint to relocate on the right side\u2014don't drift, get there with purpose so 4 can hit you in rhythm",
+     "When you catch on the wing, be a threat to shoot so your defender has to respect you",
+     "Eyes on your defender first\u2014his reaction tells you whether 2 is open"
+    ],
+    "commonError": "Relocating too slowly after the entry pass, which delays the swing and lets the defense recover"
+   },
+   "2": {
+    "job": "You make a basket cut in the first beat to occupy help, then cut through in the second beat to clear out, then fill to the right wing in the third beat as the primary kick-out option",
+    "keys": [
+     "Your cut through in beat 2 has to take your defender with you\u2014don't float, sell it like you want the ball",
+     "Time your fill to the wing so you arrive as 4 is coming off the screen\u2014too early and you clog, too late and the window closes",
+     "Catch ready to shoot\u2014this only works if the defense thinks you'll pull it"
+    ],
+    "commonError": "Drifting to the wing too early or too high, which shrinks the spacing and lets one defender guard both you and 4"
+   },
+   "3": {
+    "job": "You stay in the corner on the left side to occupy your defender and prevent help-side rotation\u2014you likely won't touch the ball, but you keep the weak side honest",
+    "keys": [
+     "Stay below the break in the corner until the ball gets to the right side",
+     "If your defender sinks into the lane to help on 4's cut, call for it\u2014you might get a skip pass for a corner three",
+     "Don't drift up or in\u2014the moment you leave the corner, your defender becomes a help defender"
+    ],
+    "commonError": "Creeping toward the action or above the break, which allows your defender to help on 4's dive without consequence"
+   },
+   "4": {
+    "job": "You cut in the first beat to reposition, then serve as the hub in the swing from 5 to 1, then use 5's back screen to cut hard to the rim for the primary finish",
+    "keys": [
+     "On the swing, catch and move it immediately to 1\u2014you're not looking to score here, you're moving the defense",
+     "Set up the back screen by giving 5 a target\u2014step toward the ball before you cut so the screen creates separation",
+     "Cut off the screen with your hands ready\u2014if 1's defender helps, the pass is coming"
+    ],
+    "commonError": "Holding the ball too long on the catch from 5, which lets the defense recover and eliminates the advantage of the quick swing"
+   },
+   "5": {
+    "job": "You receive the entry pass from 1, initiate the swing to 4, then set a back screen for 4 and dive to the rim or slip if the defense shows",
+    "keys": [
+     "Catch the entry and immediately look to reverse it\u2014we're not hunting your shot here, we're moving the ball",
+     "On the back screen, get your butt into 4's defender's thigh and hold it\u2014don't just brush by",
+     "After you screen, read your defender\u2014if he helps hard, slip before he recovers; if he stays home, roll to the weak side for the board"
+    ],
+    "commonError": "Setting the screen too high or at a bad angle, which lets 4's defender slide under and stay attached"
+   }
+  },
+  "spacingRules": [
+   "3 stays in the left corner until the ball swings to the right side\u2014if you drift up, your defender helps and the play dies",
+   "1 must relocate to the right wing with urgency after the entry pass\u2014passive relocation kills the timing of the swing",
+   "2 clears all the way through on the second beat before filling to the wing\u2014if you hang in the lane, there's no room for 4 to cut",
+   "4 sets up the back screen by creating space first\u2014if you're standing on top of 5 when he goes to screen, there's no separation"
+  ],
+  "counters": [
+   {
+    "trigger": "4's defender fights over the top of the back screen and stays attached",
+    "response": "5 slips to the rim immediately before setting the screen, and 1 hits him on the slip",
+    "why": "If the defender is overplaying the screen, his momentum takes him away from the slip, and 5's man can't recover in time to help"
+   },
+   {
+    "trigger": "The defense switches the back screen",
+    "response": "4 short rolls to the elbow or mid-post area, and 5 seals the smaller defender on the block",
+    "why": "The switch creates a mismatch\u2014either 4 has a size advantage in the middle or 5 has one on the block, and we take whichever is more open"
+   },
+   {
+    "trigger": "1's defender sinks in to help on 4's cut",
+    "response": "1 immediately hits 2 on the wing for the catch-and-shoot three",
+    "why": "If 1's defender commits to the help, he can't recover to contest 2 in time, and that's the shot we want as the counter"
+   },
+   {
+    "trigger": "3's defender leaves the corner to help on the back screen",
+    "response": "1 skips it to 3 in the corner for the wide-open three",
+    "why": "We've forced help from two passes away, which means the defense is scrambling\u20143 will be alone, and the skip pass beats the rotation"
+   }
+  ],
+  "situations": [
+   "After a timeout when you need a high-percentage look",
+   "Against man-to-man defense that struggles with back screens",
+   "When 4 has a speed or athleticism advantage over his defender",
+   "When 2 is a good shooter and the defense respects it",
+   "Early in the shot clock to get an easy basket before the defense sets"
+  ],
+  "commonBreakdowns": [
+   "1 relocates slowly after the entry pass, so the swing from 4 to 1 is late and the defense recovers before the back screen",
+   "2 fills to the wing too early, clogging the driving lane for 4 and making the defense's help easier",
+   "5 sets a lazy or high back screen that 4's defender can easily get under",
+   "4 doesn't sell the cut hard enough, so his defender doesn't commit and can stay in position to contest",
+   "3 drifts out of the corner, allowing his defender to become a free help defender on 4's dive without consequence",
+   "1 doesn't read his own defender first\u2014he looks for 4 even when the kick to 2 is wide open",
+   "The swing from 5 to 4 to 1 is too slow, giving the defense time to shift and eliminating the rotational advantage"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this play specifically designed to exploit a certain defensive tendency, like a team that switches everything or one that doesn't communicate on back screens?",
+   "What's your preferred first look\u2014are we hunting 4's dive primarily, or is 2's catch-and-shoot three equally important?",
+   "Do you want 5 to be aggressive slipping the screen if he reads early help, or should he prioritize setting a solid screen first?",
+   "Is there a specific game situation when you call this\u2014ATO, need-a-bucket, against a particular opponent?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Idaho": {
+  "intent": "5 coming off a cross-screen from 3 at the elbow for a post catch or seal on the weak side",
+  "advantage": "The cross-screen from 3 creates separation for 5 to establish position, while 1's dribble to the wing and the pass to 4 shifts the defense away from the help side where 5 is cutting",
+  "entry": "1 dribbles up to initiate while 3, 4, and 5 all relocate\u20143 moves to the elbow area, 4 drops to the corner/wing, and 5 starts from the weak-side block",
+  "beatPurposes": {
+   "b1": "Set up the alignment\u2014get 3 to the screening position at the elbow, 4 to the ball-side wing to receive, and 5 to the weak-side block to use the screen",
+   "b2": "Execute the primary action\u20143 screens for 5 cutting across while 1 passes to 4 to create the feeding angle"
+  },
+  "reads": [
+   {
+    "playerId": "4",
+    "beatId": "b2",
+    "situation": "You catch on the wing as 5 is coming off 3's screen",
+    "progression": [
+     "First look is 5 sealing after the screen\u2014hit it if defender trails or gets caught on the screen",
+     "Second look is 5 posting up if the defender goes under but 5 establishes position",
+     "Safety is reverse it back to 1 or swing to 2 if nothing's there"
+    ],
+    "trigger": "Where 5's defender is relative to the screen\u2014trailing means seal and feed, fronting means look for the lob or reset"
+   },
+   {
+    "playerId": "1",
+    "beatId": "b2",
+    "situation": "You're dribbling toward the wing to make the pass to 4",
+    "progression": [
+     "First look is can you feed 5 directly if the angle opens",
+     "Primary action is hit 4 on the wing to let them make the entry",
+     "Keep yourself available for the reversal if 4 can't get it in"
+    ],
+    "trigger": "If 5's defender loses position early and you have the angle, skip 4 and go direct\u2014otherwise execute the pass to 4"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You're the initiator. Dribble up and to the wing to create the passing angle, then get the ball to 4 so they can feed 5. Be available for the reversal if it doesn't go in.",
+    "keys": [
+     "Your dribble movement pulls the defense and creates the angle for 4 to feed",
+     "Don't rush the pass to 4\u2014let 5's cut develop off the screen",
+     "Stay active after the pass\u2014you're the safety valve"
+    ],
+    "commonError": "Passing to 4 too early before 5 is using the screen, killing the timing of the cut"
+   },
+   "2": {
+    "job": "You're the weak-side spacing. Hold the corner to keep your defender from helping on 5's cut. Be ready for a skip pass if the ball reverses.",
+    "keys": [
+     "Stay in the corner\u2014if you drift up, your defender can tag 5",
+     "Keep your hands ready\u2014the skip can come fast if 4 gets stuck"
+    ],
+    "commonError": "Drifting toward the action to get involved, which brings a help defender into the paint"
+   },
+   "3": {
+    "job": "You're the screener. Set a solid cross-screen at the elbow for 5, then read what happens after\u2014slip to the rim if your defender helps hard, or pop if the lane clogs.",
+    "keys": [
+     "Screen angle matters\u2014set it so 5 can cut to the block or seal in the lane",
+     "Make contact and hold it\u2014this isn't a brush screen",
+     "After the screen, read your defender\u2014if they help on 5, slip; if they stay, relocate to keep spacing"
+    ],
+    "commonError": "Setting the screen too high or too soft, so 5 doesn't get clean separation from their defender"
+   },
+   "4": {
+    "job": "You're the feeder. Catch on the wing from 1, then look to feed 5 coming off 3's screen. Read where 5's defender is and make the right entry pass.",
+    "keys": [
+     "Catch ready to pass\u2014the window to feed 5 is short",
+     "Read the seal\u2014if 5's defender trails, hit the pocket immediately",
+     "If you can't feed, reverse it quickly\u2014don't hold it and let the defense recover"
+    ],
+    "commonError": "Holding the ball too long looking for a perfect entry instead of hitting 5 when they're open or reversing it"
+   },
+   "5": {
+    "job": "You're the primary scorer. Use 3's screen to get position on the weak side, then seal your defender and call for the ball from 4. Finish strong when it comes.",
+    "keys": [
+     "Set your defender up\u2014take them low or wide before using the screen",
+     "Come off the screen hard and establish position immediately\u2014this is about leverage, not speed",
+     "Seal with your body and show your hands as a target for 4"
+    ],
+    "commonError": "Floating off the screen instead of making contact and sealing, letting your defender recover position"
+   }
+  },
+  "spacingRules": [
+   "2 stays in the corner until the ball moves\u2014your defender cannot be allowed to tag 5's cut",
+   "3 sets the screen at the elbow, not above it\u2014too high and 5 can't get to the block",
+   "4 must be in position on the wing before 1 passes\u2014if you're not there, the feeding angle doesn't exist",
+   "1 clears to the top after passing to maintain reversal option and keep the strong-side guard from digging down"
+  ],
+  "counters": [
+   {
+    "trigger": "5's defender fights over the top of 3's screen",
+    "response": "3 slips to the rim immediately while 5 pops short\u20144 reads which one is open",
+    "why": "If the defender is chasing over, they can't stop 3 from diving and 5 has space for the short feed"
+   },
+   {
+    "trigger": "5's defender goes under the screen and fronts the post",
+    "response": "5 seals for the lob or 1 reverses to 2 for the skip and a different attack",
+    "why": "Fronting takes away the direct feed but gives up the lob if 4 can make that pass, or we reset with better spacing"
+   },
+   {
+    "trigger": "2's defender leaves the corner to tag 5's cut",
+    "response": "4 skips it immediately to 2 in the corner for the open three",
+    "why": "That's what 2 is there for\u2014if the help comes from the corner, the corner is open"
+   },
+   {
+    "trigger": "3's defender shows hard or switches onto 5",
+    "response": "3 slips to the rim while 5 pops or flares\u2014both can't be covered",
+    "why": "If 3's defender commits to 5, 3 has the advantage going to the basket; if they switch, there's a mismatch somewhere"
+   }
+  ],
+  "situations": [
+   "Against teams that don't help aggressively\u2014if they stay home, 5 gets clean post touches",
+   "When you need a high-percentage look and want to get your post player involved",
+   "After a timeout when you can walk through the alignment and timing"
+  ],
+  "commonBreakdowns": [
+   "1 passes to 4 before 5 is even using the screen\u2014kills the whole timing and 5's defender recovers easily",
+   "3 sets a lazy screen or sets it too high, so 5 never gets the separation needed to seal",
+   "2 drifts up from the corner to watch, bringing a help defender into the lane right where 5 is trying to post",
+   "5 doesn't set up the screen\u2014just jogs into it without creating any separation first, making it easy to defend",
+   "4 catches and immediately looks to shoot or drive instead of reading 5, missing the window to feed the post"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this play designed specifically to get 5 a post touch, or is the post entry just the first option in a larger motion sequence?",
+   "What do you want to happen if 4 can't feed 5\u2014is there a secondary action we should be looking for, or do we reverse and reset?",
+   "Are there specific defensive tendencies this play is designed to attack\u2014switching teams, teams that don't help on the post, zone adjustments?",
+   "What's your terminology for this cross-screen action\u2014do you call it something specific we should know?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Kansas": {
+  "intent": "3 coming off a down screen from 5 at the elbow for a catch-and-shoot on the wing, with 2 at the top as the reversal option",
+  "advantage": "The screen from 5 at the elbow creates separation for 3 cutting from the corner to the wing. Simultaneous action \u2014 2's initial basket cut and 4's corner fill \u2014 occupies help defenders so 3's defender can't get early help over the screen.",
+  "entry": "1 starts at the top with the ball. 2 is on the right wing, 5 at the left elbow, 3 in the left corner, 4 in the right corner. Entry pass goes to 2, who immediately basket cuts to clear out, then ball reverses through 1 to 5 at the elbow.",
+  "beatPurposes": {
+   "b1": "2's basket cut clears the right side and occupies help defense. Gets their defender away from the action and sets up the reversal.",
+   "b2": "Ball gets to 5 at the elbow. This is the trigger position \u2014 5 needs the ball to make the down screen work and create the passing angle to 3 on the wing.",
+   "b3": "The money beat. 5 screens for 3 cutting to the wing for the shot. 2 relocates to the top as the pressure release. 4 fills the right corner to maintain spacing and provide a second-side option."
+  },
+  "reads": [
+   {
+    "playerId": "5",
+    "beatId": "b3",
+    "situation": "You have the ball at the elbow and you're about to set the down screen for 3",
+    "progression": [
+     "First look is 3 coming off your screen to the wing \u2014 hit them for the catch-and-shoot if their defender trails or goes under",
+     "Second look is 2 at the top if 3's defender fights over and denies the wing pass",
+     "If 3's defender shows hard on the screen, slip to the basket before you complete the screen"
+    ],
+    "trigger": "How 3's defender plays the screen tells you everything. Trailing or under means hit 3. Fighting over top means skip to 2. Showing hard on you means slip."
+   },
+   {
+    "playerId": "3",
+    "beatId": "b3",
+    "situation": "You're cutting off 5's screen from the corner to the wing",
+    "progression": [
+     "Primary is catch-and-shoot on the wing if you're open",
+     "If your defender chases over the top and 5 slips, look to feed 5 on the roll",
+     "If the pass doesn't come, continue through and relocate \u2014 don't stand and watch"
+    ],
+    "trigger": "Hands ready as you come off the screen. If the ball goes to 2 at the top instead, you become the second-side option."
+   },
+   {
+    "playerId": "2",
+    "beatId": "b3",
+    "situation": "You've basket cut and relocated to the top",
+    "progression": [
+     "If you receive from 5, look to swing to 3 on the wing immediately if their defender is trailing",
+     "Attack the closeout if the defense has rotated and you catch with an advantage",
+     "Reversal to 4 in the opposite corner if the defense collapses to 3's side"
+    ],
+    "trigger": "When 5 passes to you instead of 3, it's because 3 is denied. The defense is overplaying strong side \u2014 the answer is usually on the second side with 4."
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You're the initiator. Make the entry pass to 2, get the ball back, then hit 5 at the elbow. After that, space to the weak side and be ready for a skip pass if the ball swings back out.",
+    "keys": [
+     "Crisp passes \u2014 don't float it to 5, the timing matters",
+     "After you pass to 5, relocate to balance the floor, usually opposite wing",
+     "Stay above the break so you're a release valve"
+    ],
+    "commonError": "Drifting too far toward the corner after passing to 5, which shrinks the floor and makes you unavailable as an outlet"
+   },
+   "2": {
+    "job": "You're the space creator and the safety valve. Make a hard basket cut on the catch to clear out, then relocate to the top. You're the release if 3 is denied.",
+    "keys": [
+     "Your basket cut has to be a real threat \u2014 sell it, occupy the help",
+     "Sprint to the top after your cut, don't jog \u2014 timing matters for 5's passing window",
+     "Catch ready to shoot at the top, defense will be scrambling if the ball comes to you"
+    ],
+    "commonError": "Lazy basket cut that doesn't actually pull your defender, leaving them in position to help on 3"
+   },
+   "3": {
+    "job": "You're the primary scorer. Set up your defender in the corner, then explode off 5's screen to the wing for the catch-and-shoot. Use the screen \u2014 don't drift away from it.",
+    "keys": [
+     "Wait for 5 to get set \u2014 if you go too early, there's no screen",
+     "Cut shoulder-to-shoulder off the screen, tight enough that your defender has to go around",
+     "Hands up and ready as you come off \u2014 this is a catch-and-shoot, not a catch-and-think"
+    ],
+    "commonError": "Fading toward the sideline instead of cutting tight off the screen, which gives your defender an easy path to recover"
+   },
+   "4": {
+    "job": "You're the second-side spacing. Hold the right corner until the action happens, then cut to fill the opposite corner when 5 screens. Keep the defense honest \u2014 they can't help off you.",
+    "keys": [
+     "Don't move too early \u2014 wait until 5 has the ball at the elbow",
+     "Fill to the corner, not the wing \u2014 we need corner spacing for drive-and-kick if the ball swings back",
+     "Be ready to catch and shoot, you're live if the defense collapses strong side"
+    ],
+    "commonError": "Drifting up toward the wing instead of staying in the corner, which kills the spacing and eliminates the skip pass angle"
+   },
+   "5": {
+    "job": "You're the hub. Catch at the elbow, read 3's defender, then either hit 3 on the wing or kick to 2 at the top. Your screen creates the shot, and your decision gets the ball to the right place.",
+    "keys": [
+     "Set the screen at the elbow level, not too high \u2014 3 needs room to get to the wing",
+     "Screen and immediate look to pass \u2014 you're not rolling hard here, you're facilitating",
+     "If their defender shows on you, slip before the screen is set"
+    ],
+    "commonError": "Setting the screen too high toward the free throw line, which forces 3 out to the three-point line with no room to operate"
+   }
+  },
+  "spacingRules": [
+   "Corner players (3 and 4) stay in the corners until the ball is at the elbow with 5 \u2014 early movement kills the spacing",
+   "2 must relocate all the way to the top of the key, not halfway \u2014 you need to pull your defender out and create the passing lane to 3",
+   "After the initial reversal, 1 must get above the break on the weak side \u2014 if you sink too low, you're not a viable outlet and the defense can load up strong side",
+   "When 4 fills to the opposite corner, stay wide \u2014 don't creep toward the lane"
+  ],
+  "counters": [
+   {
+    "trigger": "3's defender fights over the top of the screen and denies the wing pass",
+    "response": "5 skips to 2 at the top, then 2 reverses to 4 on the second side or attacks the scrambling defense",
+    "why": "If they're denying 3 that hard, they're overcommitted strong side. The weak side is open and the defense is rotating late."
+   },
+   {
+    "trigger": "3's defender shows hard on 5 before the screen is set, trying to blow up the action",
+    "response": "5 slips to the basket immediately instead of completing the screen, 3 looks to feed 5 on the roll",
+    "why": "When the defender commits to the screener, the screener becomes the open man. Don't run into a trap \u2014 take the advantage they're giving you."
+   },
+   {
+    "trigger": "Help defender from the weak side tags 3 coming off the screen",
+    "response": "3 skip passes to 4 in the corner on the second side, or 2 at the top reverses it quickly",
+    "why": "If weak-side help is tagging, someone is open on the backside. The ball has to get there before the defense rotates back."
+   },
+   {
+    "trigger": "Defender goes under the screen on 3",
+    "response": "3 stops at the elbow for the mid-range jumper or 5 hits 3 immediately and 3 attacks the closeout downhill",
+    "why": "Going under gives 3 space. If 3 can shoot the mid-range, take it. If not, the defender has to recover and 3 can attack the scrambling closeout."
+   }
+  ],
+  "situations": [
+   "Need a clean catch-and-shoot look for your best wing shooter",
+   "Against man-to-man defense that doesn't switch \u2014 this falls apart against a switching team",
+   "After a timeout when you need an organized set to get a good shot",
+   "When 3 has a size or speed advantage over their defender and can use the screen effectively",
+   "Late shot clock reset \u2014 this is a quick-hitter that can get a shot in 6-8 seconds if executed sharply"
+  ],
+  "commonBreakdowns": [
+   "3 goes too early before 5 is set, so there's no real screen and the defender stays attached",
+   "2's basket cut is lazy and doesn't occupy the help defender, who then sits in the gap and takes away the pass to 3",
+   "5 sets the screen too high, forcing 3 out to the three-point line with no driving room",
+   "4 drifts up from the corner toward the wing, shrinking the floor and eliminating the second-side skip pass",
+   "1 makes a slow or looping pass to 5, which gives the defense time to recover and deny 3",
+   "2 doesn't relocate all the way to the top, making them unavailable as the pressure release when 3 is denied"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this specifically designed for a certain player at the 3 spot, or is this your standard flow when you need a wing three?",
+   "Do you want 5 to roll hard to the basket after screening, or is 5 supposed to pop back out after the pass to be a safety valve?",
+   "If 3's shot isn't there and the ball goes to 2 at the top, what's the next action \u2014 are we flowing into a secondary set or is this a one-look play?",
+   "What do you call this set when you're calling it in a game \u2014 is 'Kansas' the name or is there a specific tag for this action?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Kentucky": {
+  "intent": "4 coming off a down screen from 3 for a catch-and-shoot jumper at the top of the key or elbow area",
+  "advantage": "The initial motion scrambles the defense with multiple cuts, then we use 3's down screen to free up 4 while the defense is still recovering. 5 at the nail occupies the middle help defender.",
+  "entry": "1 passes to 2 on the wing and immediately relocates. This triggers the motion\u2014everyone moves off the pass.",
+  "beatPurposes": {
+   "b1": "Scramble the defense with cuts and get the ball to the wing. 3 cutting down gets their defender moving ballside, setting up the screen. 4 cutting to the top looks like they're clearing but really they're getting position to come back off the screen.",
+   "b2": "This is the money beat. 4 uses 3's down screen to get separation for the shot. 2 hits 5 at the nail as a connector\u20145 has the angle to hit 4 coming off. The dribble from 2 shifts the defense and creates the passing angle.",
+   "b3": "Continuation if 4 doesn't shoot. 5 can hit cutters or we reset into secondary action. This beat keeps the defense moving if the primary shot isn't there."
+  },
+  "reads": [
+   {
+    "playerId": "2",
+    "beatId": "b1",
+    "situation": "You catch the pass on the wing",
+    "progression": [
+     "First look: if your defender trails you on the cut, turn the corner to the rim",
+     "Second: hit 5 at the nail to reverse it",
+     "Safety: dribble to create the angle for the pass to 5"
+    ],
+    "trigger": "If the defense is scrambling to find 3 and 4, attack. If they recover, hit 5 and let the screen work."
+   },
+   {
+    "playerId": "5",
+    "beatId": "b2",
+    "situation": "You receive at the nail from 2",
+    "progression": [
+     "First look: 4 coming off 3's screen\u2014hit them the moment they show hands",
+     "Second: if 4's defender fights over hard, 3 should be open slipping to the basket",
+     "Safety: swing to 1 on the opposite wing and we run secondary"
+    ],
+    "trigger": "Read 4's defender. If they trail or go under, hit 4 immediately. If they fight over and bump 3, look at 3 slipping."
+   },
+   {
+    "playerId": "4",
+    "beatId": "b2",
+    "situation": "You're coming off 3's down screen",
+    "progression": [
+     "First look: catch and shoot if you're open",
+     "Second: if your defender goes under, take the dribble pull-up",
+     "Third: if help comes from 1's side, skip it to 1 for the open three"
+    ],
+    "trigger": "Hands ready the moment you clear the screen. If 5 can see you, you shoot. If the defender is draped on you, keep moving and look skip."
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start the play with the pass to 2, then relocate to the opposite wing. Your job is to space the floor and be ready for the kick-out if help comes from your side.",
+    "keys": [
+     "Make a good pass to 2\u2014not a lob, chest pass on time",
+     "Get to the opposite wing above the break, don't drift toward the corner",
+     "Stay ready\u2014if 4's defender helps, you're wide open"
+    ],
+    "commonError": "Passing to 2 and standing there watching. You've got to relocate immediately or you clog the whole right side."
+   },
+   "2": {
+    "job": "You receive on the wing and cut toward the basket initially, then you're the connector\u2014dribble to create the angle and hit 5 at the nail so they can feed 4.",
+    "keys": [
+     "Cut with purpose on the catch, make the defense think you're scoring",
+     "Use the dribble to shift the defense and open up the passing lane to 5",
+     "Don't rush the pass to 5\u2014let 4 get set up on the screen first"
+    ],
+    "commonError": "Catching and immediately passing to 5 before 4 is ready to use the screen. The timing has to sync up\u2014dribble gets you that time."
+   },
+   "3": {
+    "job": "You cut down the left side to occupy your defender, then sprint back up to set a solid down screen for 4. If their defender fights over hard, slip to the rim.",
+    "keys": [
+     "The cut down has to be hard enough that your defender follows\u2014you're clearing them out",
+     "Set the screen at the elbow, not too high or 4 ends up out of range",
+     "Screen and hold it\u2014don't drift early unless you see them fighting over"
+    ],
+    "commonError": "Setting the screen too high. If you're at the three-point line, 4 catches too far out and the shot quality drops. Elbow extended is the spot."
+   },
+   "4": {
+    "job": "You cut to the top initially to clear out, then use 3's screen to get open for your shot. This play is designed to get you the ball.",
+    "keys": [
+     "The first cut to the top sets up the screen\u2014go all the way, don't be lazy",
+     "Come off 3's screen tight, shoulder to shoulder, so your defender can't slip through",
+     "Hands ready, eyes on 5, catch in your shot pocket"
+    ],
+    "commonError": "Drifting too far from the screen. If you give your defender space to slide through, the whole play dies. Use the screen\u2014rub them off."
+   },
+   "5": {
+    "job": "You're the hub. Catch at the nail from 2 and immediately look to feed 4 coming off the screen. You're also keeping the middle help defender honest so they can't jump out on 4.",
+    "keys": [
+     "Position at the nail, not too high or you can't see 4",
+     "Catch ready to pass\u2014this is one-touch if 4 is open",
+     "Your presence in the middle keeps the defense from helping on 4's shot"
+    ],
+    "commonError": "Catching and facing your own basket instead of pivoting to see 4. You've got to catch and immediately turn to the action or you're late on the feed."
+   }
+  },
+  "spacingRules": [
+   "1 must relocate to the opposite wing above the break\u2014if you stay middle or drift low, you kill the spacing for 4's shot",
+   "3's screen must be at the elbow extended, not above the three-point line\u2014this determines whether 4 catches in range",
+   "2 stays on the wing after the pass to 5\u2014don't crash toward the basket and bring your defender into the paint"
+  ],
+  "counters": [
+   {
+    "trigger": "4's defender goes under the screen",
+    "response": "5 still hits 4, but 4 takes one dribble and pulls up from mid-range instead of catch-and-shoot from three",
+    "why": "Going under concedes the elbow jumper. Take what they give you\u2014the dribble pull-up is a high-percentage shot for 4."
+   },
+   {
+    "trigger": "4's defender fights over the screen hard and makes contact with 3",
+    "response": "3 slips the screen to the basket, 5 hits 3 on the slip instead of 4",
+    "why": "If they're that aggressive fighting over, 3's defender can't help. The slip gets 3 a layup with only rim protection to beat."
+   },
+   {
+    "trigger": "Help defender jumps out from 1's side to take away 4's shot",
+    "response": "4 skip passes to 1 on the opposite wing for an open three",
+    "why": "When help comes, someone's open. 1 is the pressure release\u2014make them pay for helping."
+   },
+   {
+    "trigger": "The defense switches 3's screen on 4",
+    "response": "4 immediately attacks the mismatch with the dribble if it's a size advantage, or 3 seals their smaller defender in the post",
+    "why": "Switching creates a mismatch one way or the other. If 4's got a small on them, go. If 3's got a small on them, post them up."
+   }
+  ],
+  "situations": [
+   "After a timeout when you need a quality shot",
+   "Against man-to-man defenses that aren't switching everything",
+   "When 4 is your best shooter and you want to get them a clean look",
+   "Early in the shot clock to get into your offense with purpose"
+  ],
+  "commonBreakdowns": [
+   "1 doesn't relocate\u2014stands at the top and clogs the spacing for 4 coming off the screen",
+   "4 doesn't use the screen tight enough\u2014gives the defender space to get through and the shot never opens up",
+   "3 sets the screen too high\u20144 catches way beyond the three-point line and it's a low-percentage shot",
+   "2 rushes the pass to 5 before 4 is ready to come off\u2014the timing breaks down and 4's defender recovers",
+   "5 catches at the nail facing their own basket instead of pivoting to see the action\u2014late on the feed to 4 or misses the window entirely"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is 4 your primary shooter, or is this play used to set up multiple options depending on personnel?",
+   "What do you call this action when 3 screens for 4\u2014do you have a specific name for it?",
+   "Is there a specific counter you run if the defense denies 2's initial catch on the wing?",
+   "How do you want 5 to play it if none of the primary reads are there in beat 3\u2014is there a secondary action or do we reset into something else?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Kickup": {
+  "intent": "3 coming off a ball screen from 5 at the top of the key for a pull-up jumper or drive to the rim",
+  "advantage": "We create the advantage through misdirection \u2014 the kickup action and full rotation makes the defense shift and track cutters, then we flip it back with 5's screen for 3 coming from the weakside corner. The defense is rotating one way while our shooter is coming back the other direction.",
+  "entry": "1 dribbles up and swings to 2 in the corner, triggering the kickup action",
+  "beatPurposes": {
+   "b1": "Initiate the kickup \u2014 get the ball to the wing and put 2 in motion to start the rotation",
+   "b2": "Full rotation to rebalance \u2014 everyone exchanges spots while the defense is tracking cutters, setting up the screen action on the opposite side",
+   "b3": "The payoff \u2014 5 screens for 3 coming off the weakside corner while 4 has the ball at the top to deliver the pass"
+  },
+  "reads": [
+   {
+    "playerId": "3",
+    "beatId": "b3",
+    "situation": "You're coming off 5's screen at the top",
+    "progression": [
+     "First look is your own shot \u2014 pull-up jumper or attack the rim if your defender trails or goes under",
+     "Second look is 5 on the roll if the big hedges hard",
+     "Third look is kick back to 4 if the defense rotates hard and you're covered"
+    ],
+    "trigger": "Read how your defender plays the screen \u2014 under means shoot it, over or switch means use 5's roll, hard hedge with help means reverse it back out"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b3",
+    "situation": "You have the ball at the top as 3 comes off 5's screen",
+    "progression": [
+     "First look is hitting 3 for the shot",
+     "Second look is 5 slipping or rolling to the rim",
+     "Safety is swing it to 1 in the corner if nothing's there"
+    ],
+    "trigger": "Deliver the pass on time when 3 clears the screen \u2014 if the defense switches or helps early, look for 5 diving"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start the action by dribbling up and swinging to 2, then you rotate through to the opposite corner. You're the safety outlet once the ball gets to 4.",
+    "keys": [
+     "Make a crisp pass to 2 to trigger the rotation",
+     "Get to the corner and stay wide \u2014 don't drift up",
+     "Be ready for the kick-out if the defense collapses on 3"
+    ],
+    "commonError": "Drifting up from the corner too early and clogging the driving lane for 3"
+   },
+   "2": {
+    "job": "You receive the entry pass and immediately cut through to start the rotation, then fill the opposite corner. You're spacing the weakside.",
+    "keys": [
+     "Cut hard through the lane to pull your defender with you",
+     "Get to the corner and stay there \u2014 you're clearing out for the screen action",
+     "Time your cut immediately when you catch \u2014 don't hesitate"
+    ],
+    "commonError": "Cutting too slowly or stopping in the lane instead of clearing all the way through to the corner"
+   },
+   "3": {
+    "job": "You rotate across the top to the weakside corner, then you're the primary scorer coming off 5's screen. This is your shot.",
+    "keys": [
+     "Set up your defender by going all the way to the corner before using the screen",
+     "Come off 5's shoulder tight and under control \u2014 read the defense on the catch",
+     "Attack downhill if they go under, use the roll if they hedge"
+    ],
+    "commonError": "Coming off the screen too early before 5 is set, or rounding the cut instead of coming tight off the shoulder"
+   },
+   "4": {
+    "job": "You start in the weakside corner, then rotate up to receive the ball at the top. You're the passer who delivers to 3 coming off the screen.",
+    "keys": [
+     "Time your move up from the baseline so you arrive as the rotation completes",
+     "Catch with your eyes on 3 \u2014 deliver the pass on rhythm as they clear the screen",
+     "Stay high enough that the help defender can't tag both you and the roll"
+    ],
+    "commonError": "Not squaring up to the screen action or delivering the pass late after 3 has already cleared"
+   },
+   "5": {
+    "job": "You stay put weakside at the elbow in Beat 1 and 2, then you set the ball screen for 3 at the top. Roll or slip based on how they guard it.",
+    "keys": [
+     "Stay patient \u2014 don't move until Beat 3 when 3 is ready to use you",
+     "Set a solid screen at the top of the key level with the ball",
+     "Read the hedge \u2014 slip if they show early, roll hard if they drop"
+    ],
+    "commonError": "Setting the screen too early before 3 gets there, or setting it too high and taking 3 away from the basket"
+   }
+  },
+  "spacingRules": [
+   "Corners stay in the corners during the screen action \u2014 1 and 2 cannot drift up or the driving lanes collapse",
+   "4 must be high enough at the top that the tag defender can't help on the roll and still recover to the ball",
+   "5's screen must be at the level of the free throw line or lower \u2014 too high and 3 has no angle to attack"
+  ],
+  "counters": [
+   {
+    "trigger": "3's defender fights over the screen or they switch",
+    "response": "5 slips to the rim early and 4 delivers the pass over the top",
+    "why": "If they're chasing over or switching, nobody's between 5 and the basket when 5 dives"
+   },
+   {
+    "trigger": "The big hedges hard on 3",
+    "response": "3 rejects the screen and attacks the other way, or kicks back to 4 who swings to the open corner",
+    "why": "A hard hedge leaves 3's original defender trailing and opens the reject, or it pulls both defenders up and leaves the corners open"
+   },
+   {
+    "trigger": "The defense doesn't rotate during the kickup and stays home on shooters",
+    "response": "2 or 3 can seal their defender on the cuts through the lane for a quick post feed",
+    "why": "If they're not chasing the cutters, the cutters have inside position for an easy dump-off"
+   }
+  ],
+  "situations": [
+   "Need a quality shot late in the clock after the initial offense didn't generate anything",
+   "Against a defense that chases cutters \u2014 the rotation creates confusion",
+   "When 3 is your best scorer and you want to get them the ball with a clear decision to make",
+   "After a timeout when you need to manufacture a good look"
+  ],
+  "commonBreakdowns": [
+   "3 comes off the screen too early before 5 is set, turning it into a contested catch instead of an open look",
+   "1 or 2 drift up from the corners during the screen action, clogging the paint and killing 3's driving lane",
+   "4 delivers the pass late after 3 has already used the screen, forcing a difficult catch on the move",
+   "5 sets the screen too high or at the wrong angle, pushing 3 away from the basket instead of toward it",
+   "The rotation in Beat 2 happens too slowly and the defense recovers before the screen action starts"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this primarily a set play you call out of timeouts, or is it part of your regular flow offense?",
+   "What's your preference for how 5 reads the screen \u2014 are you teaching slip on early shows, or do you want the roll every time unless they switch?",
+   "The first beat shows 2 cutting to the basket immediately \u2014 is there ever a read where 1 hits 2 on that first cut for a layup, or is that purely to start the rotation?",
+   "Do you have a specific name for this kickup rotation that the players know, or do they just recognize it as the full exchange?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Openkickbacks": {
+  "intent": "1 catching in the corner for a catch-and-shoot three off a reversal with 5's backscreen occupying help",
+  "advantage": "We create it through a full reversal that shifts the defense from strong side to weak side faster than they can rotate, combined with 5's cross-screen occupying the rim protector so they can't help on 1's catch",
+  "entry": "1 passes to 4 on the wing, 4 immediately dribbles up to the slot as 2 and 3 cut down to create the reversal alignment",
+  "beatPurposes": {
+   "b1": "Reverses the floor and gets the defense shifting\u20143 and 2 cutting down pulls their defenders away from where 1 is going to end up",
+   "b2": "This is the money beat\u2014ball reverses to 1 in the corner while 5's diagonal cut across the lane seals the help, creating the open catch-and-shoot look"
+  },
+  "reads": [
+   {
+    "playerId": "4",
+    "beatId": "b1",
+    "situation": "You've caught the pass from 1 and are dribbling up to the slot",
+    "progression": [
+     "First look: if 2's defender goes to sleep on the cut down, hit 2 immediately",
+     "Primary: swing it to 2 on the wing to continue the reversal"
+    ],
+    "trigger": "If 2's man turns his head or trails the cut, 2 is open now\u2014take it. Otherwise keep the ball moving"
+   },
+   {
+    "playerId": "2",
+    "beatId": "b2",
+    "situation": "You've received the reversal pass from 4 and 1 is relocating to the corner",
+    "progression": [
+     "First look: 1 in the corner for the three\u2014this is what we're hunting",
+     "Second look: 5 sealing on the back cut if the help commits hard to 1",
+     "Safety: 4 at the top if nothing's there"
+    ],
+    "trigger": "If 1's defender is late on the closeout or 5's man helps out to 1, you know where to go. If the corner is covered and 5's man stays home, reset to 4"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start the play with the entry pass to 4, then relocate hard to the weak-side corner for the catch-and-shoot three off the reversal. This is your shot.",
+    "keys": [
+     "Sprint to the corner after your pass\u2014don't drift or cheat up, you need to be in the corner when the ball gets to 2",
+     "Read your defender on the closeout\u2014if they're flying at you, one more to 5 sealing inside",
+     "Be ready to shoot on the catch\u2014this all breaks down if you catch and hesitate"
+    ],
+    "commonError": "Drifting up toward the wing instead of staying in the corner, which kills your shooting angle and brings your defender closer to the catch"
+   },
+   "2": {
+    "job": "You cut down from the wing in beat 1 to pull your defender away, then you're the reversal passer who delivers the ball to 1 in the corner. You're the trigger man.",
+    "keys": [
+     "Your cut down in beat 1 has to be purposeful\u2014sell it so your defender moves with you",
+     "When you catch from 4, immediately look corner\u2014don't hold it",
+     "Make a strong pass that 1 can shoot off of, not a lazy flip"
+    ],
+    "commonError": "Catching the reversal pass and taking an extra dribble or looking inside first\u2014the defense recovers and the window closes"
+   },
+   "3": {
+    "job": "You cut down to the strong-side corner in beat 1 and stay there. Your job is to occupy your defender so they can't help on 1's catch on the weak side.",
+    "keys": [
+     "Get to the corner and stay there\u2014don't creep up until the shot goes up",
+     "Your defender has to respect you as a shooter, which keeps them from helping",
+     "If your man helps anyway, be ready for a skip pass and second-side action"
+    ],
+    "commonError": "Leaving the corner early or drifting toward the action, which frees your defender to help on 1"
+   },
+   "4": {
+    "job": "You're the first receiver and the reversal initiator. Catch from 1, dribble up to create the angle, then swing it to 2 to get the ball reversed.",
+    "keys": [
+     "Dribble up with purpose\u2014you're changing the angle so 2 can catch in position to hit 1",
+     "Don't hold the ball\u2014catch, dribble up, swing to 2",
+     "After you pass to 2, relocate to the top for spacing and as the safety valve"
+    ],
+    "commonError": "Dribbling too far or holding the ball too long, which gives the defense time to recover and get back to 1"
+   },
+   "5": {
+    "job": "You stay at the top of the key in beat 1, then make a diagonal cut across the lane in beat 2 to seal the help defender. You're the reason 1 is open.",
+    "keys": [
+     "Time your cut with the pass from 4 to 2\u2014too early and you're standing, too late and the help is already on 1",
+     "Your cut has to occupy the rim protector\u2014make them respect the seal and the lob",
+     "If your defender commits to helping on 1, seal hard and be ready for the dump-off"
+    ],
+    "commonError": "Cutting too early and getting there before the ball reverses, or not sealing aggressively enough so the help defender can still tag 1"
+   }
+  },
+  "spacingRules": [
+   "3 must stay in the strong-side corner until the shot goes up\u2014if you drift up, your defender helps on 1",
+   "1 must get all the way to the corner, not the wing\u2014the corner angle is what makes the shot and creates the driving lane if the closeout is wild",
+   "5's cut has to clear the lane but stay inside enough to occupy the big\u2014if you drift to the short corner too early, the help can still reach 1"
+  ],
+  "counters": [
+   {
+    "trigger": "If 1's defender jumps the cut to the corner and denies the catch",
+    "response": "1 back-cuts to the rim immediately, 2 hits the lob or bounce pass, 5 clears out",
+    "why": "An over-deny to the corner means 1's defender has their back to the basket with no help behind them\u2014it's a layup if 1 reads it"
+   },
+   {
+    "trigger": "If 5's defender helps hard on 1's catch in the corner",
+    "response": "1 hits 5 sealing inside for the layup or dump-off",
+    "why": "The whole point of 5's cut is to occupy that help\u2014if they leave 5 to help on 1, 5 should have inside position for an easy finish"
+   },
+   {
+    "trigger": "If the defense recovers and gets to 1 on the catch",
+    "response": "1 swings it back to 4 at the top, reset and look for second-side action or flow into your next set",
+    "why": "Forcing a contested three defeats the purpose\u20144 at the top is the safety valve to keep the possession alive"
+   }
+  ],
+  "situations": [
+   "Need a three\u2014this is designed to get your best shooter an open look from the corner",
+   "Against a defense that's slow to rotate or doesn't communicate on reversals well",
+   "When 1 is your best shooter and you want to get them a clean catch-and-shoot",
+   "After a timeout when you need a quality look quickly"
+  ],
+  "commonBreakdowns": [
+   "1 doesn't get all the way to the corner\u2014drifts to the wing and the shot angle is gone",
+   "2 catches the reversal and holds it or takes a dribble instead of immediately hitting 1\u2014defense recovers",
+   "5 cuts too early and is just standing in the lane when the ball gets reversed, so the help defender can still tag 1",
+   "3 leaves the corner early to watch or help, freeing their defender to rotate to 1",
+   "4 dribbles too much in beat 1 instead of quickly swinging to 2, killing the pace and letting the defense set"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this designed specifically for 1 as your best shooter, or should any guard be able to read and take that corner three?",
+   "What do you want if the defense switches everything\u2014do we still hunt the corner three or is there a different read?",
+   "Is there a specific defensive look this play is designed to attack, or is this a general-purpose reversal set?",
+   "What's the progression if 2 can't get the ball to 1\u2014is there a backside action with 3 and 5, or do we reset and flow into something else?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ },
+ "Relax*": {
+  "intent": "5 curling to the corner off a down screen from 1 for a catch-and-shoot three, or 2 cutting baseline for a layup",
+  "advantage": "We shift the defense with the initial reversal and corner cuts, then hit them with a down screen for our shooter while their help is occupied by the baseline cut",
+  "entry": "1 passes to 3 on the wing and cuts off 5's screen to the top",
+  "beatPurposes": {
+   "b1": "Get the ball to the wing and reposition 1 to the top to set the down screen",
+   "b2": "Reverse the ball and pull the defense up with the corner cuts\u2014this is what makes the down screen work",
+   "b3": "Hit 5 curling to the corner off the down screen, or 2 cutting baseline if help collapses"
+  },
+  "reads": [
+   {
+    "playerId": "1",
+    "beatId": "b1",
+    "situation": "You're coming off 5's screen to the top",
+    "progression": [
+     "Receive the pass back from 3 if you're open",
+     "Relocate to set the down screen for 5"
+    ],
+    "trigger": "If 3 looks at you immediately and your defender trails the screen, you're the first look\u2014otherwise you're there to reverse and screen"
+   },
+   {
+    "playerId": "3",
+    "beatId": "b2",
+    "situation": "You've got the ball on the wing with 1 at the top",
+    "progression": [
+     "Pass to 1 at the top to reverse",
+     "If denied, skip to 4"
+    ],
+    "trigger": "Make the pass as 2 and 4 start their cuts\u2014the timing pulls their defenders with them"
+   },
+   {
+    "playerId": "4",
+    "beatId": "b3",
+    "situation": "You receive at the top of the key with 5 curling and 2 cutting baseline",
+    "progression": [
+     "First look is 5 coming off the screen to the corner for the three",
+     "Second look is 2 on the baseline cut if help comes to 5",
+     "Reset to 3 or back to 1 if nothing's there"
+    ],
+    "trigger": "If 5's defender trails the screen or gets caught on it, hit 5. If help rotates from the baseline, 2 is open cutting"
+   }
+  ],
+  "roles": {
+   "1": {
+    "job": "You start the action with the pass to 3, cut off 5's screen to the top, then set the down screen for 5 to get the shot",
+    "keys": [
+     "Set the down screen at the elbow level\u2014not too high or 5 can't get to the corner",
+     "After screening, roll to the ball-side for the safety",
+     "Get your body into the screen so 5's defender has to go over or under"
+    ],
+    "commonError": "Setting the screen too far from the basket so 5 ends up above the break instead of in the corner"
+   },
+   "2": {
+    "job": "You cut from the weak-side corner toward the ball on the reversal, then make a hard baseline cut when the ball gets to 4",
+    "keys": [
+     "First cut pulls your defender up and occupies help",
+     "Baseline cut has to be aggressive\u2014you're either scoring or clearing",
+     "If you don't get it, clear to the opposite corner to maintain spacing"
+    ],
+    "commonError": "Making a lazy baseline cut that doesn't threaten, so help can stay home on 5"
+   },
+   "3": {
+    "job": "You receive the first pass, then reverse it to 1 to shift the defense and trigger the action",
+    "keys": [
+     "Catch ready to pass\u2014this isn't your shot",
+     "Hit 1 as the corners are cutting so the defense is moving",
+     "After the pass, relocate to the wing for spacing or safety"
+    ],
+    "commonError": "Holding the ball too long and letting the corner cuts finish before reversing\u2014kills the timing"
+   },
+   "4": {
+    "job": "You cut from the corner toward the ball on the reversal, then receive at the top and make the read between 5 and 2",
+    "keys": [
+     "First cut occupies your defender and opens the passing lane to 1",
+     "When you catch at the top, you've got two reads happening at once\u2014see both",
+     "Be ready to shoot if they help too hard off you"
+    ],
+    "commonError": "Cutting too high or too early and clogging the space for 1 to operate"
+   },
+   "5": {
+    "job": "You set the first screen for 1, then use 1's down screen to curl hard to the corner for the shot",
+    "keys": [
+     "First screen has to be solid\u2014set it at the wing and give 1 a clean cut to the top",
+     "When you're cutting off 1's screen, curl tight and get to the corner ready to shoot",
+     "If the shot's not there, continue through and post up or relocate"
+    ],
+    "commonError": "Drifting too far from the screen and ending up above the break instead of in the corner with your feet set"
+   }
+  },
+  "spacingRules": [
+   "2 and 4 must start in the corners\u2014if they're too high, the cuts don't pull help",
+   "5 has to cut all the way to the corner, not float at the wing\u2014we need a three-point look",
+   "After the reversal, 3 cannot drift into the middle\u2014stay on the wing so the defense stays honest",
+   "1 must set the down screen at the elbow level so 5 can get corner depth"
+  ],
+  "counters": [
+   {
+    "trigger": "5's defender cheats over the screen early or fights through",
+    "response": "1 slips the screen and posts up, or 5 fades to the wing instead of curling",
+    "why": "If the defender is anticipating the curl, going the opposite direction gets separation"
+   },
+   {
+    "trigger": "Help rotates hard from the baseline to take away 5",
+    "response": "4 hits 2 on the baseline cut immediately",
+    "why": "That help has to come from somewhere\u2014if they're taking away 5, 2 is wide open underneath"
+   },
+   {
+    "trigger": "Defense switches the down screen",
+    "response": "5 posts the smaller defender or 1 pops for the shot",
+    "why": "A switch puts a guard on our big or a big on our guard\u2014either mismatch is what we want"
+   }
+  ],
+  "situations": [
+   "Need a three late in the clock or game",
+   "Against a team that helps hard on ball screens but is slow rotating to shooters",
+   "When 5 is your best shooter and you need to get them a clean look",
+   "After a timeout when you need an organized set"
+  ],
+  "commonBreakdowns": [
+   "1 sets the down screen too high and 5 can't get to the corner\u2014ends up at the wing with no shot",
+   "2 or 4 cut too early before the ball reverses, so their defenders recover and help is still there",
+   "3 holds the ball and lets the action die before reversing to 1",
+   "5 doesn't curl tight to the screen and their defender goes under easily",
+   "4 catches and looks at 5 before 2 cuts, telegraphing the read and letting help rotate"
+  ],
+  "confidence": "medium",
+  "needsCoachInput": [
+   "Is this primarily a play to get 5 a three, or is 2's baseline cut equally important?",
+   "What do you call this action\u2014is 'Relax' the name for the down screen series or the whole set?",
+   "Is there a specific counter if they deny the reversal from 3 to 1?",
+   "Do you want 5 to always curl, or do they read curl vs fade based on the defense?"
+  ],
+  "breakdownStale": false,
+  "breakdownModel": "claude-sonnet-4-5-20250929"
+ }
+}

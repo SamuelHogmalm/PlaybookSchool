@@ -28,6 +28,7 @@ from pydantic import BaseModel, Field
 
 from crops import extract_crops_base64
 from interpret import interpret_plays
+from breakdown import breakdown_plays
 from parser import parse
 
 logging.basicConfig(level=logging.INFO)
@@ -50,6 +51,12 @@ app.add_middleware(
 class InterpretRequest(BaseModel):
     plays: list[dict[str, Any]]
     crops: dict[str, str] = Field(description="Base64 PNG crops keyed by PlayName_beatN")
+
+
+class BreakdownRequest(BaseModel):
+    plays: list[dict[str, Any]]
+    crops: dict[str, str] = Field(default_factory=dict)
+    play_names: list[str] | None = None
 
 
 @app.get("/health")
@@ -164,5 +171,34 @@ async def interpret(body: InterpretRequest):
     except Exception as exc:
         logger.exception("interpret failed")
         raise HTTPException(500, detail={"error": "interpret_failed", "message": str(exc)}) from exc
+
+    return result
+
+
+@app.post("/breakdown")
+async def breakdown(body: BreakdownRequest):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise HTTPException(
+            503,
+            detail={
+                "error": "ai_not_configured",
+                "message": "Set ANTHROPIC_API_KEY on the importer service.",
+            },
+        )
+
+    if not body.plays:
+        raise HTTPException(400, detail={"error": "no_plays", "message": "plays array is required."})
+
+    import copy
+
+    plays_copy = copy.deepcopy(body.plays)
+
+    try:
+        result = await breakdown_plays(plays_copy, body.crops, play_names=body.play_names)
+    except RuntimeError as exc:
+        raise HTTPException(503, detail={"error": "ai_not_configured", "message": str(exc)}) from exc
+    except Exception as exc:
+        logger.exception("breakdown failed")
+        raise HTTPException(500, detail={"error": "breakdown_failed", "message": str(exc)}) from exc
 
     return result

@@ -10,6 +10,7 @@ import {
   CourtSurface,
   Token,
   ActionLayer,
+  MovementArrows,
   FlyingBall,
   toSvg,
 } from "@/app/court/Court";
@@ -324,14 +325,20 @@ export default function PlayDrawEditor({
   const layerFrame = playback ? play.frames[playback.beatIdx] : frame;
   const layerPrev =
     playback && playback.beatIdx > 0 ? play.frames[playback.beatIdx - 1] : prev;
+  const nextFrame = safeIdx < play.frames.length - 1 ? play.frames[safeIdx + 1] : null;
   const activeHint = safeIdx === 0
-    ? "Beat 1: drag players into starting spots. Then switch to Beat 2 to draw lines."
+    ? nextFrame
+      ? "Beat 1: starting spots. Gold arrows preview movement on Beat 2."
+      : "Beat 1: drag players into starting spots. Then add Beat 2 to draw movement."
     : lineTool
       ? LINE_TOOLS.find((t) => t.id === lineTool)?.hint
-      : "Drag any player to move them. Pick a line type below to draw cuts, passes, screens.";
+      : nextFrame
+        ? "Gold arrows = where everyone goes on the next beat. Drag players or draw lines."
+        : "Drag any player to move them. Pick a line type below to draw cuts, passes, screens.";
 
   const startPos = prev ? beatStartPositions(prev, frame) : frame.pos;
   const endPos = prev ? beatEndPositions(prev, frame) : frame.pos;
+  const showNextBeatPreview = canEdit && !isPlaying && !viewingScrub && nextFrame;
 
   const distPt = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -416,65 +423,29 @@ export default function PlayDrawEditor({
           >
             <CourtSurface
               svgRef={svgRef}
+              theme={paper ? "paper" : "dark"}
               onPointerDown={onCourtDown}
               onPointerMove={onCourtMove}
               onPointerUp={onCourtUp}
               suffix="-draw"
             >
-              {canEdit && prev && (
-                <g opacity="0.25">
-                  {IDS.map((id) => (
-                    <circle
-                      key={id}
-                      cx={prev.pos[id].x}
-                      cy={prev.pos[id].y}
-                      r="15"
-                      fill="none"
-                      stroke={C.muted}
-                      strokeWidth="1.5"
-                      strokeDasharray="4 4"
-                    />
-                  ))}
-                  <text x={W / 2} y={16} textAnchor="middle" fontSize="11" fill={C.muted} style={{ userSelect: "none" }}>
-                    faded = last beat
-                  </text>
-                </g>
+              {showNextBeatPreview && (
+                <MovementArrows
+                  prev={frame}
+                  frame={nextFrame}
+                  suffix="-draw"
+                  fromPositions={frame.pos}
+                  toPositions={nextFrame.pos}
+                />
               )}
-              {canEdit && !isPlaying && !viewingScrub && prev && (
-                <g style={{ pointerEvents: "none" }}>
-                  {IDS.map((id) => {
-                    const from = startPos[id];
-                    const to = endPos[id];
-                    if (!from || !to || distPt(from, to) < 8) return null;
-                    return (
-                      <g key={`dest-${id}`} opacity="0.85">
-                        <circle
-                          cx={to.x}
-                          cy={to.y}
-                          r="15"
-                          fill="none"
-                          stroke="#E8560F"
-                          strokeWidth="2.5"
-                          strokeDasharray="5 3"
-                        />
-                        <text
-                          x={to.x}
-                          y={to.y + 4}
-                          textAnchor="middle"
-                          fontSize="12"
-                          fontWeight="700"
-                          fill="#E8560F"
-                          style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}
-                        >
-                          {id}
-                        </text>
-                      </g>
-                    );
-                  })}
-                  <text x={W / 2} y={H - 12} textAnchor="middle" fontSize="10" fill="#E8560F" style={{ userSelect: "none" }}>
-                    orange dashed = where they run to this beat
-                  </text>
-                </g>
+              {layerPrev && (isPlaying || viewingScrub) && (
+                <MovementArrows
+                  prev={layerPrev}
+                  frame={layerFrame}
+                  suffix="-draw-play"
+                  fromPositions={beatStartPositions(layerPrev, layerFrame)}
+                  toPositions={beatEndPositions(layerPrev, layerFrame)}
+                />
               )}
               {layerPrev && (canEdit || isPlaying || viewingScrub) && (
                 <ActionLayer frame={layerFrame} prev={layerPrev} suffix="-draw" />

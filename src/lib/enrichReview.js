@@ -4,19 +4,57 @@ export function cropKey(playName, beatIndex) {
   return `${safe}_beat${beatIndex + 1}`;
 }
 
-/** Turn imported play (with AI beat notes) into review-screen shape. */
+/** Attach play-level breakdown from Stage 3 onto raw import plays (beats key). */
+export function applyBreakdownsToRawPlays(plays, breakdowns = {}) {
+  return plays.map((play) => {
+    const bd = breakdowns[play.name];
+    if (!bd) return play;
+    return {
+      ...play,
+      breakdown: bd,
+      breakdownStale: false,
+      counters: (bd.counters ?? []).map((c) => ({
+        trigger: c.trigger,
+        answer: c.response,
+      })),
+    };
+  });
+}
+
+/** Turn imported play (beat notes + optional breakdown) into review-screen shape. */
 export function enrichPlayFromImport(play) {
+  const bd = play.breakdown;
   const beatNotes = play.frames.map((f) => f.note).filter(Boolean);
-  const summary =
-    beatNotes.length > 0
-      ? `${play.name} — ${play.frames.length}-beat ${play.category.toLowerCase()}. ${beatNotes[0]}`
-      : `${play.name} — ${play.frames.length}-beat ${play.category.toLowerCase()}.`;
+
+  const purpose =
+    bd?.intent?.trim() ||
+    play.purpose ||
+    (beatNotes.length
+      ? beatNotes[0]
+      : "Execute spacing and reads; know your role on each beat.");
+
+  let summary;
+  if (bd?.intent) {
+    const parts = [play.name, bd.intent.trim()];
+    if (bd.advantage?.trim()) parts.push(bd.advantage.trim());
+    summary = parts.join(" — ");
+  } else if (beatNotes.length > 0) {
+    summary = `${play.name} — ${play.frames.length}-beat ${(play.category ?? "Set").toLowerCase()}. ${beatNotes[0]}`;
+  } else {
+    summary = `${play.name} — ${play.frames.length}-beat ${(play.category ?? "Set").toLowerCase()}.`;
+  }
 
   return {
     ...play,
     summary,
-    purpose: "Execute spacing and reads; know your role on each beat.",
+    purpose,
     verified: false,
-    counters: play.counters?.length ? play.counters : [],
+    counters:
+      play.counters?.length > 0
+        ? play.counters
+        : (bd?.counters ?? []).map((c) => ({
+            trigger: c.trigger,
+            answer: c.response,
+          })),
   };
 }

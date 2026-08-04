@@ -1,5 +1,8 @@
 "use client";
 
+import { createContext, useContext } from "react";
+
+/** @deprecated legacy demo palette — prefer paper theme via CourtSurface */
 export const C = {
   bg: "#0E1116",
   panel: "#161B22",
@@ -14,7 +17,36 @@ export const C = {
   ok: "#3FD68C",
   bad: "#FF5C5C",
   wood: "#15130E",
+  courtLine: "#3D4A5C",
 };
+
+/** Playbook School court — chalkboard inside paper frame */
+export const C_PAPER = {
+  bg: "#16181c",
+  panel: "#1e2128",
+  panel2: "#343840",
+  line: "#5c6474",
+  text: "#edeae4",
+  muted: "#a8a29e",
+  dim: "#78716c",
+  ball: "#e8560f",
+  screen: "#3e82c4",
+  cut: "#c9a227",
+  ok: "#2e8b57",
+  bad: "#c4362e",
+  wood: "#16181c",
+  courtLine: "#6b7280",
+};
+
+const CourtColorsContext = createContext(C_PAPER);
+
+export function useCourtColors() {
+  return useContext(CourtColorsContext);
+}
+
+export function courtPalette(theme = "paper") {
+  return theme === "dark" ? C : C_PAPER;
+}
 
 export const W = 500;
 export const H = 470;
@@ -95,6 +127,7 @@ function collegeThreePointD(cx, cy, r, leftCornerX, rightCornerX) {
 }
 
 function CourtBase() {
+  const colors = useCourtColors();
   const cx = HOOP.x;
   const cy = HOOP.y;
   const r3 = COLLEGE_3PT_IN * PX_PER_IN * THREE_PT_DIAGRAM_SCALE;
@@ -106,11 +139,11 @@ function CourtBase() {
   const keyH = 190;
   const ftR = 60;
   const boardY = 8;
-  const stroke = "#3D4A5C";
+  const stroke = colors.courtLine;
 
   return (
     <g>
-      <rect x="0" y="0" width={W} height={H} fill={C.wood} />
+      <rect x="0" y="0" width={W} height={H} fill={colors.wood} />
       <rect x="1" y="1" width={W - 2} height={H - 2} fill="none" stroke={stroke} strokeWidth="2" />
 
       {/* Key / paint */}
@@ -157,13 +190,14 @@ function CourtBase() {
 }
 
 function Defs({ suffix = "" }) {
+  const colors = useCourtColors();
   return (
     <defs>
       <marker id={`arrowCut${suffix}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill={C.cut} />
+        <path d="M 0 0 L 10 5 L 0 10 z" fill={colors.cut} />
       </marker>
       <marker id={`arrowBall${suffix}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill={C.ball} />
+        <path d="M 0 0 L 10 5 L 0 10 z" fill={colors.ball} />
       </marker>
     </defs>
   );
@@ -171,6 +205,7 @@ function Defs({ suffix = "" }) {
 
 export function ActionLayer({ frame, prev, suffix = "" }) {
   if (!prev) return null;
+  const colors = useCourtColors();
   const cutMarker = `url(#arrowCut${suffix})`;
   const ballMarker = `url(#arrowBall${suffix})`;
 
@@ -199,18 +234,18 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
           if (route) {
             const end = pathArrowEnd(route);
             const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={C.ball} strokeWidth="2.5" markerEnd={ballMarker} />;
+            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={colors.ball} strokeWidth="2.5" markerEnd={ballMarker} />;
           }
-          return <path key={a.id} d={squigglePath(from, to)} fill="none" stroke={C.ball} strokeWidth="2.5" markerEnd={ballMarker} />;
+          return <path key={a.id} d={squigglePath(from, to)} fill="none" stroke={colors.ball} strokeWidth="2.5" markerEnd={ballMarker} />;
         }
         if (a.type === "cut") {
           if (route) {
             const end = pathArrowEnd(route);
             const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={C.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
+            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={colors.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
           }
           const [p, q] = shorten(from, to, 15, 15);
-          return <line key={a.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={C.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
+          return <line key={a.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={colors.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
         }
         if (a.type === "pass") {
           const target = frame.pos[a.for];
@@ -223,7 +258,7 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
                 key={a.id}
                 d={pathToSvgD(trimmed)}
                 fill="none"
-                stroke={C.ball}
+                stroke={colors.ball}
                 strokeWidth="2.5"
                 strokeDasharray="9 7"
                 markerEnd={ballMarker}
@@ -235,7 +270,7 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
             <line
               key={a.id}
               x1={p.x} y1={p.y} x2={q.x} y2={q.y}
-              stroke={C.ball}
+              stroke={colors.ball}
               strokeWidth="2.5"
               strokeDasharray="9 7"
               markerEnd={ballMarker}
@@ -253,18 +288,18 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
               <path
                 d={pathToSvgD(trimmed)}
                 fill="none"
-                stroke={C.cut}
+                stroke={colors.cut}
                 strokeWidth="2.5"
                 markerEnd={cutMarker}
               />
-              <circle cx={meet.x} cy={meet.y} r="6" fill="none" stroke={C.ball} strokeWidth="2" />
+              <circle cx={meet.x} cy={meet.y} r="6" fill="none" stroke={colors.ball} strokeWidth="2" />
               {receiver && (
                 <line
                   x1={meet.x}
                   y1={meet.y}
                   x2={receiver.x}
                   y2={receiver.y}
-                  stroke={C.ball}
+                  stroke={colors.ball}
                   strokeWidth="1.5"
                   strokeDasharray="2 4"
                   opacity="0.45"
@@ -284,11 +319,11 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
           return (
             <g key={a.id}>
               {route ? (
-                <path d={pathToSvgD(moveRoute)} fill="none" stroke={C.screen} strokeWidth="2.5" />
+                <path d={pathToSvgD(moveRoute)} fill="none" stroke={colors.screen} strokeWidth="2.5" />
               ) : (
-                <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={C.screen} strokeWidth="2.5" />
+                <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={colors.screen} strokeWidth="2.5" />
               )}
-              <line x1={q.x - px} y1={q.y - py} x2={q.x + px} y2={q.y + py} stroke={C.screen} strokeWidth="3.5" strokeLinecap="round" />
+              <line x1={q.x - px} y1={q.y - py} x2={q.x + px} y2={q.y + py} stroke={colors.screen} strokeWidth="3.5" strokeLinecap="round" />
             </g>
           );
         }
@@ -306,21 +341,44 @@ export function MovementArrows({
   highlightPlayer,
   minDist = 12,
   dimOthers = false,
+  fromPositions,
+  toPositions,
 }) {
   if (!prev?.pos || !frame?.pos) return null;
 
+  const colors = useCourtColors();
+  const fromPos = fromPositions ?? prev.pos;
+  const toPos = toPositions ?? frame.pos;
+
   const cutMarker = `url(#arrowCut${suffix})`;
   const ballMarker = `url(#arrowBall${suffix})`;
+  const actions = frame.actions ?? [];
   const actionMovers = new Set(
-    (frame.actions ?? [])
+    actions
       .filter((a) => ["cut", "dribble", "screen", "handoff"].includes(a.type))
       .map((a) => a.by)
   );
+  for (const a of actions) {
+    if (a.type === "pass" || a.type === "handoff") {
+      if (a.by) actionMovers.add(a.by);
+    }
+  }
+
+  const hasExplicitPass =
+    prev.ball &&
+    frame.ball &&
+    prev.ball !== frame.ball &&
+    actions.some(
+      (a) =>
+        (a.type === "pass" || a.type === "handoff") &&
+        a.by === prev.ball &&
+        a.for === frame.ball
+    );
 
   let passLine = null;
-  if (prev.ball && frame.ball && prev.ball !== frame.ball) {
-    const from = prev.pos[prev.ball];
-    const to = frame.pos[frame.ball];
+  if (!hasExplicitPass && prev.ball && frame.ball && prev.ball !== frame.ball) {
+    const from = fromPos[prev.ball];
+    const to = toPos[frame.ball];
     if (from && to && dist(from, to) >= minDist) {
       const [p, q] = shorten(from, to, 16, 18);
       passLine = (
@@ -329,7 +387,7 @@ export function MovementArrows({
           y1={p.y}
           x2={q.x}
           y2={q.y}
-          stroke={C.ball}
+          stroke={colors.ball}
           strokeWidth="2.5"
           strokeDasharray="9 7"
           markerEnd={ballMarker}
@@ -339,12 +397,12 @@ export function MovementArrows({
   }
 
   return (
-    <g>
+    <g style={{ pointerEvents: "none" }}>
       {passLine}
       {IDS.map((id) => {
         if (actionMovers.has(id)) return null;
-        const from = prev.pos[id];
-        const to = frame.pos[id];
+        const from = fromPos[id];
+        const to = toPos[id];
         if (!from || !to || dist(from, to) < minDist) return null;
         const highlighted = highlightPlayer === id;
         const [p, q] = shorten(from, to, 15, 15);
@@ -355,7 +413,7 @@ export function MovementArrows({
             y1={p.y}
             x2={q.x}
             y2={q.y}
-            stroke={highlighted ? C.ok : C.cut}
+            stroke={highlighted ? colors.ok : colors.cut}
             strokeWidth={highlighted ? 3 : 2.5}
             markerEnd={cutMarker}
             opacity={dimOthers && highlightPlayer && !highlighted ? 0.45 : 0.95}
@@ -366,34 +424,76 @@ export function MovementArrows({
   );
 }
 
+/** Faded markers for where players were on the previous beat. */
+export function BeatGhostMarkers({ positions, opacity = 0.38, showLabels = true }) {
+  if (!positions) return null;
+  const colors = useCourtColors();
+  return (
+    <g opacity={opacity} style={{ pointerEvents: "none" }}>
+      {IDS.map((id) => {
+        const p = positions[id];
+        if (!p) return null;
+        return (
+          <g key={id}>
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r="15"
+              fill="none"
+              stroke={colors.muted}
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+            />
+            {showLabels && (
+              <text
+                x={p.x}
+                y={p.y + 4}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="600"
+                fill={colors.muted}
+                style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}
+              >
+                {id}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 export function Token({ id, p, hasBall, highlight, faded, draggable, onDown }) {
   if (!p) return null;
+  const colors = useCourtColors();
   return (
     <g
       transform={`translate(${p.x} ${p.y})`}
       onPointerDown={draggable ? (e) => onDown(e, id) : undefined}
       style={{ cursor: draggable ? "grab" : "default", opacity: faded ? 0.28 : 1 }}
     >
-      {highlight && <circle r="24" fill="none" stroke={C.ok} strokeWidth="2" opacity="0.7" />}
-      <circle r="15" fill={C.panel2} stroke={hasBall ? C.ball : C.muted} strokeWidth={hasBall ? 3 : 2} />
-      <text textAnchor="middle" y="5.5" fontSize="15" fontWeight="700" fill={C.text} style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}>
+      {highlight && <circle r="24" fill="none" stroke={colors.ok} strokeWidth="2" opacity="0.7" />}
+      <circle r="15" fill={colors.panel2} stroke={hasBall ? colors.ball : colors.muted} strokeWidth={hasBall ? 3 : 2} />
+      <text textAnchor="middle" y="5.5" fontSize="15" fontWeight="700" fill={colors.text} style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}>
         {id}
       </text>
-      {hasBall && <circle cx="12" cy="-12" r="5" fill={C.ball} />}
+      {hasBall && <circle cx="12" cy="-12" r="5" fill={colors.ball} />}
     </g>
   );
 }
 
 /** Animated ball traveling in the air (pass / handoff) */
 export function FlyingBall({ x, y }) {
+  const colors = useCourtColors();
   return (
     <g transform={`translate(${x} ${y})`} style={{ pointerEvents: "none" }}>
       <ellipse cx="0" cy="6" rx="6" ry="2.5" fill="#000" opacity="0.2" />
-      <circle r="7" fill={C.ball} stroke="#0E1116" strokeWidth="1.5" />
+      <circle r="7" fill={colors.ball} stroke={colors.wood} strokeWidth="1.5" />
       <path
         d="M -3 -2 Q 0 1 3 -2"
         fill="none"
-        stroke="#0E1116"
+        stroke={colors.wood}
         strokeWidth="1.2"
         opacity="0.35"
         strokeLinecap="round"
@@ -402,48 +502,68 @@ export function FlyingBall({ x, y }) {
   );
 }
 
-export function CourtSurface({ children, onPointerDown, onPointerMove, onPointerUp, svgRef, suffix = "" }) {
+export function CourtSurface({
+  children,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  svgRef,
+  suffix = "",
+  theme = "paper",
+}) {
+  const colors = courtPalette(theme);
   return (
-    <svg
-      ref={svgRef}
-      viewBox={`0 0 ${W} ${H}`}
-      className="w-full h-auto block touch-none select-none"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
-    >
-      <Defs suffix={suffix} />
-      <CourtBase />
-      {children}
-    </svg>
+    <CourtColorsContext.Provider value={colors}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-auto block touch-none select-none"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+      >
+        <Defs suffix={suffix} />
+        <CourtBase />
+        {children}
+      </svg>
+    </CourtColorsContext.Provider>
   );
 }
 
 export function CourtFrameView({
   frame,
   prev,
+  next: _next,
   suffix = "",
   maxWidthClass = COURT_MAX_W,
-  showGhost = true,
+  showGhost = false,
   showActions = true,
+  /** Inferred cut/pass lines for this beat (prev → frame). Off when explicit actions render. */
+  showMovementLines = true,
   draggable = false,
   onDown = undefined,
+  theme = "paper",
 }) {
   if (!frame?.pos) return null;
+  const hasExplicitActions = (frame.actions?.length ?? 0) > 0;
+  const showInferred = showMovementLines && prev?.pos && !(showActions && hasExplicitActions);
   return (
-    <div className={`rounded-lg overflow-hidden border w-full ${maxWidthClass}`} style={{ borderColor: C.line, background: C.wood }}>
-      <CourtSurface suffix={suffix}>
-        {showGhost && prev && (
-          <g opacity="0.22">
-            {IDS.map((id) =>
-              prev.pos[id] ? (
-                <circle key={id} cx={prev.pos[id].x} cy={prev.pos[id].y} r="15" fill="none" stroke={C.muted} strokeWidth="1.5" strokeDasharray="3 3" />
-              ) : null
-            )}
-          </g>
+    <div className={`overflow-hidden border border-rule w-full ${maxWidthClass} ${theme === "paper" ? "ps-court-frame" : "rounded-lg"}`} style={theme === "paper" ? undefined : { borderColor: C.line, background: C.wood }}>
+      <CourtSurface suffix={suffix} theme={theme}>
+        {showGhost && prev && <BeatGhostMarkers positions={prev.pos} />}
+        {showInferred && (
+          <MovementArrows
+            prev={prev}
+            frame={frame}
+            suffix={suffix}
+            fromPositions={prev.pos}
+            toPositions={frame.pos}
+          />
         )}
-        {showActions && <ActionLayer frame={frame} prev={prev} suffix={suffix} />}
+        {showActions && hasExplicitActions && prev && (
+          <ActionLayer frame={frame} prev={prev} suffix={suffix} />
+        )}
         {IDS.map((id) => (
           <Token key={id} id={id} p={frame.pos[id]} hasBall={frame.ball === id} draggable={draggable} onDown={onDown} />
         ))}

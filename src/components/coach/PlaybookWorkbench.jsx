@@ -121,8 +121,9 @@ export default function PlaybookWorkbench({ plays: initialPlays, initialPlay }) 
                   prev={idx > 0 ? frames[idx - 1] : null}
                   suffix={`-wb-${selected.name}`}
                   maxWidthClass="max-w-full"
-                  showGhost={idx > 0}
-                  showActions
+                  showGhost={false}
+                  showActions={idx > 0}
+                  showMovementLines={idx > 0}
                 />
               </div>
             )}

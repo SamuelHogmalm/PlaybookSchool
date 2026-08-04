@@ -247,7 +247,7 @@ body {
   border-radius: 0;
 }
 
-/* Editor chrome — paper theme (court stays dark inside) */
+/* Editor chrome — paper theme; court uses design-system chalkboard palette */
 .ps-editor-toolbar {
   border: 1px solid var(--rule);
   background: var(--paper-2);

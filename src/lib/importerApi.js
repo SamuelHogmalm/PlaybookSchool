@@ -35,3 +35,19 @@ export async function interpretPlays(plays, crops, onStatus) {
   onStatus?.(`Done — ${data.needs_review?.length ?? 0} beats flagged for review`);
   return data;
 }
+
+export async function breakdownPlays(plays, crops, playNames, onStatus) {
+  onStatus?.("Building play-level breakdown with AI…");
+  const res = await fetch(`${BASE}/breakdown`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plays, crops, play_names: playNames ?? null }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = data?.detail?.message ?? data?.detail ?? "Breakdown failed";
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+  }
+  onStatus?.(`Breakdown done — ${Object.keys(data.breakdowns ?? {}).length} plays`);
+  return data;
+}

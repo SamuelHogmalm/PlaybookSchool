@@ -30,7 +30,7 @@ export default function PlayerPracticePage() {
   return (
     <div>
       <h1 className="font-display text-xl font-bold mb-1">Practice</h1>
-      <p className="text-sm text-ink-soft mb-4">Flashcard deck — five question types per play.</p>
+      <p className="text-sm text-ink-soft mb-4">Spot, draw, and watch questions for your role.</p>
 
       <div className="mb-4">
         <label className="ps-label" htmlFor="practice-play">Play</label>

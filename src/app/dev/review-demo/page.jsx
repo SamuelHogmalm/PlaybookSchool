@@ -2,18 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import interpretedPlays from "@/data/plays-interpreted.json";
-import { normalizeImportedPlay } from "@/lib/normalizePlay";
-import { enrichPlayFromImport } from "@/lib/enrichReview";
+import { loadAllPlays } from "@/lib/playData";
 import PlayReview from "@/app/play/PlayReview";
-import { C } from "@/app/court/Court";
 
-/** Pre-saved AI-interpreted plays — zero API calls, zero credits. */
 function loadDemoPlays() {
-  return interpretedPlays
-    .map(normalizeImportedPlay)
-    .map(enrichPlayFromImport)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return loadAllPlays().sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export default function ReviewDemoPage() {
@@ -44,6 +37,7 @@ export default function ReviewDemoPage() {
         onVerified={() => setVerified((v) => ({ ...v, [play.name]: true }))}
         runLabel="RUN DEMO"
         showCropCompare={false}
+        theme="paper"
       />
     );
   }
@@ -51,34 +45,24 @@ export default function ReviewDemoPage() {
   const verifiedCount = Object.values(verified).filter(Boolean).length;
 
   return (
-    <div className="min-h-screen p-4 md:p-6" style={{ background: C.bg, color: C.text }}>
-      <header className="mb-6 max-w-3xl mx-auto">
-        <div
-          className="rounded-lg px-3 py-2 mb-4 text-sm"
-          style={{ background: "#1a2a1a", border: `1px solid ${C.ok}`, color: C.text }}
-        >
-          <strong style={{ color: C.ok }}>Demo mode</strong> — uses pre-saved interpreted plays from{" "}
-          <code className="text-xs" style={{ color: C.muted }}>plays-interpreted.json</code>.
-          No PDF upload, no AI API, no credits. Edit lines and movements with the same tools as real import review.
-        </div>
-        <p className="text-xs font-mono mb-1" style={{ color: C.dim, letterSpacing: "0.12em" }}>
-          REVIEW DEMO
+    <div className="flex-1 flex flex-col min-h-0">
+      <header className="px-4 py-3 border-b border-rule bg-paper-2">
+        <p className="font-data text-[10px] uppercase tracking-widest text-go mb-0.5">Demo mode</p>
+        <h1 className="font-display text-xl font-bold">Practice reviewing a play</h1>
+        <p className="text-sm text-ink-soft mt-1">
+          Pre-saved interpreted plays — no PDF upload or AI credits. Same editor as real import review.
         </p>
-        <h1 className="text-2xl font-bold">Practice reviewing a play</h1>
-        <p className="text-sm mt-1" style={{ color: C.muted }}>
-          {plays.length} plays · {stats.beats} beats · {stats.actions} AI-drawn actions (offline)
+        <p className="text-sm text-ink-soft mt-1">
+          {plays.length} plays · {stats.beats} beats · {stats.actions} drawn actions
         </p>
-        <p className="text-xs mt-2" style={{ color: C.ok }}>
-          {verifiedCount} of {plays.length} verified this session
-        </p>
-        <div className="flex flex-wrap gap-3 mt-3 text-xs">
-          <Link href="/" style={{ color: C.ball }}>← Home</Link>
-          <Link href="/import" style={{ color: C.muted }}>Real import →</Link>
-          <Link href="/plays/new" style={{ color: C.muted }}>Create play →</Link>
+        <p className="font-data text-xs text-go mt-2">{verifiedCount} of {plays.length} verified</p>
+        <div className="flex flex-wrap gap-3 mt-2 text-xs">
+          <Link href="/import" className="text-chalk hover:underline">Real import →</Link>
+          <Link href="/coach/playbook" className="text-ink-soft hover:text-ink">Playbook →</Link>
         </div>
       </header>
 
-      <ul className="max-w-3xl mx-auto flex flex-col gap-2">
+      <ul className="flex-1 overflow-auto p-4 max-w-3xl w-full mx-auto flex flex-col gap-2">
         {plays.map((p, i) => {
           const actionCount = p.frames.reduce((n, f) => n + (f.actions?.length ?? 0), 0);
           return (
@@ -86,16 +70,15 @@ export default function ReviewDemoPage() {
               <button
                 type="button"
                 onClick={() => setSelected(i)}
-                className="w-full text-left rounded-lg px-4 py-3 flex items-center justify-between gap-3"
-                style={{ background: C.panel, border: `1px solid ${C.line}` }}
+                className="w-full text-left border border-rule px-4 py-3 flex items-center justify-between gap-3 bg-paper hover:bg-paper-2 transition-colors duration-[120ms]"
               >
                 <div>
-                  <span className="font-semibold">{p.name}</span>
-                  <span className="text-xs ml-2" style={{ color: C.muted }}>
+                  <span className="font-display font-semibold">{p.name}</span>
+                  <span className="font-data text-xs ml-2 text-ink-soft">
                     {p.frames.length} beats · {actionCount} lines
                   </span>
                 </div>
-                <span className="text-xs shrink-0" style={{ color: verified[p.name] ? C.ok : C.dim }}>
+                <span className={`text-xs shrink-0 font-data ${verified[p.name] ? "text-go" : "text-ink-soft"}`}>
                   {verified[p.name] ? "✓ verified" : "Review →"}
                 </span>
               </button>
@@ -103,11 +86,6 @@ export default function ReviewDemoPage() {
           );
         })}
       </ul>
-
-      <p className="text-xs text-center max-w-lg mx-auto mt-8" style={{ color: C.dim }}>
-        Pick a play, fix AI lines with the draw editor, run the animation, and verify.
-        Edits stay until you refresh the page.
-      </p>
     </div>
   );
 }

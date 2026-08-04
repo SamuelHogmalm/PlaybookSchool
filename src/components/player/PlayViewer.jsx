@@ -47,7 +47,8 @@ export default function PlayViewer({ play, myPosition = "4", onClose }) {
             suffix={`-view-${play.name}`}
             maxWidthClass="max-w-full"
             showGhost
-            showActions
+            showActions={idx > 0}
+            showMovementLines={idx > 0}
           />
         </div>
 

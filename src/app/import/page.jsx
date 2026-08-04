@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { checkImporterHealth, interpretPlays, parsePdf } from "@/lib/importerApi";
+import { checkImporterHealth, interpretPlays, parsePdf, breakdownPlays } from "@/lib/importerApi";
 import { normalizeImportedPlay } from "@/lib/normalizePlay";
+import { applyBreakdownsToRawPlays } from "@/lib/enrichReview";
 import { useImportSession } from "./ImportContext";
 
 export default function ImportPage() {
@@ -48,6 +49,14 @@ export default function ImportPage() {
           plays = interpreted.plays;
           usage = interpreted.usage;
           needsReview = interpreted.needs_review ?? [];
+
+          setStatus("Breaking down each play — what we're hunting, reads, and jobs…");
+          const broken = await breakdownPlays(plays, crops, null, setStatus);
+          plays = applyBreakdownsToRawPlays(plays, broken.breakdowns ?? {});
+          usage = {
+            input_tokens: (usage?.input_tokens ?? 0) + (broken.usage?.input_tokens ?? 0),
+            output_tokens: (usage?.output_tokens ?? 0) + (broken.usage?.output_tokens ?? 0),
+          };
         }
 
         const normalized = plays.map(normalizeImportedPlay);
@@ -84,7 +93,7 @@ export default function ImportPage() {
         <p className="font-data text-[10px] uppercase tracking-widest text-ink-soft mb-0.5">Import</p>
         <h1 className="font-display text-xl font-bold">Upload FastDraw PDF</h1>
         <p className="text-sm text-ink-soft mt-1">
-          Stage 1 extracts positions · Stage 2 reads arrows (optional)
+          Stage 1 extracts positions · Stage 2 reads arrows per beat · Stage 3 breaks down each play
         </p>
       </header>
 

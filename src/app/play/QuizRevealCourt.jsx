@@ -30,6 +30,7 @@ export default function QuizRevealCourt({
   highlightPlayer,
   wrongSpot,
   correctSpot,
+  spotTolerance = 52,
   onFinished,
 }) {
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -89,20 +90,24 @@ export default function QuizRevealCourt({
       className="rounded-lg overflow-hidden border w-full"
       style={{ borderColor: border, boxShadow: `0 0 0 1px ${border}44` }}
     >
-      <CourtSurface suffix="-quiz">
+      <CourtSurface suffix="-quiz" theme="paper">
         <g opacity="0.2">
-          {IDS.map((id) => (
+          {IDS.map((id) => {
+            const p = prev.pos?.[id];
+            if (!p) return null;
+            return (
             <circle
               key={id}
-              cx={prev.pos[id].x}
-              cy={prev.pos[id].y}
+              cx={p.x}
+              cy={p.y}
               r="15"
               fill="none"
               stroke={C.muted}
               strokeWidth="1.5"
               strokeDasharray="4 4"
             />
-          ))}
+            );
+          })}
         </g>
         <MovementArrows
           prev={prev}
@@ -120,18 +125,42 @@ export default function QuizRevealCourt({
           </g>
         )}
         {correctSpot && (
-          <circle cx={correctSpot.x} cy={correctSpot.y} r="18" fill="none" stroke={C.ok} strokeWidth="2.5" opacity={playback.done ? 1 : 0.6} />
+          <>
+            <circle
+              cx={correctSpot.x}
+              cy={correctSpot.y}
+              r={spotTolerance * 0.55}
+              fill="none"
+              stroke={C.ok}
+              strokeWidth="1.5"
+              strokeDasharray="8 5"
+              opacity={0.45}
+            />
+            <circle
+              cx={correctSpot.x}
+              cy={correctSpot.y}
+              r="18"
+              fill="none"
+              stroke={C.ok}
+              strokeWidth="2.5"
+              opacity={playback.done ? 1 : 0.6}
+            />
+          </>
         )}
         {playback.ballInAir && <FlyingBall x={playback.ballInAir.x} y={playback.ballInAir.y} />}
-        {IDS.map((id) => (
+        {IDS.map((id) => {
+          const p = playback.pos?.[id];
+          if (!p) return null;
+          return (
           <Token
             key={id}
             id={id}
-            p={playback.pos[id]}
+            p={p}
             hasBall={playerHasBall(playback, next, id)}
             highlight={highlightPlayer === id}
           />
-        ))}
+          );
+        })}
       </CourtSurface>
     </div>
   );
