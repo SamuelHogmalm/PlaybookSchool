@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const TABS = [
   { href: "/player/today", label: "Today" },
@@ -12,6 +13,7 @@ const TABS = [
 
 export default function PlayerShell({ children }) {
   const pathname = usePathname();
+  const { user, configured } = useAuth();
 
   return (
     <div className="ps-app min-h-screen pb-[calc(56px+env(safe-area-inset-bottom))]">
@@ -20,9 +22,19 @@ export default function PlayerShell({ children }) {
           Playbook School
         </Link>
         <span className="flex-1" />
-        <Link href="/demo" className="text-xs text-chalk">
-          Demo
-        </Link>
+        {user ? (
+          <Link href="/player/me" className="text-xs text-chalk">
+            Account
+          </Link>
+        ) : configured ? (
+          <Link href="/login" className="text-xs text-chalk font-semibold">
+            Log in
+          </Link>
+        ) : (
+          <Link href="/demo" className="text-xs text-chalk">
+            Demo
+          </Link>
+        )}
       </header>
 
       <main className="flex-1 w-full max-w-lg mx-auto px-4 py-4">{children}</main>

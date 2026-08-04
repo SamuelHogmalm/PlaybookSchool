@@ -84,12 +84,16 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4 pt-4 border-t border-rule space-y-2">
-            <Link href="/coach/playbook" className="ps-btn ps-btn-secondary w-full block text-center">
-              Open coach demo
-            </Link>
-            <Link href="/player/today" className="ps-btn ps-btn-ghost w-full block text-center">
-              Open player demo
-            </Link>
+            {!configured && (
+              <>
+                <Link href="/coach/playbook" className="ps-btn ps-btn-secondary w-full block text-center">
+                  Open coach demo
+                </Link>
+                <Link href="/player/today" className="ps-btn ps-btn-ghost w-full block text-center">
+                  Open player demo
+                </Link>
+              </>
+            )}
           </div>
 
           <p className="text-xs text-ink-soft mt-4 text-center">
