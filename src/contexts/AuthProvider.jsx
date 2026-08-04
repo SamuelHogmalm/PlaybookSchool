@@ -51,6 +51,9 @@ export function AuthProvider({ children }) {
       setUser(u);
       if (u) loadProfile(u.id);
       setLoading(false);
+    }).catch((err) => {
+      console.warn("Supabase getSession:", err);
+      if (mounted) setLoading(false);
     });
 
     const {

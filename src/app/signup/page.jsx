@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthProvider";
+import { supabaseConfigStatus } from "@/lib/supabase/config";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [working, setWorking] = useState(false);
+
+  const configStatus = supabaseConfigStatus();
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +55,11 @@ export default function SignupPage() {
           <p className="text-sm text-ink-soft mb-6">
             {configured
               ? "Free pilot — quiz progress syncs when you sign in."
-              : "Supabase not configured — demo mode only."}
+              : configStatus === "bad-url"
+                ? "Supabase URL looks wrong in env vars — use https://hkvnzffvwqenuuyxjtnx.supabase.co"
+                : configStatus === "bad-key"
+                  ? "Supabase anon key looks wrong — use the JWT key from Dashboard → API."
+                  : "Supabase not configured — add env vars and redeploy."}
           </p>
 
           <form className="space-y-4" onSubmit={onSubmit}>
