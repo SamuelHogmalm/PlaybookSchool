@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthProvider";
 import { homePathForProfile } from "@/lib/teams";
 
+import { isCoachUser } from "@/lib/teams";
+
 /** Redirect non-coaches away from /coach/* */
 export default function CoachGuard({ children }) {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
-  const isCoach = profile?.role === "coach" || user?.user_metadata?.role === "coach";
+  const isCoach = isCoachUser(profile, user);
 
   useEffect(() => {
     if (loading) return;
@@ -17,7 +19,7 @@ export default function CoachGuard({ children }) {
       router.replace("/login?next=/coach/playbook");
       return;
     }
-    if (profile && profile.role !== "coach" && user?.user_metadata?.role !== "coach") {
+    if (profile && !isCoachUser(profile, user)) {
       router.replace("/player/today");
     }
   }, [loading, user, profile, router]);

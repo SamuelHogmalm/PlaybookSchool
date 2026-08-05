@@ -10,7 +10,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
-  const { signIn, configured, loading } = useAuth();
+  const { signIn, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,20 +18,20 @@ function LoginForm() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!configured) {
-      router.push("/player/today");
-      return;
-    }
     setWorking(true);
     setError("");
+
     const { error: err, profile, user } = await signIn(email, password);
     setWorking(false);
+
     if (err) {
       setError(err.message ?? String(err));
       return;
     }
+
     const dest = next && next.startsWith("/") ? next : homePathForUser(profile, user);
-    router.push(dest);
+    // Full navigation avoids race with auth state + client router
+    window.location.assign(dest);
   };
 
   return (
@@ -47,7 +47,7 @@ function LoginForm() {
             className="ps-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required={configured}
+            required
           />
         </div>
         <div>
@@ -60,7 +60,7 @@ function LoginForm() {
             className="ps-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required={configured}
+            required
           />
         </div>
         {error && <p className="text-sm text-flag">{error}</p>}
@@ -69,20 +69,9 @@ function LoginForm() {
           disabled={working || loading}
           className="ps-btn ps-btn-primary w-full disabled:opacity-50"
         >
-          {working ? "Signing in…" : configured ? "Log in" : "Continue demo"}
+          {working ? "Signing in…" : "Log in"}
         </button>
       </form>
-
-      {!configured && (
-        <div className="mt-4 pt-4 border-t border-rule space-y-2">
-          <Link href="/coach/playbook" className="ps-btn ps-btn-secondary w-full block text-center">
-            Open coach demo
-          </Link>
-          <Link href="/player/today" className="ps-btn ps-btn-ghost w-full block text-center">
-            Open player demo
-          </Link>
-        </div>
-      )}
     </>
   );
 }

@@ -64,10 +64,10 @@ export default function CoachShell({ children }) {
               </button>
             ) : null}
             <Link
-              href="/player/today"
+              href="/player/today?preview=1"
               className="block mt-2 text-xs font-semibold text-chalk hover:underline"
             >
-              Player view →
+              Player preview →
             </Link>
           </div>
         </aside>

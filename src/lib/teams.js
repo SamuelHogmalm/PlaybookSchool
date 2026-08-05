@@ -6,9 +6,12 @@ export function homePathForProfile(profile) {
 }
 
 /** Also check auth metadata when profile row is unavailable (RLS edge cases). */
+export function isCoachUser(profile, user) {
+  return profile?.role === "coach" || user?.user_metadata?.role === "coach";
+}
+
 export function homePathForUser(profile, user) {
-  if (profile?.role === "coach") return "/coach/playbook";
-  if (user?.user_metadata?.role === "coach") return "/coach/playbook";
+  if (isCoachUser(profile, user)) return "/coach/playbook";
   return "/player/today";
 }
 
