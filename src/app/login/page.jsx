@@ -98,6 +98,13 @@ export default function LoginPage() {
               Coach: <span className="font-data">coach@test.playbookschool.dev</span> /{" "}
               <span className="font-data">TestCoach123!</span>
             </p>
+            <p className="text-xs text-ink-soft leading-relaxed mt-1">
+              Player: <span className="font-data">player@test.playbookschool.dev</span> /{" "}
+              <span className="font-data">TestPlayer123!</span>
+            </p>
+            <p className="text-xs text-ink-soft mt-2">
+              Logged in as coach? Sign out first to test the player account.
+            </p>
           </div>
 
           <p className="text-xs text-ink-soft mt-4 text-center">

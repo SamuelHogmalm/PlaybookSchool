@@ -32,8 +32,8 @@ export default function LandingPage() {
           <Link href="/login" className="text-sm font-semibold text-ink-soft hover:text-ink">
             Log in
           </Link>
-          <Link href="/player/today" className="text-sm font-semibold text-chalk hover:underline hidden sm:inline">
-            Player app
+          <Link href="/player/today?preview=1" className="text-sm font-semibold text-chalk hover:underline hidden sm:inline">
+            Player demo
           </Link>
           <Link href="/signup" className="ps-btn ps-btn-primary py-0 min-h-[36px] text-xs">
             Create account
@@ -110,8 +110,8 @@ export default function LandingPage() {
               step: "03",
               title: "Players drill on their phones",
               body: "Animations, quizzes, and draw-the-route questions — generated from your actual plays.",
-              href: "/player/today",
-              cta: "Player view",
+              href: "/player/today?preview=1",
+              cta: "Player demo",
             },
           ].map((s) => (
             <article key={s.step} className="border border-rule p-4 bg-paper flex flex-col">
@@ -214,8 +214,11 @@ export default function LandingPage() {
             <Link href="/coach/playbook" className="ps-btn ps-btn-ghost">
               Coach app
             </Link>
-            <Link href="/player/today" className="ps-btn ps-btn-ghost">
-              Player app
+            <Link href="/login" className="ps-btn ps-btn-ghost">
+              Player login
+            </Link>
+            <Link href="/player/today?preview=1" className="ps-btn ps-btn-ghost">
+              Player demo
             </Link>
           </div>
         </div>
