@@ -15,7 +15,8 @@ export default function CoachGuard({ children }) {
       window.location.replace("/login?next=/coach/playbook");
       return;
     }
-    if (!isCoach(profile, user)) {
+    // Only redirect once profile is loaded OR metadata confirms not a coach
+    if (profile && !isCoach(profile, user)) {
       window.location.replace("/player/today");
     }
   }, [loading, user, profile, router]);

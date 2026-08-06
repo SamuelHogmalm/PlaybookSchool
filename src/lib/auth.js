@@ -2,18 +2,16 @@
 
 export const COACH_HOME = "/coach/playbook";
 export const PLAYER_HOME = "/player/today";
-export const AUTH_ENTER = "/auth/enter";
+export const AUTH_ENTER = "/api/auth/enter";
 
 export function resolveRole(profile, user) {
-  if (profile?.role === "coach" || profile?.role === "player") return profile.role;
-  if (user?.user_metadata?.role === "coach" || user?.user_metadata?.role === "player") {
-    return user.user_metadata.role;
-  }
+  if (profile?.role === "coach" || user?.user_metadata?.role === "coach") return "coach";
+  if (profile?.role === "player" || user?.user_metadata?.role === "player") return "player";
   return "player";
 }
 
 export function isCoach(profile, user) {
-  return resolveRole(profile, user) === "coach";
+  return profile?.role === "coach" || user?.user_metadata?.role === "coach";
 }
 
 export function homeForUser(profile, user) {

@@ -114,6 +114,9 @@ export function AuthProvider({ children }) {
         const { error } = await client.auth.signInWithPassword({ email, password });
         if (error) return { error, profile: null, user: null };
 
+        // Ensure session cookie is written before server redirect
+        await client.auth.getSession();
+
         const { data: { user: u } } = await client.auth.getUser();
         if (!u) return { error: new Error("No user after sign in"), profile: null, user: null };
 
