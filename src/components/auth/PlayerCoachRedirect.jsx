@@ -1,24 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthProvider";
-import { isCoachUser } from "@/lib/teams";
+import { isCoach, COACH_HOME } from "@/lib/auth";
 
-/** Send logged-in coaches to the coach app unless they opened player preview (?preview=1). */
 export default function PlayerCoachRedirect() {
   const { user, profile, loading } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const preview = searchParams.get("preview") === "1";
 
   useEffect(() => {
     if (loading || !user || preview) return;
-    if (isCoachUser(profile, user) && pathname.startsWith("/player")) {
-      router.replace("/coach/playbook");
+    if (isCoach(profile, user) && pathname.startsWith("/player")) {
+      window.location.replace(COACH_HOME);
     }
-  }, [loading, user, profile, preview, pathname, router]);
+  }, [loading, user, profile, preview, pathname]);
 
   return null;
 }

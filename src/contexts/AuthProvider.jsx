@@ -3,18 +3,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createCoachTeam, fetchMyTeam, syncProfileFromAuth } from "@/lib/teams";
+import {
+  ensureCoachTeam,
+  isCoach,
+  loadProfileForUser,
+  loadTeamForUser,
+} from "@/lib/auth";
 
 const AuthContext = createContext({
   user: null,
   profile: null,
   team: null,
+  role: "player",
   loading: true,
   configured: false,
   configError: null,
   refreshProfile: async () => {},
   signIn: async () => ({ error: null, profile: null, user: null }),
-  signUp: async () => ({ error: null }),
+  signUp: async () => ({ error: null, session: false }),
   signOut: async () => {},
 });
 
@@ -27,93 +33,47 @@ export function AuthProvider({ children }) {
   const [configError, setConfigError] = useState(null);
   const configured = isSupabaseConfigured() || !!supabase;
 
-  const loadProfile = useCallback(async (client, userId) => {
-    if (!client || !userId) {
+  const hydrate = useCallback(async (client, authUser) => {
+    if (!client || !authUser) {
       setProfile(null);
       setTeam(null);
-      return null;
+      return { profile: null, team: null };
     }
 
-    let prof = null;
+    let prof = await loadProfileForUser(client, authUser.id);
+    let teamRow = await loadTeamForUser(client);
 
-    try {
-      prof = await syncProfileFromAuth();
-    } catch {
-      /* rpc may not exist until migration 2 runs */
-    }
-
-    if (!prof) {
-      const { data } = await client
-        .from("profiles")
-        .select("id, full_name, role, position, jersey, team_id")
-        .eq("id", userId)
-        .maybeSingle();
-      prof = data ?? null;
+    if (prof?.role === "coach" && !prof.team_id && !teamRow) {
+      try {
+        await ensureCoachTeam(client, prof.full_name ?? "My Team");
+        prof = await loadProfileForUser(client, authUser.id);
+        teamRow = await loadTeamForUser(client);
+      } catch (e) {
+        console.warn("ensureCoachTeam:", e);
+      }
     }
 
     setProfile(prof);
-
-    try {
-      const teamInfo = await fetchMyTeam();
-      if (teamInfo?.has_team) {
-        setTeam({
-          id: teamInfo.team_id,
-          name: teamInfo.team_name,
-          join_code: teamInfo.join_code,
-        });
-      } else {
-        setTeam(null);
-      }
-    } catch {
-      if (prof?.team_id) {
-        const { data: t } = await client
-          .from("teams")
-          .select("id, name, join_code")
-          .eq("id", prof.team_id)
-          .maybeSingle();
-        setTeam(t ?? null);
-      } else {
-        setTeam(null);
-      }
-    }
-
-    if (prof?.role === "coach" && !prof?.team_id) {
-      try {
-        const created = await createCoachTeam(prof.full_name ?? "My Team");
-        setTeam({
-          id: created.team_id,
-          name: created.team_name,
-          join_code: created.join_code,
-        });
-        prof = await syncProfileFromAuth().catch(() => prof);
-        if (prof) setProfile(prof);
-      } catch (e) {
-        console.warn("createCoachTeam:", e);
-      }
-    }
-
-    return prof;
+    setTeam(teamRow);
+    return { profile: prof, team: teamRow };
   }, []);
 
   useEffect(() => {
     let mounted = true;
 
     getSupabaseBrowserClient()
-      .then((client) => {
+      .then(async (client) => {
         if (!mounted) return;
         setSupabase(client);
         setConfigError(null);
 
-        return client.auth.getSession().then(async ({ data: { session } }) => {
-          if (!mounted) return;
-          const u = session?.user ?? null;
-          setUser(u);
-          if (u) await loadProfile(client, u.id);
-          setLoading(false);
-        });
+        const { data: { session } } = await client.auth.getSession();
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) await hydrate(client, u);
+        if (mounted) setLoading(false);
       })
       .catch((err) => {
-        console.warn("Supabase init:", err);
         if (mounted) {
           setConfigError(err.message ?? "Could not connect to Supabase");
           setLoading(false);
@@ -123,17 +83,15 @@ export function AuthProvider({ children }) {
     return () => {
       mounted = false;
     };
-  }, [loadProfile]);
+  }, [hydrate]);
 
   useEffect(() => {
     if (!supabase) return;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      if (u) await loadProfile(supabase, u.id);
+      if (u) await hydrate(supabase, u);
       else {
         setProfile(null);
         setTeam(null);
@@ -141,12 +99,13 @@ export function AuthProvider({ children }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, loadProfile]);
+  }, [supabase, hydrate]);
 
   const refreshProfile = useCallback(async () => {
     if (!supabase || !user) return null;
-    return loadProfile(supabase, user.id);
-  }, [supabase, user, loadProfile]);
+    const result = await hydrate(supabase, user);
+    return result.profile;
+  }, [supabase, user, hydrate]);
 
   const signIn = useCallback(
     async (email, password) => {
@@ -154,14 +113,18 @@ export function AuthProvider({ children }) {
         const client = supabase ?? (await getSupabaseBrowserClient());
         const { error } = await client.auth.signInWithPassword({ email, password });
         if (error) return { error, profile: null, user: null };
+
         const { data: { user: u } } = await client.auth.getUser();
-        const prof = u ? await loadProfile(client, u.id) : null;
+        if (!u) return { error: new Error("No user after sign in"), profile: null, user: null };
+
+        setUser(u);
+        const { profile: prof } = await hydrate(client, u);
         return { error: null, profile: prof, user: u };
       } catch (err) {
         return { error: err, profile: null, user: null };
       }
     },
-    [supabase, loadProfile]
+    [supabase, hydrate]
   );
 
   const signUp = useCallback(
@@ -173,43 +136,49 @@ export function AuthProvider({ children }) {
           password,
           options: {
             data: { full_name: fullName, role: role ?? "player" },
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: `${window.location.origin}/auth/enter`,
           },
         });
-        if (error) return { error };
+        if (error) return { error, session: false };
 
         if (data.session && data.user) {
-          await loadProfile(client, data.user.id);
+          setUser(data.user);
+          await hydrate(client, data.user);
           if (role === "coach") {
             try {
-              await createCoachTeam(teamName || fullName || "My Team");
-              await loadProfile(client, data.user.id);
+              await ensureCoachTeam(client, teamName || fullName || "My Team");
+              await hydrate(client, data.user);
             } catch (e) {
-              console.warn("coach team setup:", e);
+              console.warn("coach team on signup:", e);
             }
           }
+          return { error: null, session: true };
         }
 
-        return { error: null };
+        return { error: null, session: false };
       } catch (err) {
-        return { error: err };
+        return { error: err, session: false };
       }
     },
-    [supabase, loadProfile]
+    [supabase, hydrate]
   );
 
   const signOut = useCallback(async () => {
     const client = supabase ?? (await getSupabaseBrowserClient());
     await client.auth.signOut();
+    setUser(null);
     setProfile(null);
     setTeam(null);
   }, [supabase]);
+
+  const role = resolveRoleFromState(profile, user);
 
   const value = useMemo(
     () => ({
       user,
       profile,
       team,
+      role,
       loading,
       configured,
       configError,
@@ -218,12 +187,25 @@ export function AuthProvider({ children }) {
       signUp,
       signOut,
     }),
-    [user, profile, team, loading, configured, configError, refreshProfile, signIn, signUp, signOut]
+    [user, profile, team, role, loading, configured, configError, refreshProfile, signIn, signUp, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+function resolveRoleFromState(profile, user) {
+  if (profile?.role === "coach" || profile?.role === "player") return profile.role;
+  if (user?.user_metadata?.role === "coach" || user?.user_metadata?.role === "player") {
+    return user.user_metadata.role;
+  }
+  return "player";
+}
+
 export function useAuth() {
   return useContext(AuthContext);
+}
+
+export function useIsCoach() {
+  const { profile, user } = useAuth();
+  return isCoach(profile, user);
 }

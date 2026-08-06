@@ -1,21 +1,13 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isCoach, homeForUser, COACH_HOME, PLAYER_HOME } from "@/lib/auth";
+
+// Re-export for backwards compatibility
+export { isCoach as isCoachUser, homeForUser as homePathForUser, COACH_HOME, PLAYER_HOME };
 
 export function homePathForProfile(profile) {
-  if (profile?.role === "coach") return "/coach/playbook";
-  return "/player/today";
+  return profile?.role === "coach" ? COACH_HOME : PLAYER_HOME;
 }
 
-/** Also check auth metadata when profile row is unavailable (RLS edge cases). */
-export function isCoachUser(profile, user) {
-  return profile?.role === "coach" || user?.user_metadata?.role === "coach";
-}
-
-export function homePathForUser(profile, user) {
-  if (isCoachUser(profile, user)) return "/coach/playbook";
-  return "/player/today";
-}
-
-/** Sync role/full_name from signup metadata into profiles row. */
 export async function syncProfileFromAuth() {
   const supabase = await getSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("sync_profile_from_auth");
@@ -30,7 +22,6 @@ export async function fetchMyTeam() {
   return data;
 }
 
-/** Coach: create team + join code (idempotent). */
 export async function createCoachTeam(teamName) {
   const supabase = await getSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("create_coach_team", {
@@ -40,7 +31,6 @@ export async function createCoachTeam(teamName) {
   return data;
 }
 
-/** Player: join team with invite code. */
 export async function joinTeamByCode(joinCode) {
   const supabase = await getSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("join_team_by_code", {

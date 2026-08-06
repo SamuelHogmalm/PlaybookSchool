@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabaseConfigStatus } from "@/lib/supabase/config";
-import { homePathForProfile } from "@/lib/teams";
+import { AUTH_ENTER } from "@/lib/auth";
 
 function SignupForm() {
   const router = useRouter();
@@ -28,7 +28,7 @@ function SignupForm() {
     setWorking(true);
     setError("");
     setMessage("");
-    const { error: err } = await signUp({
+    const { error: err, session } = await signUp({
       email,
       password,
       fullName: team || email.split("@")[0],
@@ -38,6 +38,10 @@ function SignupForm() {
     setWorking(false);
     if (err) {
       setError(err.message ?? String(err));
+      return;
+    }
+    if (session) {
+      window.location.assign(AUTH_ENTER);
       return;
     }
     if (role === "coach") {
