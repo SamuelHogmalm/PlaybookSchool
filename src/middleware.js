@@ -2,7 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { supabaseEnv } from "@/lib/supabase/config";
 
+const PRODUCTION_HOST = "playlab-omega.vercel.app";
+
 export async function middleware(request) {
+  const host = request.nextUrl.hostname;
+
+  // Preview deploy URLs (playlab-xxxx-....vercel.app) lack auth env — send users to production
+  if (
+    host.endsWith(".vercel.app") &&
+    host !== PRODUCTION_HOST &&
+    host.startsWith("playlab-")
+  ) {
+    const url = request.nextUrl.clone();
+    url.hostname = PRODUCTION_HOST;
+    url.protocol = "https";
+    return NextResponse.redirect(url);
+  }
+
   const { url, anonKey } = supabaseEnv();
   if (!url || !anonKey) return NextResponse.next();
 
