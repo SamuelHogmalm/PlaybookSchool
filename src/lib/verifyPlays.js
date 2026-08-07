@@ -84,18 +84,27 @@ export function exportForPromotion(plays) {
     const row = {
       name: play.name,
       category: play.category ?? "Set",
-      beats: play.frames.map(({ id, pos, ball, actions, note }) => ({
-        id,
-        pos,
-        ball,
-        actions: (actions ?? []).map(({ id: aid, type, by, for: fo, path }) => {
+      beats: play.frames.map(({ id, pos, ball, actions, note, needs_review, review_reason, animation_issues }) => {
+        const beat = {
+          id,
+          pos,
+          ball,
+        actions: (actions ?? []).map(({ id: aid, type, by, for: fo, path, order, uncertain, reason }) => {
           const a = { id: aid, type, by };
           if (fo != null) a.for = fo;
           if (path?.length) a.path = path;
+          if (order != null) a.order = order;
+          if (uncertain) a.uncertain = true;
+          if (reason) a.reason = reason;
           return a;
         }),
-        note: note ?? "",
-      })),
+          note: note ?? "",
+        };
+        if (needs_review) beat.needs_review = true;
+        if (review_reason) beat.review_reason = review_reason;
+        if (animation_issues?.length) beat.animation_issues = animation_issues;
+        return beat;
+      }),
       counters: play.counters ?? [],
     };
     if (play.breakdown && !play.breakdownStale) {

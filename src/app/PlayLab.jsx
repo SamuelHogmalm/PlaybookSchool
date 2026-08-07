@@ -1,9 +1,18 @@
 "use client";
 
+/** @deprecated Legacy monolith for /demo and dev previews. Use PlayDrawEditor + PlayerQuizSession in production routes. */
+
 import { useState, useRef, useEffect, useMemo } from "react";
 import { C, W, H, COURT_MAX_W, IDS, CourtSurface, Token, ActionLayer, FlyingBall, toSvg } from "./court/Court";
 import QuizRevealCourt, { questionBeatRange } from "./play/QuizRevealCourt";
-import { getPlaybackState, playerHasBall, SPEED_OPTIONS, timelineDuration } from "@/lib/playback";
+import { SPEED_OPTIONS } from "@/lib/playback";
+import ActiveRouteLayer from "./play/ActiveRouteLayer";
+import {
+  buildSequentialTimeline,
+  getSequentialPlaybackState,
+  sequentialTimelineDuration,
+} from "@/lib/sequentialPlayback";
+import { playerHasBallFromState } from "@/hooks/useSequentialPlayback";
 import { generateQuestions, POS_NAME, shuffle } from "@/lib/quiz";
 
 /* ============================================================
@@ -115,7 +124,8 @@ function Editor({ play, setPlay }) {
 
   const frame = play.frames[idx];
   const prev = idx > 0 ? play.frames[idx - 1] : null;
-  const totalMs = timelineDuration(play.frames, speed);
+  const timeline = useMemo(() => buildSequentialTimeline(play.frames), [play.frames]);
+  const totalMs = sequentialTimelineDuration(timeline, speed);
 
   useEffect(() => {
     if (!playing) return;
@@ -138,7 +148,7 @@ function Editor({ play, setPlay }) {
   }, [playing, totalMs]);
 
   const inPlayback = playing || elapsedMs > 0;
-  const playback = inPlayback ? getPlaybackState(play.frames, elapsedMs, speed) : null;
+  const playback = inPlayback ? getSequentialPlaybackState(timeline, elapsedMs * speed) : null;
 
   const updateFrame = (patch) => {
     const frames = play.frames.map((f, i) => (i === idx ? { ...f, ...patch } : f));
@@ -215,14 +225,25 @@ function Editor({ play, setPlay }) {
                 ))}
               </g>
             )}
-            {(() => {
-              const af = inPlayback && playback ? play.frames[playback.beatIdx] : frame;
-              const ap = inPlayback && playback && playback.beatIdx > 0 ? play.frames[playback.beatIdx - 1] : prev;
-              return ap ? <ActionLayer frame={af} prev={ap} /> : null;
-            })()}
+            {inPlayback && playback ? (
+              <ActiveRouteLayer activeRoutes={playback.activeRoutes ?? []} />
+            ) : (
+              prev && <ActionLayer frame={frame} prev={prev} />
+            )}
             {playback?.ballInAir && <FlyingBall x={playback.ballInAir.x} y={playback.ballInAir.y} />}
             {IDS.map((id) => (
-              <Token key={id} id={id} p={shown.pos[id]} hasBall={playerHasBall(playback, frame, id)} draggable={!inPlayback} onDown={onDown} />
+              <Token
+                key={id}
+                id={id}
+                p={shown.pos[id]}
+                hasBall={
+                  playback
+                    ? playerHasBallFromState(playback, id)
+                    : frame.ball === id
+                }
+                draggable={!inPlayback}
+                onDown={onDown}
+              />
             ))}
           </CourtSurface>
         </div>
@@ -434,7 +455,7 @@ function Player({ play }) {
   const submit = () => {
     if (guess == null) return;
     let right;
-    if (q.kind === "spot") right = dist(guess, q.target) <= 48;
+    if (q.kind === "formation") right = dist(guess, q.target) <= 48;
     else right = guess === q.correct;
     setResult(right);
     setRevealDone(false);
@@ -515,9 +536,9 @@ function Player({ play }) {
                 toIdx={beatRange.toIdx}
                 active
                 result={result}
-                highlightPlayer={q.kind === "spot" ? q.player : undefined}
-                wrongSpot={q.kind === "spot" && !result ? guess : null}
-                correctSpot={q.kind === "spot" ? q.target : null}
+                highlightPlayer={q.kind === "formation" ? q.player : undefined}
+                wrongSpot={q.kind === "formation" && !result ? guess : null}
+                correctSpot={q.kind === "formation" ? q.target : null}
                 onFinished={() => setRevealDone(true)}
               />
             </>
@@ -526,7 +547,7 @@ function Player({ play }) {
               <CourtSurface
                 svgRef={svgRef}
                 onPointerDown={(e) => {
-                  if (q.kind !== "spot" || result !== null) return;
+                  if (q.kind !== "formation" || result !== null) return;
                   setGuess(toSvg(svgRef.current, e));
                 }}
               >
@@ -536,11 +557,11 @@ function Player({ play }) {
                     id={id}
                     p={q.from.pos[id]}
                     hasBall={q.from.ball === id}
-                    faded={q.kind === "spot" && id !== q.player}
-                    highlight={q.kind === "spot" && id === q.player}
+                    faded={q.kind === "formation" && id !== q.player}
+                    highlight={q.kind === "formation" && id === q.player}
                   />
                 ))}
-                {q.kind === "spot" && guess && (
+                {q.kind === "formation" && guess && (
                   <circle cx={guess.x} cy={guess.y} r="15" fill="none" stroke={C.ball} strokeWidth="3" strokeDasharray="4 3" />
                 )}
               </CourtSurface>
@@ -560,8 +581,8 @@ function Player({ play }) {
         </div>
         <h3 className="text-xl font-semibold mb-4 leading-snug" style={{ color: C.text }}>{q.prompt}</h3>
 
-        {q.kind === "spot" ? (
-          <p className="text-sm mb-4" style={{ color: C.muted }}>Tap the spot on the floor.</p>
+        {q.kind === "formation" ? (
+          <p className="text-sm mb-4" style={{ color: C.muted }}>Tap your spot on the floor.</p>
         ) : (
           <div className="flex flex-col gap-2 mb-4">
             {options.map((o) => {
@@ -592,7 +613,7 @@ function Player({ play }) {
             <div className="font-semibold mb-1" style={{ color: result ? C.ok : C.bad }}>
               {result ? "That's it." : "Not quite."}
             </div>
-            {q.kind === "spot" ? play.frames[q.frameIdx].note : q.correct}
+            {q.kind === "formation" ? "Starting formation" : q.correct}
             {!revealDone && (
               <p className="text-xs mt-2" style={{ color: C.muted }}>Watch the court…</p>
             )}
@@ -653,14 +674,14 @@ export default function PlayLab({ initialPlay = SEED, onBack, onPlayChange }) {
               <div className="min-w-0">
                 <span className="font-bold tracking-tight text-lg block truncate">{play.name}</span>
                 <span className="text-xs font-mono" style={{ color: C.dim }}>
-                  {play.category} · {play.frames.length} BEATS · {play.counters.length} READS
+                  {play.category} · {play.frames.length} BEATS
                 </span>
               </div>
             </>
           ) : (
             <>
               <span className="font-bold tracking-tight text-lg">PlayLab</span>
-              <span className="text-xs font-mono" style={{ color: C.dim }}>{play.frames.length} BEATS · {play.counters.length} READS</span>
+              <span className="text-xs font-mono" style={{ color: C.dim }}>{play.frames.length} BEATS</span>
               <a href="/plays/new" className="text-xs font-medium" style={{ color: C.ball }}>Create play →</a>
               <a href="/import" className="text-xs font-medium ml-3" style={{ color: C.muted }}>Import</a>
               <a href="/dev/review-demo" className="text-xs font-medium ml-3" style={{ color: C.muted }}>Review demo</a>

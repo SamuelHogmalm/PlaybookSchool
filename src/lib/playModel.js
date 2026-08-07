@@ -145,14 +145,20 @@ export function beatStartPositions(prevPos, frame) {
   return { ...prevPos.pos };
 }
 
+/** Editor / static court display — each beat matches one PDF frame at frame.pos. */
+export function beatDisplayState(_prevFrame, frame, _beatIdx) {
+  return { tokenPos: frame?.pos ?? {}, endPos: null, ball: frame?.ball ?? null };
+}
+
 /**
  * Turn a drawn stroke into an Action + frame updates.
  * Pass/handoff start from the player's current spot on this beat (after prior dribbles, etc.).
  */
 export function actionFromStroke({ tool, points, prevPos, curPos, ball, existingActions = [] }) {
-  if (!tool || points.length < 2 || !prevPos) return { error: "Draw a longer line on the court." };
+  const basePos = prevPos ?? curPos;
+  if (!tool || points.length < 2 || !basePos) return { error: "Draw a longer line on the court." };
 
-  const effective = effectivePositions(prevPos, curPos, existingActions);
+  const effective = effectivePositions(basePos, curPos, existingActions);
   let path = simplifyPath(points);
   const start = path[0];
   const end = path[path.length - 1];

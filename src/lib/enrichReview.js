@@ -1,3 +1,5 @@
+import { normalizeImportedPlay } from "@/lib/normalizePlay";
+
 /** Build crop map key — must match services/importer/interpret.py */
 export function cropKey(playName, beatIndex) {
   const safe = [...playName].filter((ch) => /[a-zA-Z0-9-_]/.test(ch)).join("");
@@ -13,48 +15,86 @@ export function applyBreakdownsToRawPlays(plays, breakdowns = {}) {
       ...play,
       breakdown: bd,
       breakdownStale: false,
-      counters: (bd.counters ?? []).map((c) => ({
-        trigger: c.trigger,
-        answer: c.response,
-      })),
     };
   });
+}
+
+/** Map breakdown motion type to frame action type. */
+const MOTION_ACTION_TYPE = {
+  dribble: "dribble",
+  pass: "pass",
+  handoff: "handoff",
+  screen: "screen",
+  cut: "cut",
+  fill: "cut",
+  relocate: "cut",
+};
+
+/** Apply breakdown motion order onto frame actions (after AI import). */
+export function syncMotionOrderToActions(play) {
+  const motions = play.breakdown?.motions;
+  const frames = play.frames ?? play.beats;
+  if (!motions?.length || !frames?.length) return play;
+
+  const byBeat = {};
+  for (const m of motions) {
+    const bid = m.beatId ?? m.beat;
+    if (!bid) continue;
+    if (!byBeat[bid]) byBeat[bid] = [];
+    byBeat[bid].push(m);
+  }
+
+  const nextFrames = frames.map((frame, idx) => {
+    const beatMotions =
+      byBeat[frame.id] ?? byBeat[`b${idx + 1}`] ?? [];
+    if (!beatMotions.length || !(frame.actions?.length)) return frame;
+
+    const orderByKey = new Map();
+    for (const m of beatMotions) {
+      const pid = m.playerId ?? m.by;
+      const type = MOTION_ACTION_TYPE[m.type] ?? m.type;
+      if (pid && type) orderByKey.set(`${pid}:${type}`, m.order);
+    }
+
+    const actions = frame.actions.map((a) => {
+      const order = orderByKey.get(`${a.by}:${a.type}`);
+      return order != null ? { ...a, order } : a;
+    });
+
+    return { ...frame, actions };
+  });
+
+  if (play.frames) return { ...play, frames: nextFrames };
+  if (play.beats) return { ...play, beats: nextFrames };
+  return { ...play, frames: nextFrames };
 }
 
 /** Turn imported play (beat notes + optional breakdown) into review-screen shape. */
 export function enrichPlayFromImport(play) {
   const bd = play.breakdown;
-  const beatNotes = play.frames.map((f) => f.note).filter(Boolean);
+  const normalized = normalizeImportedPlay(play);
+  const beatNotes = normalized.frames.map((f) => f.note).filter(Boolean);
 
+  const objective = bd?.intent?.trim();
   const purpose =
-    bd?.intent?.trim() ||
-    play.purpose ||
-    (beatNotes.length
-      ? beatNotes[0]
-      : "Execute spacing and reads; know your role on each beat.");
+    objective ||
+    normalized.purpose ||
+    (beatNotes.length ? beatNotes[0] : "Know where to go on every beat.");
 
   let summary;
   if (bd?.intent) {
-    const parts = [play.name, bd.intent.trim()];
-    if (bd.advantage?.trim()) parts.push(bd.advantage.trim());
-    summary = parts.join(" — ");
+    summary = `${normalized.name} — ${bd.intent.trim()}`;
   } else if (beatNotes.length > 0) {
-    summary = `${play.name} — ${play.frames.length}-beat ${(play.category ?? "Set").toLowerCase()}. ${beatNotes[0]}`;
+    summary = `${normalized.name} — ${normalized.frames.length}-beat ${(normalized.category ?? "Set").toLowerCase()}. ${beatNotes[0]}`;
   } else {
-    summary = `${play.name} — ${play.frames.length}-beat ${(play.category ?? "Set").toLowerCase()}.`;
+    summary = `${normalized.name} — ${normalized.frames.length}-beat ${(normalized.category ?? "Set").toLowerCase()}.`;
   }
 
   return {
-    ...play,
+    ...normalized,
     summary,
     purpose,
     verified: false,
-    counters:
-      play.counters?.length > 0
-        ? play.counters
-        : (bd?.counters ?? []).map((c) => ({
-            trigger: c.trigger,
-            answer: c.response,
-          })),
+    counters: [],
   };
 }

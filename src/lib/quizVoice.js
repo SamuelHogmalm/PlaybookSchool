@@ -39,7 +39,7 @@ export function actionAnswer(prev, cur, playerId, beatActions, playerMovedOnBeat
     steps.push(`Hand off to ${handoffAction.for}`);
   }
   if (screenAction) {
-    steps.push(`Set a ball screen for ${screenAction.for}`);
+    steps.push(`Set a screen for ${screenAction.for}`);
   }
   if (dribbleAction && dest) {
     steps.push(`Dribble to ${dest}`);
@@ -65,15 +65,16 @@ export function passLookAnswer(forId, prev, cur, beatActions) {
   const end = beatEndPositions(prev, cur)[forId] ?? cur.pos[forId];
   const dest = end ? spotShort(end) : "the open man";
   const roll = beatActions.some((a) => a.type === "cut" && String(a.by) === String(forId));
-  if (roll && dest.includes("block")) return `Hit ${forId} on the roll`;
-  if (dest.includes("corner")) return `Skip to ${forId} in the corner`;
-  if (dest.includes("wing")) return `Kick to ${forId} on the wing`;
-  if (dest.includes("elbow") || dest.includes("top")) return `Hit ${forId} at the top`;
+  if (roll && dest.includes("block")) return `Pass to ${forId} at the block`;
+  if (dest.includes("corner")) return `Pass to ${forId} in the corner`;
+  if (dest.includes("wing")) return `Pass to ${forId} on the wing`;
+  if (dest.includes("slot")) return `Pass to ${forId} in the slot`;
+  if (dest.includes("elbow") || dest.includes("top")) return `Pass to ${forId} at the top`;
   return `Pass to ${forId} at ${dest}`;
 }
 
 export function handoffLookAnswer(forId) {
-  return `Hand off to ${forId} and roll`;
+  return `Hand off to ${forId}`;
 }
 
 export function ballHolderAnswer(holderId, myId) {
@@ -119,40 +120,49 @@ export function runningPlay(playName) {
   return playName ? `Running ${playName}.` : "";
 }
 
-export function spotStem(playName, myId) {
-  return `${runningPlay(playName)} ${youAre(myId)} Where do you go?`.trim();
+export function spotStem(_playName, myId) {
+  return `${youAre(myId)} Where do you go on this beat?`.trim();
 }
 
-export function drawStem(playName, myId) {
-  return `${runningPlay(playName)} ${youAre(myId)} Draw it.`.trim();
+export function formationStem(playName, myId) {
+  const set = playName ? `You're running ${playName}` : "See the set";
+  return `${set} — where should you be?`.trim();
 }
 
-export function watchStem(playName, myId) {
-  return `${runningPlay(playName)} ${youAre(myId)} What's your next move?`.trim();
+export function formationSubText() {
+  return "Tap your starting spot on the floor.";
 }
 
-export function ballPassStem(playName, myId, prev, cur, youPass) {
+export function drawStem(_playName, myId) {
+  return `${youAre(myId)} Draw your route.`.trim();
+}
+
+export function watchStem(_playName, myId) {
+  return `${youAre(myId)} What do you do next?`.trim();
+}
+
+export function ballPassStem(_playName, myId, prev, cur, youPass) {
   const sit = ballSituation(prev, myId);
   if (youPass) {
-    return `${runningPlay(playName)} ${youAre(myId)} ${sit} Who's your first look?`.trim();
+    return `${youAre(myId)} ${sit} Who's your first look?`.trim();
   }
-  return `${runningPlay(playName)} ${sit} Who gets the pass?`.trim();
+  return `${sit} Who gets the pass?`.trim();
 }
 
-export function ballHandoffStem(playName, myId, prev, youHandoff) {
+export function ballHandoffStem(_playName, myId, prev, youHandoff) {
   const sit = ballSituation(prev, myId);
   if (youHandoff) {
-    return `${runningPlay(playName)} ${youAre(myId)} ${sit} Who do you hand off to?`.trim();
+    return `${youAre(myId)} ${sit} Hand off to who?`.trim();
   }
-  return `${runningPlay(playName)} ${sit} Who receives the handoff?`.trim();
+  return `${sit} Who receives the handoff?`.trim();
 }
 
-export function ballHolderStem(playName, myId, prev) {
-  return `${runningPlay(playName)} ${youAre(myId)} Who has the ball?`.trim();
+export function ballHolderStem(_playName, myId) {
+  return `${youAre(myId)} Who has the ball?`.trim();
 }
 
-export function readStem(playName, trigger) {
-  return `${runningPlay(playName)} ${trigger} What's the read?`.trim();
+export function lookStem(playName) {
+  return playName ? `Running ${playName}. What's the main look?` : "What's the main look?";
 }
 
 export function identifyStem() {
@@ -228,22 +238,18 @@ export function actionDistractorPool(prev, cur, myId, beatActions, playerMovedOn
   }
 
   const flips = [
-    "Curl over the screen to the elbow",
-    "Flare to the corner",
-    "Reject the screen and drive left",
-    "Dive to the rim",
+    "Cut to the corner",
+    "Fill the slot",
+    "Flare to the wing",
     "Pop to the top",
     "Drift to the weakside corner",
-    "Seal your man and post",
-    "Back cut to the rim",
+    "Roll to the rim",
+    "Cut to the basket",
+    "Fill the wing",
+    "Move to the elbow",
     "Relocate to the corner",
-    "Set a pin down for 2",
   ];
   pool.push(...flips);
-
-  if (playName) {
-    pool.push(`Hold — that's ${playName} spacing on the other side`);
-  }
 
   return pool;
 }
@@ -256,10 +262,10 @@ export function passDistractorPool(prev, cur, myId, beatActions, passerId, playe
   }
   pool.push(
     "Skip to the weakside corner",
-    "Hit the roll man",
+    "Pass to the slot",
     "Reset to the top",
-    "Drive and kick",
-    "Swing it to the second side"
+    "Swing to the wing",
+    "Fill the corner"
   );
   return pool;
 }
@@ -296,7 +302,7 @@ export function contrastiveFeedback({ playName, guess, correct, altPlay }) {
   if (altPlay && altPlay !== playName) {
     return `Not quite. ${guess} — that's ${altPlay}. On ${playName}, ${correct.charAt(0).toLowerCase()}${correct.slice(1)}.`;
   }
-  return `Not quite. ${guess} isn't the read here. ${correct}.`;
+  return `Not quite. ${guess} isn't it. ${correct}.`;
 }
 
 /** Feedback after a missed spot or draw — uses coach beat note when available. */
@@ -315,104 +321,13 @@ export function spotDrawSuccess(frameNote) {
   return "Nice — you've got the spot.";
 }
 
-/** Use play breakdown when available for read distractors. */
-export function readOptionsFromBreakdown(play, correctAnswer) {
+/** Use play breakdown for main-look MC distractors — other plays' intents, not reads. */
+export function lookOptionsFromBreakdown(play, correctAnswer) {
   const bd = play?.breakdown;
   const pool = [];
-
-  if (bd?.counters?.length) {
-    for (const c of bd.counters) {
-      if (c.response && c.response !== correctAnswer) pool.push(c.response);
-    }
-  }
-  if (bd?.roles) {
-    for (const r of Object.values(bd.roles)) {
-      if (r?.commonError) pool.push(r.commonError);
-    }
-  }
-  return pool;
-}
-
-export function roleJobFromBreakdown(play, myId) {
-  const job = play?.breakdown?.roles?.[myId]?.job;
-  return job?.trim() || null;
-}
-
-export function roleErrorFromBreakdown(play, myId) {
-  return play?.breakdown?.roles?.[myId]?.commonError?.trim() || null;
-}
-
-export function roleKeysFromBreakdown(play, myId) {
-  const keys = play?.breakdown?.roles?.[myId]?.keys;
-  if (!keys?.length) return null;
-  return keys.filter(Boolean).join(" · ");
-}
-
-/** Coach stem — what we're hunting. */
-export function intentStem(playName) {
-  return `Running ${playName}. What shot are we hunting?`;
-}
-
-export function advantageStem(playName) {
-  return `Running ${playName}. How do we create that look?`;
-}
-
-export function beatPurposeStem(playName, beatLabel) {
-  return `On ${playName}, why does ${beatLabel} exist?`;
-}
-
-export function spacingStem(playName) {
-  return `Running ${playName}. Which spacing rule matters?`;
-}
-
-export function roleKeysStem(myId) {
-  return `${youAre(myId)} What's key for you on this play?`;
-}
-
-export function progressionStem(playName, situation) {
-  const bit = situation?.trim() ? `${situation.trim()} — ` : "";
-  return `Running ${playName}. ${bit}what's your second look?`;
-}
-
-/** Pull realistic wrong answers from the same play's breakdown. */
-export function breakdownWrongPool(play, correct, { includeRoles = true, includeSpacing = true } = {}) {
-  const bd = play?.breakdown;
-  const pool = [];
-  if (!bd) return pool;
-
-  for (const field of ["intent", "advantage", "entry"]) {
-    const v = bd[field]?.trim();
-    if (v && v !== correct) pool.push(v);
-  }
-  if (bd.counters?.length) {
-    for (const c of bd.counters) {
-      const v = (c.response ?? c.answer)?.trim();
-      if (v && v !== correct) pool.push(v);
-    }
-  }
-  if (includeRoles && bd.roles) {
-    for (const r of Object.values(bd.roles)) {
-      if (r?.job?.trim() && r.job !== correct) pool.push(r.job);
-      if (r?.commonError?.trim()) pool.push(r.commonError);
-      for (const k of r?.keys ?? []) {
-        if (k?.trim() && k !== correct) pool.push(k);
-      }
-    }
-  }
-  if (includeSpacing && bd.spacingRules?.length) {
-    for (const s of bd.spacingRules) {
-      if (s?.trim() && s !== correct) pool.push(s);
-    }
-  }
-  if (bd.beatPurposes) {
-    for (const p of Object.values(bd.beatPurposes)) {
-      if (p?.trim() && p !== correct) pool.push(p);
-    }
-  }
-  if (bd.commonBreakdowns?.length) {
-    for (const b of bd.commonBreakdowns) {
-      if (b?.trim() && b !== correct) pool.push(b);
-    }
+  for (const field of ["entry", "advantage"]) {
+    const v = bd?.[field]?.trim();
+    if (v && v !== correctAnswer) pool.push(v);
   }
   return pool;
 }

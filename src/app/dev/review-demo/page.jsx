@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { loadAllPlays } from "@/lib/playData";
+import { getDemoCropsForPlay, hasDemoCrops } from "@/lib/demoCrops";
 import PlayReview from "@/app/play/PlayReview";
 
 function loadDemoPlays() {
@@ -25,10 +26,11 @@ export default function ReviewDemoPage() {
 
   if (selected != null) {
     const play = plays[selected];
+    const crops = getDemoCropsForPlay(play.name);
     return (
       <PlayReview
         play={{ ...play, verified: !!verified[play.name] }}
-        crops={{}}
+        crops={crops}
         backLabel="← Demo plays"
         onBack={() => setSelected(null)}
         onPlayChange={(updated) => {
@@ -36,7 +38,7 @@ export default function ReviewDemoPage() {
         }}
         onVerified={() => setVerified((v) => ({ ...v, [play.name]: true }))}
         runLabel="RUN DEMO"
-        showCropCompare={false}
+        showCropCompare
         theme="paper"
       />
     );
@@ -51,6 +53,9 @@ export default function ReviewDemoPage() {
         <h1 className="font-display text-xl font-bold">Practice reviewing a play</h1>
         <p className="text-sm text-ink-soft mt-1">
           Pre-saved interpreted plays — no PDF upload or AI credits. Same editor as real import review.
+          {hasDemoCrops("Alabama") && (
+            <> Open <strong>Alabama</strong> to see PDF vs model comparison.</>
+          )}
         </p>
         <p className="text-sm text-ink-soft mt-1">
           {plays.length} plays · {stats.beats} beats · {stats.actions} drawn actions

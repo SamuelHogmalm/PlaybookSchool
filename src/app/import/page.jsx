@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { checkImporterHealth, interpretPlays, parsePdf, breakdownPlays } from "@/lib/importerApi";
 import { normalizeImportedPlay } from "@/lib/normalizePlay";
-import { applyBreakdownsToRawPlays } from "@/lib/enrichReview";
+import { applyBreakdownsToRawPlays, syncMotionOrderToActions } from "@/lib/enrichReview";
 import { useImportSession } from "./ImportContext";
 
 export default function ImportPage() {
@@ -50,9 +50,11 @@ export default function ImportPage() {
           usage = interpreted.usage;
           needsReview = interpreted.needs_review ?? [];
 
-          setStatus("Breaking down each play — what we're hunting, reads, and jobs…");
+          setStatus("Breaking down each play — movements and main look…");
           const broken = await breakdownPlays(plays, crops, null, setStatus);
-          plays = applyBreakdownsToRawPlays(plays, broken.breakdowns ?? {});
+          plays = applyBreakdownsToRawPlays(plays, broken.breakdowns ?? {}).map((p) =>
+            syncMotionOrderToActions({ ...p, beats: p.beats ?? p.frames }),
+          );
           usage = {
             input_tokens: (usage?.input_tokens ?? 0) + (broken.usage?.input_tokens ?? 0),
             output_tokens: (usage?.output_tokens ?? 0) + (broken.usage?.output_tokens ?? 0),
@@ -60,6 +62,9 @@ export default function ImportPage() {
         }
 
         const normalized = plays.map(normalizeImportedPlay);
+        if (parsed.meta?.crop_warning) {
+          setStatus(parsed.meta.crop_warning);
+        }
         setSession({
           filename: file.name,
           plays: normalized,
@@ -93,7 +98,7 @@ export default function ImportPage() {
         <p className="font-data text-[10px] uppercase tracking-widest text-ink-soft mb-0.5">Import</p>
         <h1 className="font-display text-xl font-bold">Upload FastDraw PDF</h1>
         <p className="text-sm text-ink-soft mt-1">
-          Stage 1 extracts positions · Stage 2 reads arrows per beat · Stage 3 breaks down each play
+          Stage 1 extracts positions · Stage 2 interprets arrows per beat · Stage 3 breaks down each play
         </p>
       </header>
 
@@ -138,7 +143,15 @@ export default function ImportPage() {
             )}
           </label>
 
-          {status && <p className="text-sm mt-4 text-center text-jersey animate-pulse">{status}</p>}
+          {status && (
+            <p className={`text-sm mt-4 text-center px-3 py-2 border animate-pulse ${
+              status.toLowerCase().includes("poppler") || status.toLowerCase().includes("crop")
+                ? "border-flag text-flag"
+                : "text-jersey border-transparent"
+            }`}>
+              {status}
+            </p>
+          )}
           {error && (
             <p className="text-sm mt-4 text-center px-3 py-2 border border-flag text-flag">{error}</p>
           )}

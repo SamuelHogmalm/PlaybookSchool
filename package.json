@@ -2,12 +2,19 @@
   "name": "playlab",
   "version": "0.1.0",
   "private": true,
+  "imports": {
+    "@/lib/*": "./src/lib/*",
+    "@/app/*": "./src/app/*",
+    "@/hooks/*": "./src/hooks/*",
+    "@/components/*": "./src/components/*"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "seed:test-users": "node scripts/seed-test-users.mjs",
+    "test:animator": "node scripts/test-positions-at.mjs",
     "reset:accounts": "node scripts/reset-accounts.mjs"
   },
   "dependencies": {

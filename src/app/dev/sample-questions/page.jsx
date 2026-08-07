@@ -20,7 +20,7 @@ function formatQuestion(q, n) {
       const mark = o === q.correct ? " *" : "";
       lines.push(`     - ${o}${mark}`);
     }
-  } else if (q.kind === "spot" || q.kind === "draw") {
+  } else if (q.kind === "formation" || q.kind === "draw") {
     lines.push(`   (tap/draw — no MC options)`);
   }
   return lines.join("\n");
@@ -96,9 +96,9 @@ export default function SampleQuestionsPage() {
       </Link>
       <h1 className="font-display text-xl font-bold mt-2 mb-1">Sample quiz questions</h1>
       <p className="text-sm text-ink-soft mb-2">
-        Breakdown-driven coach/read questions when{" "}
-        <code className="text-xs">plays-breakdowns.json</code> has data. Spot/draw/ball still
-        from beat actions.
+        Breakdown-driven main-look questions when{" "}
+        <code className="text-xs">plays-breakdowns.json</code> has data. Formation, draw, and
+        next-spot MC from beat actions.
       </p>
       <p className="text-sm text-ink-soft mb-4">
         Breakdowns loaded: <strong>{stats.withBreakdown}</strong> / {stats.total} plays

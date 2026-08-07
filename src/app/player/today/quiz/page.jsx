@@ -21,7 +21,7 @@ export default function TodayQuizPage() {
       </p>
       <h1 className="font-display text-xl font-bold mb-1">Team quiz</h1>
       <p className="text-sm text-ink-soft mb-4">
-        Pick your position — spot, draw, watch, and role questions from every play in the playbook, plus a few name-that-play clips.
+        Pick your position — starting spots, draw your routes, and remember where to go on each beat.
       </p>
 
       <PlayerQuizSession

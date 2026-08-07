@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import {
   C,
   W,
@@ -10,7 +10,6 @@ import {
   CourtSurface,
   Token,
   ActionLayer,
-  MovementArrows,
   FlyingBall,
   toSvg,
 } from "@/app/court/Court";
@@ -26,9 +25,22 @@ import {
   sampleStroke,
   uid,
 } from "@/lib/playModel";
-import { getPlaybackState, playerHasBall, timelineDuration } from "@/lib/playback";
-
-const SPEED_OPTIONS = [0.5, 1, 2];
+import {
+  reindexBeatActions,
+  appendBeatAction,
+  actionTimingRows,
+  moveTimingStep,
+  mergeStepWithNext,
+  splitActionToNewStep,
+} from "@/lib/breakdownUtils";
+import ActiveRouteLayer from "@/app/play/ActiveRouteLayer";
+import {
+  buildSequentialTimeline,
+  getSequentialPlaybackState,
+  sequentialTimelineDuration,
+} from "@/lib/sequentialPlayback";
+import { playerHasBallFromState } from "@/hooks/useSequentialPlayback";
+import { SPEED_OPTIONS } from "@/lib/playback";
 
 function pathToSvgD(points) {
   if (!points?.length) return "";
@@ -91,7 +103,7 @@ export default function PlayDrawEditor({
   theme = "dark",
 }) {
   const paper = theme === "paper";
-  const [internalIdx, setInternalIdx] = useState(1);
+  const [internalIdx, setInternalIdx] = useState(0);
   const idx = controlledIdx ?? internalIdx;
   const setIdx = onBeatIdxChange ?? setInternalIdx;
 
@@ -113,12 +125,14 @@ export default function PlayDrawEditor({
   const safeIdx = Math.min(idx, Math.max(0, play.frames.length - 1));
   const frame = play.frames[safeIdx];
   const prev = safeIdx > 0 ? play.frames[safeIdx - 1] : null;
-  const totalMs = timelineDuration(play.frames, speed);
+  const timeline = useMemo(() => buildSequentialTimeline(play.frames), [play.frames]);
+  const totalMs = sequentialTimelineDuration(timeline, speed);
   const isPlaying = playing;
   const viewingScrub = !playing && elapsedMs > 0 && elapsedMs < totalMs;
-  const playback = isPlaying || viewingScrub ? getPlaybackState(play.frames, elapsedMs, speed) : null;
+  const playback = isPlaying || viewingScrub ? getSequentialPlaybackState(timeline, elapsedMs * speed) : null;
   const canEdit = !isPlaying;
-  const canDraw = !!lineTool && safeIdx > 0 && canEdit;
+  const canDraw = !!lineTool && canEdit;
+  const posBase = prev?.pos ?? frame.pos;
 
   useEffect(() => {
     if (idx !== safeIdx) setIdx(safeIdx);
@@ -204,7 +218,7 @@ export default function PlayDrawEditor({
     e.stopPropagation();
 
     if (canDraw) {
-      const effective = prev ? effectivePositions(prev.pos, frame.pos, frame.actions) : frame.pos;
+      const effective = effectivePositions(posBase, frame.pos, frame.actions);
       const p = clampCourt(effective[id] ?? frame.pos[id]);
       drawing.current = true;
       strokeRef.current = [p];
@@ -260,7 +274,7 @@ export default function PlayDrawEditor({
     const result = actionFromStroke({
       tool: lineTool,
       points,
-      prevPos: prev?.pos,
+      prevPos: posBase,
       curPos: frame.pos,
       ball: frame.ball,
       existingActions: frame.actions,
@@ -272,7 +286,7 @@ export default function PlayDrawEditor({
     }
 
     const { action, patch } = result;
-    const updates = { actions: [...frame.actions, action] };
+    const updates = { actions: appendBeatAction(frame.actions, action) };
     if (patch.pos) updates.pos = patch.pos;
     if (patch.ball) updates.ball = patch.ball;
     updateFrame(updates);
@@ -316,37 +330,43 @@ export default function PlayDrawEditor({
 
   const removeLastAction = () => {
     if (!frame.actions.length) return;
-    updateFrame({ actions: frame.actions.slice(0, -1) });
+    const next = reindexBeatActions(frame.actions.slice(0, -1));
+    updateFrame({ actions: next, inferMoves: next.length ? frame.inferMoves : false });
     setMsg("Removed last line");
   };
 
-  const shown = playback || frame;
+  const timingRows = useMemo(() => actionTimingRows(frame.actions), [frame.actions]);
+
+  const removeAction = (actionId) => {
+    const next = reindexBeatActions(frame.actions.filter((x) => x.id !== actionId));
+    updateFrame({
+      actions: next,
+      inferMoves: next.length ? frame.inferMoves : false,
+    });
+    setMsg("Removed movement");
+  };
+
+  const clearAllActions = () => {
+    if (!frame.actions.length) return;
+    updateFrame({ actions: [], inferMoves: false });
+    setMsg("Cleared all lines on this beat");
+  };
+
+  const tokenPos = playback?.pos ?? frame.pos;
   const captionNote = playback?.note;
-  const layerFrame = playback ? play.frames[playback.beatIdx] : frame;
-  const layerPrev =
-    playback && playback.beatIdx > 0 ? play.frames[playback.beatIdx - 1] : prev;
-  const nextFrame = safeIdx < play.frames.length - 1 ? play.frames[safeIdx + 1] : null;
-  const activeHint = safeIdx === 0
-    ? nextFrame
-      ? "Beat 1: starting spots. Gold arrows preview movement on Beat 2."
-      : "Beat 1: drag players into starting spots. Then add Beat 2 to draw movement."
-    : lineTool
-      ? LINE_TOOLS.find((t) => t.id === lineTool)?.hint
-      : nextFrame
-        ? "Gold arrows = where everyone goes on the next beat. Drag players or draw lines."
-        : "Drag any player to move them. Pick a line type below to draw cuts, passes, screens.";
+  const activeHint = lineTool
+    ? LINE_TOOLS.find((t) => t.id === lineTool)?.hint
+    : "Each beat = one PDF frame. Drag players, draw lines to match the diagram.";
 
   const startPos = prev ? beatStartPositions(prev, frame) : frame.pos;
   const endPos = prev ? beatEndPositions(prev, frame) : frame.pos;
-  const showNextBeatPreview = canEdit && !isPlaying && !viewingScrub && nextFrame;
-
   const distPt = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
   return (
     <div className="flex flex-col gap-4">
       <div className={paper ? "ps-editor-toolbar" : "rounded-lg p-3"} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}` }}>
         <div className={`text-xs mb-2 font-mono ${paper ? "text-ink-soft uppercase tracking-widest" : ""}`} style={paper ? undefined : { color: C.dim, letterSpacing: "0.1em" }}>
-          LINE TOOLS {safeIdx === 0 && <span className={paper ? "text-jersey" : ""} style={paper ? undefined : { color: C.ball }}>— switch to Beat 2+ to draw</span>}
+          LINE TOOLS
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <button
@@ -375,18 +395,16 @@ export default function PlayDrawEditor({
           </button>
           {LINE_TOOLS.map((t) => {
             const active = lineTool === t.id;
-            const disabled = safeIdx === 0;
             const stroke = toolColor(t.color);
             return (
               <button
                 key={t.id}
                 type="button"
-                disabled={disabled}
                 onClick={() => setLineTool(t.id)}
                 className={
                   paper
-                    ? `ps-editor-tool-btn disabled:opacity-35 ${active ? "is-active" : ""}`
-                    : "flex flex-col items-center gap-1 px-3 py-2 rounded min-w-[72px] disabled:opacity-35"
+                    ? `ps-editor-tool-btn ${active ? "is-active" : ""}`
+                    : "flex flex-col items-center gap-1 px-3 py-2 rounded min-w-[72px]"
                 }
                 style={
                   paper
@@ -429,26 +447,11 @@ export default function PlayDrawEditor({
               onPointerUp={onCourtUp}
               suffix="-draw"
             >
-              {showNextBeatPreview && (
-                <MovementArrows
-                  prev={frame}
-                  frame={nextFrame}
-                  suffix="-draw"
-                  fromPositions={frame.pos}
-                  toPositions={nextFrame.pos}
-                />
+              {canEdit && !isPlaying && !viewingScrub && frame.actions.length > 0 && (
+                <ActionLayer frame={frame} prev={prev} suffix="-draw" />
               )}
-              {layerPrev && (isPlaying || viewingScrub) && (
-                <MovementArrows
-                  prev={layerPrev}
-                  frame={layerFrame}
-                  suffix="-draw-play"
-                  fromPositions={beatStartPositions(layerPrev, layerFrame)}
-                  toPositions={beatEndPositions(layerPrev, layerFrame)}
-                />
-              )}
-              {layerPrev && (canEdit || isPlaying || viewingScrub) && (
-                <ActionLayer frame={layerFrame} prev={layerPrev} suffix="-draw" />
+              {(isPlaying || viewingScrub) && playback && (
+                <ActiveRouteLayer activeRoutes={playback.activeRoutes ?? []} suffix="-draw" />
               )}
               {canEdit && draftPoints.length > 1 && <DraftStroke points={draftPoints} tool={lineTool} />}
               {playback?.ballInAir && <FlyingBall x={playback.ballInAir.x} y={playback.ballInAir.y} />}
@@ -456,8 +459,12 @@ export default function PlayDrawEditor({
                 <g key={id} data-player-token>
                   <Token
                     id={id}
-                    p={shown.pos[id]}
-                    hasBall={playerHasBall(playback, frame, id)}
+                    p={tokenPos[id]}
+                    hasBall={
+                      playback
+                        ? playerHasBallFromState(playback, id)
+                        : frame.ball === id
+                    }
                     draggable={canEdit}
                     onDown={onPlayerDown}
                   />
@@ -466,7 +473,7 @@ export default function PlayDrawEditor({
             </CourtSurface>
           </div>
 
-          {captionNote && isPlaying && (
+          {captionNote && (isPlaying || viewingScrub) && (
             <div className={`mt-2 px-3 py-2 text-sm max-w-md ${paper ? "border border-rule bg-paper-2" : "rounded"}`} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}`, color: C.text, maxWidth: 420 }}>
               <span className={`text-xs font-mono mr-2 ${paper ? "text-jersey font-data" : ""}`} style={paper ? undefined : { color: C.ball }}>BEAT {(playback?.beatIdx ?? 0) + 1}</span>
               {captionNote}
@@ -583,38 +590,130 @@ export default function PlayDrawEditor({
           </div>
 
           <div className={paper ? "ps-editor-side" : "rounded-lg p-3"} style={paper ? undefined : { background: C.panel, border: `1px solid ${C.line}` }}>
-            <div className={`text-xs mb-2 flex items-center justify-between ${paper ? "font-data uppercase tracking-widest text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>
-              <span>Movements this beat</span>
-              {frame.actions.length > 0 && (
-                <button type="button" onClick={removeLastAction} className={`text-xs ${paper ? "text-chalk font-semibold" : ""}`} style={paper ? undefined : { color: C.ball }}>
-                  Undo last
-                </button>
-              )}
-            </div>
-            {safeIdx === 0 ? (
-              <p className={`text-xs ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>Starting alignment — drag players into spots.</p>
-            ) : frame.actions.length === 0 ? (
-              <p className={`text-xs ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>No movements yet — draw a line or drag a player.</p>
-            ) : (
-              <ul className="space-y-2">
-                {frame.actions.map((a, i) => (
-                  <li key={a.id} className="flex justify-between gap-2 text-sm border-b border-rule/50 pb-1.5 last:border-0">
-                    <span className={paper ? "text-ink font-data text-xs" : ""} style={paper ? undefined : { color: C.text }}>
-                      <span className={paper ? "text-ink-soft" : ""} style={paper ? undefined : { color: C.dim }}>{i + 1}. </span>
-                      {actionLabel(a)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateFrame({ actions: frame.actions.filter((x) => x.id !== a.id) })}
-                      className={`text-xs shrink-0 ${paper ? "text-ink-soft" : ""}`}
-                      style={paper ? undefined : { color: C.dim }}
-                      aria-label="Remove movement"
-                    >
-                      ✕
+            <div className={`text-xs mb-2 flex items-center justify-between gap-2 ${paper ? "font-data uppercase tracking-widest text-ink-soft" : ""}`} style={paper ? undefined : { color: C.dim }}>
+              <span>Play order this beat</span>
+              <div className="flex gap-2">
+                {frame.actions.length > 0 && (
+                  <>
+                    <button type="button" onClick={clearAllActions} className={`text-xs ${paper ? "text-flag font-semibold" : ""}`} style={paper ? undefined : { color: C.bad }}>
+                      Clear all
                     </button>
-                  </li>
+                    <button type="button" onClick={removeLastAction} className={`text-xs ${paper ? "text-chalk font-semibold" : ""}`} style={paper ? undefined : { color: C.ball }}>
+                      Undo last
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+            {frame.actions.length === 0 ? (
+              <p className={`text-xs ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>No lines yet — pick a line type and draw on the court.</p>
+            ) : (
+              <>
+              <div className="space-y-2">
+                {timingRows.map((row, rowIdx) => (
+                  <div
+                    key={row.step}
+                    className={`rounded border p-2 ${paper ? "border-rule bg-paper-2/40" : ""}`}
+                    style={paper ? undefined : { borderColor: C.line, background: C.panel2 }}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className={`text-[10px] font-semibold uppercase tracking-widest ${paper ? "font-data text-jersey" : "font-mono"}`} style={paper ? undefined : { color: C.ball }}>
+                        Step {row.step}
+                        {row.items.length > 1 && (
+                          <span className={`ml-1.5 normal-case font-normal ${paper ? "text-ink-soft" : ""}`} style={paper ? undefined : { color: C.muted }}>
+                            · same time
+                          </span>
+                        )}
+                      </span>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          type="button"
+                          disabled={rowIdx === 0}
+                          onClick={() => {
+                            updateFrame({ actions: moveTimingStep(frame.actions, rowIdx, -1) });
+                            setMsg("Moved step earlier");
+                          }}
+                          className={`px-1.5 py-0.5 text-xs ${paper ? "text-ink-soft disabled:opacity-30" : ""}`}
+                          style={paper ? undefined : { color: C.muted }}
+                          title="Move step earlier"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={rowIdx === timingRows.length - 1}
+                          onClick={() => {
+                            updateFrame({ actions: moveTimingStep(frame.actions, rowIdx, 1) });
+                            setMsg("Moved step later");
+                          }}
+                          className={`px-1.5 py-0.5 text-xs ${paper ? "text-ink-soft disabled:opacity-30" : ""}`}
+                          style={paper ? undefined : { color: C.muted }}
+                          title="Move step later"
+                        >
+                          ↓
+                        </button>
+                        {rowIdx < timingRows.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateFrame({ actions: mergeStepWithNext(frame.actions, rowIdx) });
+                              setMsg("Merged with next step — same time");
+                            }}
+                            className={`px-1.5 py-0.5 text-[10px] ${paper ? "text-chalk font-semibold" : ""}`}
+                            style={paper ? undefined : { color: C.ball }}
+                            title="Run with next step at the same time"
+                          >
+                            + next
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <ul className="space-y-1">
+                      {row.items.map((a) => (
+                        <li key={a.id} className="flex items-center justify-between gap-2 text-xs">
+                          <span className={`flex-1 min-w-0 ${paper ? "text-ink font-data" : ""}`} style={paper ? undefined : { color: C.text }}>
+                            {actionLabel(a)}
+                            {a.uncertain && (
+                              <span className="ml-1 text-flag font-semibold" title={a.reason ?? "AI uncertain — verify this line"}>
+                                ?
+                              </span>
+                            )}
+                          </span>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {row.items.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  updateFrame({ actions: splitActionToNewStep(frame.actions, a.id) });
+                                  setMsg("Split to own step");
+                                }}
+                                className={`px-1 text-[10px] ${paper ? "text-ink-soft" : ""}`}
+                                style={paper ? undefined : { color: C.dim }}
+                                title="Own step"
+                              >
+                                split
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeAction(a.id)}
+                              className={`text-xs px-1 ${paper ? "text-ink-soft" : ""}`}
+                              style={paper ? undefined : { color: C.dim }}
+                              aria-label="Remove movement"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
+              <p className={`text-[10px] mt-2 ${paper ? "text-ink-soft font-data" : ""}`} style={paper ? undefined : { color: C.dim }}>
+                Each step runs in order. Use <strong>+ next</strong> to put moves on the same row (same time).
+              </p>
+              </>
             )}
             {safeIdx > 0 && prev && (
               <div className={`mt-3 pt-3 border-t ${paper ? "border-rule" : ""}`} style={paper ? undefined : { borderColor: C.line }}>
@@ -643,4 +742,4 @@ export default function PlayDrawEditor({
   );
 }
 
-export { getPlaybackState, timelineDuration } from "@/lib/playback";
+export { buildSequentialTimeline, sequentialTimelineDuration } from "@/lib/sequentialPlayback";

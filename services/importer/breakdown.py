@@ -1,4 +1,4 @@
-"""Play-level breakdown — one Claude call per play after beats are verified."""
+"""Play-level breakdown — movements + main look only."""
 
 from __future__ import annotations
 
@@ -20,9 +20,19 @@ DEFAULT_MODEL = os.environ.get(
 )
 RUBRIC_PATH = Path(__file__).resolve().parents[2] / "docs" / "how-to-break-down-a-play.md"
 
-PROMPT_TEMPLATE = """You are a high school basketball coach breaking down one of your own plays so your players can learn it.
+TYPE_ORDER = {
+    "dribble": 1,
+    "pass": 2,
+    "handoff": 2,
+    "screen": 3,
+    "cut": 4,
+    "fill": 4,
+    "relocate": 4,
+}
 
---- COACHING RUBRIC (follow this) ---
+PROMPT_TEMPLATE = """You translate one basketball play diagram into our animated model.
+
+--- RUBRIC ---
 {rubric}
 --- END RUBRIC ---
 
@@ -32,27 +42,41 @@ Coach's notes: {notes}
 
 Return strict JSON, no prose, no markdown fences:
 {{
-  "intent": "the specific shot we're hunting",
-  "advantage": "how we create it",
-  "entry": "how it starts",
-  "beatPurposes": {{"beatId": "why this beat exists"}},
-  "reads": [{{"playerId": "1", "beatId": "b2", "situation": "...", "progression": ["first look", "second look"], "trigger": "..."}}],
-  "roles": {{"1": {{"job": "...", "keys": ["..."], "commonError": "..."}}, "2": {{...}}, "3": {{...}}, "4": {{...}}, "5": {{...}}}},
-  "spacingRules": ["..."],
-  "counters": [{{"trigger": "...", "response": "...", "why": "..."}}],
-  "situations": ["..."],
-  "commonBreakdowns": ["..."],
-  "confidence": "high|medium|low",
-  "needsCoachInput": ["direct question if unsure"]
+  "intent": "one sentence — the final shot this play hunts (main look only)",
+  "motions": [
+    {{
+      "beatId": "b1",
+      "order": 1,
+      "playerId": "1",
+      "type": "dribble|pass|handoff|screen|cut|fill|relocate",
+      "description": "short factual movement — angle, timing, destination"
+    }}
+  ]
 }}
 
-Second person, present tense, coach voice throughout. Be honest about uncertainty in needsCoachInput."""
+MOTIONS — list every movement on every beat in play order (order restarts at 1 each beat):
+- dribble → pass/handoff → screen → cut/fill/relocate within a beat unless the diagram clearly shows another sequence
+- one pass arrow = one pass — never list pass options or reads
+- screener order number must be lower than the cutter they screen for
+
+Do NOT output: reads, roles, counters, situations, spacingRules, beatPurposes, advantage, entry, or coaching essays.
+
+## How animation uses this data
+
+The coach app plays beats **one action at a time** in `order` within each beat:
+dribble → pass/handoff → screen → cut/fill/relocate. Parallel motion only when
+actions share the same order step. One pass arrow = one animated pass. If the
+diagram is ambiguous, omit the motion — the coach will fix it in review."""
 
 
 def load_rubric() -> str:
+    parts = []
+    knowledge_path = RUBRIC_PATH.parent / "basketball-diagram-knowledge.md"
+    if knowledge_path.is_file():
+        parts.append(knowledge_path.read_text(encoding="utf-8"))
     if RUBRIC_PATH.is_file():
-        return RUBRIC_PATH.read_text(encoding="utf-8")
-    return "Every play hunts a specific shot. Name it first."
+        parts.append(RUBRIC_PATH.read_text(encoding="utf-8"))
+    return "\n\n".join(parts) if parts else "List movements in order. Name the main look in one sentence."
 
 
 def beats_for_prompt(play: dict[str, Any]) -> list[dict[str, Any]]:
@@ -74,6 +98,49 @@ def coach_notes(play: dict[str, Any]) -> str:
     notes = [b.get("note", "").strip() for b in play.get("beats", play.get("frames", []))]
     notes = [n for n in notes if n]
     return " | ".join(notes) if notes else "none"
+
+
+def normalize_breakdown(data: dict[str, Any], play: dict[str, Any]) -> dict[str, Any]:
+    """Keep only intent + motions; ensure motion order per beat."""
+    beats = play.get("beats", play.get("frames", []))
+    beat_ids = [b.get("id") for b in beats if b.get("id")]
+
+    motions: list[dict[str, Any]] = []
+    for raw in data.get("motions") or []:
+        if not isinstance(raw, dict):
+            continue
+        m = dict(raw)
+        bid = m.get("beatId") or m.get("beat") or (beat_ids[0] if beat_ids else "b1")
+        m["beatId"] = bid
+        if m.get("order") is None:
+            m["order"] = TYPE_ORDER.get(str(m.get("type", "")), 99)
+        motions.append(m)
+
+    by_beat: dict[str, list[dict[str, Any]]] = {}
+    for m in motions:
+        by_beat.setdefault(str(m["beatId"]), []).append(m)
+
+    normalized: list[dict[str, Any]] = []
+    ordered_beats = beat_ids or sorted(by_beat.keys())
+    for bid in ordered_beats:
+        group = sorted(
+            by_beat.get(str(bid), []),
+            key=lambda x: (int(x.get("order", 99)), TYPE_ORDER.get(str(x.get("type", "")), 99)),
+        )
+        for j, m in enumerate(group, 1):
+            m["order"] = j
+            normalized.append(m)
+
+    intent = (data.get("intent") or "").strip()
+    if not intent:
+        legacy = data.get("mainReads")
+        if isinstance(legacy, list) and legacy:
+            intent = str(legacy[0]).strip()
+
+    return {
+        "intent": intent,
+        "motions": normalized,
+    }
 
 
 async def breakdown_one_play(
@@ -123,6 +190,7 @@ async def breakdown_one_play(
 
     raw = "".join(block.text for block in message.content if block.type == "text")
     data = parse_model_json(raw)
+    data = normalize_breakdown(data, play)
     data["breakdownStale"] = False
     data["breakdownModel"] = model
     return data, usage

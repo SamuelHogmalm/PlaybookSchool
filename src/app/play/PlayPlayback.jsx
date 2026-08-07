@@ -1,58 +1,43 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useMemo, useState } from "react";
 import {
   COURT_MAX_W,
-  IDS,
   CourtSurface,
   Token,
-  ActionLayer,
-  MovementArrows,
   FlyingBall,
+  IDS,
 } from "@/app/court/Court";
-import { beatEndPositions, beatStartPositions } from "@/lib/playModel";
-import { getPlaybackState, playerHasBall, SPEED_OPTIONS, timelineDuration } from "@/lib/playback";
+import { SPEED_OPTIONS } from "@/lib/playback";
+import ActiveRouteLayer from "@/app/play/ActiveRouteLayer";
+import {
+  buildSequentialTimeline,
+  getSequentialPlaybackState,
+  sequentialTimelineDuration,
+} from "@/lib/sequentialPlayback";
+import { playerHasBallFromState, useSequentialPlayback } from "@/hooks/useSequentialPlayback";
 
-/** Read-only court + RUN PLAY — paper theme by default */
+/** Read-only court + RUN PLAY — beat-by-beat sequential animation */
 export default function PlayPlayback({ play, theme = "paper" }) {
   const paper = theme === "paper";
   const [playing, setPlaying] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [idx, setIdx] = useState(0);
-  const raf = useRef(null);
 
   const frames = play.frames;
-  const totalMs = timelineDuration(frames, speed);
-  const inPlayback = playing || elapsedMs > 0;
-  const playback = inPlayback ? getPlaybackState(frames, elapsedMs, speed) : null;
-  const frame = frames[idx];
-  const prev = idx > 0 ? frames[idx - 1] : null;
-  const next = idx < frames.length - 1 ? frames[idx + 1] : null;
-  const shown = playback || frame;
-  const captionNote = playback?.note ?? frame?.note;
-  const layerFrame = playback ? frames[playback.beatIdx] : frame;
-  const layerPrev = playback && playback.beatIdx > 0 ? frames[playback.beatIdx - 1] : prev;
+  const timeline = useMemo(() => buildSequentialTimeline(frames), [frames]);
+  const totalMs = sequentialTimelineDuration(timeline, speed);
+  const { elapsedMs, setElapsedMs, state: playback } = useSequentialPlayback(frames, {
+    speed,
+    playing,
+    onBeatChange: setIdx,
+    onDone: () => setPlaying(false),
+  });
 
-  useEffect(() => {
-    if (!playing) return;
-    let last = performance.now();
-    const step = (now) => {
-      const dt = now - last;
-      last = now;
-      setElapsedMs((prevMs) => {
-        const nextMs = prevMs + dt;
-        if (nextMs >= totalMs) {
-          setPlaying(false);
-          return totalMs;
-        }
-        return nextMs;
-      });
-      raf.current = requestAnimationFrame(step);
-    };
-    raf.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf.current);
-  }, [playing, totalMs]);
+  const inPlayback = playing || elapsedMs > 0;
+  const frame = frames[idx];
+  const shown = inPlayback ? playback : frame;
+  const captionNote = inPlayback ? playback?.note : null;
 
   return (
     <div>
@@ -60,31 +45,25 @@ export default function PlayPlayback({ play, theme = "paper" }) {
         className={`overflow-hidden border w-full mx-auto ${COURT_MAX_W} ${paper ? "ps-court-frame border-rule" : "rounded-lg"}`}
       >
         <CourtSurface suffix="-review" theme={theme}>
-          {!inPlayback && next?.pos && (
-            <MovementArrows
-              prev={frame}
-              frame={next}
-              suffix="-review-next"
-              fromPositions={frame.pos}
-              toPositions={next.pos}
-            />
-          )}
-          {layerPrev && inPlayback && (
-            <MovementArrows
-              prev={layerPrev}
-              frame={layerFrame}
-              suffix="-review-play"
-              fromPositions={beatStartPositions(layerPrev, layerFrame)}
-              toPositions={beatEndPositions(layerPrev, layerFrame)}
-            />
-          )}
-          {!inPlayback && <ActionLayer frame={frame} prev={prev} suffix="-review" />}
-          {layerPrev && inPlayback && (
-            <ActionLayer frame={layerFrame} prev={layerPrev} suffix="-review-play" />
-          )}
-          {playback?.ballInAir && <FlyingBall x={playback.ballInAir.x} y={playback.ballInAir.y} />}
+          {inPlayback ? (
+            <>
+              <ActiveRouteLayer activeRoutes={playback.activeRoutes ?? []} suffix="-review" />
+              {playback?.ballInAir && (
+                <FlyingBall x={playback.ballInAir.x} y={playback.ballInAir.y} />
+              )}
+            </>
+          ) : null}
           {IDS.map((id) => (
-            <Token key={id} id={id} p={shown.pos[id]} hasBall={playerHasBall(playback, frame, id)} />
+            <Token
+              key={id}
+              id={id}
+              p={shown?.pos?.[id] ?? frame?.pos?.[id]}
+              hasBall={
+                inPlayback
+                  ? playerHasBallFromState(playback, id)
+                  : frame?.ball === id
+              }
+            />
           ))}
         </CourtSurface>
       </div>
@@ -154,3 +133,5 @@ export default function PlayPlayback({ play, theme = "paper" }) {
     </div>
   );
 }
+
+export { playerHasBallFromState };

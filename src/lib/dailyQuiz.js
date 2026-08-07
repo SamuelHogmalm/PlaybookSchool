@@ -2,6 +2,8 @@ import {
   generateFlashcardDeck,
   QUIZ_CATEGORIES,
   CATEGORY_ORDER,
+  ensureWatchFirst,
+  enrichBeatRecap,
 } from "@/lib/quiz";
 import { enrichPlayForQuiz } from "@/lib/playData";
 import { identifyStem, identifySub, categoryStem } from "@/lib/quizVoice";
@@ -127,6 +129,34 @@ function identifyQuestions(plays, seed, count = 2, progress = null) {
   }));
 }
 
+function beatsQuestions(plays, seed, count = 2, progress = null) {
+  const ordered = progress?.attempts?.length
+    ? sortByWeakness(
+        plays.map((play) => ({ play, playName: play.name, category: "beats" })),
+        progress,
+        seed + 11
+      ).map((x) => x.play)
+    : seededShuffle(plays, seed + 11);
+
+  return ordered.slice(0, Math.min(count, plays.length)).map((play, i) => {
+    const n = play.frames?.length ?? 0;
+    const pool = ["3", "4", "5", "6", "7", "8", "9"].filter((x) => x !== String(n));
+    return {
+      kind: "mc",
+      category: "beats",
+      play,
+      playName: play.name,
+      watchFullPlay: true,
+      skipReveal: true,
+      introMode: "watch",
+      prompt: "How many beats in this play?",
+      sub: "Watch the full play — then count the steps.",
+      correct: String(n),
+      options: mcOptions(String(n), pool, 4, seed + i * 67),
+    };
+  });
+}
+
 function categoryQuestions(plays, seed, count = 1, progress = null) {
   const categories = [...new Set(plays.map((p) => p.category || "Set"))];
   if (categories.length < 2) return [];
@@ -227,31 +257,26 @@ export function generateDailyQuizDeck(plays, myId = "4", opts = {}) {
   }
 
   const playerSeed = seed + Number(myId) * 9973;
-  const roleTarget = Math.max(8, Math.round(maxCards * 0.78));
-  const playbookTarget = maxCards - roleTarget;
+  const roleTarget = maxCards;
 
   const rolePool = collectRolePool(eligible, myId, playerSeed);
   const roleCards = pickRoleCards(rolePool, roleTarget, playerSeed, progress);
 
-  const playbookCards = [
-    ...identifyQuestions(eligible, playerSeed, Math.min(2, playbookTarget), progress),
-    ...categoryQuestions(eligible, playerSeed, 1, progress),
-  ].slice(0, playbookTarget);
-
   const used = new Set();
   const finalize = (q) => {
-    const key = questionKey(q);
+    const enriched = ensureWatchFirst(enrichBeatRecap(q));
+    const key = questionKey(enriched);
     if (used.has(key)) return null;
     used.add(key);
     return {
-      ...q,
+      ...enriched,
       id: key,
-      categoryMeta: DAILY_QUIZ_CATEGORIES[q.category] ?? QUIZ_CATEGORIES[q.category],
+      categoryMeta: DAILY_QUIZ_CATEGORIES[enriched.category] ?? QUIZ_CATEGORIES[enriched.category],
     };
   };
 
   const pool = [];
-  for (const q of [...roleCards, ...playbookCards]) {
+  for (const q of roleCards) {
     const card = finalize(q);
     if (card) pool.push(card);
   }

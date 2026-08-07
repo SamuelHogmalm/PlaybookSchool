@@ -1,9 +1,45 @@
-import { IDS } from "@/app/court/Court";
-import { effectivePositions } from "@/lib/playModel";
+import { IDS } from "./playModel.js";
+import { effectivePositions } from "./playModel.js";
+import { sortBeatActions, stageKeyForType } from "./breakdownUtils.js";
 
-export const BEAT_DURATION_MS = 2000;
-export const BEAT_HOLD_MS = 600;
-export const SPEED_OPTIONS = [0.5, 1, 2];
+import { BEAT_DURATION_MS, BEAT_HOLD_MS } from "./animation/constants.js";
+
+export { BEAT_DURATION_MS, BEAT_HOLD_MS };
+export const SPEED_OPTIONS = [0.5, 0.75, 1, 1.5];
+export const QUIZ_BEAT_HOLD_MS = BEAT_HOLD_MS;
+export const QUIZ_BEAT_TRANS_MS = BEAT_DURATION_MS;
+
+/** Legacy smooth-lerp playback — not used by quiz or editor Run Play */
+
+/** Staged action order within one beat transition (quiz / learning playback only) */
+const STAGE = {
+  dribble: [0, 0.24],
+  ball: [0.24, 0.54],
+  screen: [0.54, 0.74],
+  move: [0.74, 1],
+};
+
+function stageProgress(f, [start, end]) {
+  if (f <= start) return 0;
+  if (f >= end) return 1;
+  return easeInOut((f - start) / (end - start));
+}
+
+function actionStage(type) {
+  const key = stageKeyForType(type);
+  if (key === "dribble") return STAGE.dribble;
+  if (key === "ball") return STAGE.ball;
+  if (key === "screen") return STAGE.screen;
+  return STAGE.move;
+}
+
+function localProgressInStage(f, stageWindow, index, count) {
+  const [start, end] = stageWindow;
+  const len = end - start;
+  const slotStart = start + (index / count) * len;
+  const slotEnd = start + ((index + 1) / count) * len;
+  return stageProgress(f, [slotStart, slotEnd]);
+}
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -21,13 +57,18 @@ export function timelineDuration(frames, speed) {
   return (n * BEAT_HOLD_MS + (n - 1) * BEAT_DURATION_MS) / speed;
 }
 
+export function quizTimelineDuration(frames, speed) {
+  const n = frames.length;
+  if (n <= 1) return QUIZ_BEAT_HOLD_MS / speed;
+  return (n * QUIZ_BEAT_HOLD_MS + (n - 1) * QUIZ_BEAT_TRANS_MS) / speed;
+}
+
 function polylineLength(pts) {
   let len = 0;
   for (let i = 1; i < pts.length; i++) len += dist(pts[i - 1], pts[i]);
   return len;
 }
 
-/** Point at fraction t ∈ [0,1] along a polyline path */
 export function samplePolyline(pts, t) {
   if (!pts?.length) return null;
   if (pts.length === 1) return { ...pts[0] };
@@ -48,87 +89,156 @@ export function samplePolyline(pts, t) {
   return { ...pts[pts.length - 1] };
 }
 
-function passRoute(action, prevFrame, nextFrame) {
-  const idx = nextFrame.actions.indexOf(action);
-  const prior = nextFrame.actions.slice(0, idx);
+function frameActions(nextFrame) {
+  return sortBeatActions(nextFrame.actions ?? []);
+}
+
+function passRoute(action, prevFrame, nextFrame, actions) {
+  const idx = actions.indexOf(action);
+  const prior = idx >= 0 ? actions.slice(0, idx) : [];
   const atPos = effectivePositions(prevFrame.pos, nextFrame.pos, prior);
   if (action.path?.length >= 2) return action.path.map((p) => ({ ...p }));
   const from = atPos[action.by] ?? prevFrame.pos[action.by];
-  const to = nextFrame.pos[action.for];
-  return [from, to].map((p) => ({ ...p }));
+  const to = atPos[action.for] ?? nextFrame.pos[action.for];
+  if (!from || !to) return [];
+  return [{ ...from }, { ...to }];
 }
 
-/** Animate players along action paths during a beat transition (cuts, dribbles, handoffs). */
-export function getTransitionPositions(prevFrame, nextFrame, f) {
+/** Default — all players drift smoothly to their next spots (original feel). */
+export function getSmoothTransitionPositions(prevFrame, nextFrame, f) {
+  const a = prevFrame.pos;
+  const b = nextFrame.pos;
   const out = {};
   IDS.forEach((id) => {
-    out[id] = {
-      x: lerp(prevFrame.pos[id].x, nextFrame.pos[id].x, f),
-      y: lerp(prevFrame.pos[id].y, nextFrame.pos[id].y, f),
-    };
+    if (a[id] && b[id]) {
+      out[id] = { x: lerp(a[id].x, b[id].x, f), y: lerp(a[id].y, b[id].y, f) };
+    }
+  });
+  return out;
+}
+
+/** Quiz learning playback — dribble, then ball, then screens, then cuts/movement */
+export function getStagedTransitionPositions(prevFrame, nextFrame, f) {
+  const actions = frameActions(nextFrame);
+  const actionMovers = new Set(actions.filter((a) => a.by).map((a) => a.by));
+  const moveF = stageProgress(f, STAGE.move);
+  const out = {};
+
+  IDS.forEach((id) => {
+    const from = prevFrame.pos[id];
+    const to = nextFrame.pos[id];
+    if (!from || !to) return;
+    if (!actionMovers.has(id)) {
+      out[id] = { x: lerp(from.x, to.x, moveF), y: lerp(from.y, to.y, moveF) };
+    } else {
+      out[id] = { ...from };
+    }
   });
 
-  for (let i = 0; i < nextFrame.actions.length; i++) {
-    const a = nextFrame.actions[i];
-    if (!["cut", "dribble", "screen", "handoff"].includes(a.type)) continue;
+  const stageBuckets = { dribble: [], ball: [], screen: [], move: [] };
+  for (const a of actions) {
+    if (!["cut", "dribble", "screen", "handoff", "fill", "relocate"].includes(a.type)) continue;
+    stageBuckets[stageKeyForType(a.type)].push(a);
+  }
 
-    const prior = nextFrame.actions.slice(0, i);
-    const atPos = effectivePositions(prevFrame.pos, nextFrame.pos, prior);
-    const from = atPos[a.by] ?? prevFrame.pos[a.by];
-    const end = a.path?.length ? a.path[a.path.length - 1] : nextFrame.pos[a.by];
-    const route = a.path?.length >= 2 ? a.path : [from, end];
-    out[a.by] = samplePolyline(route, f);
+  for (const stageKey of ["dribble", "ball", "screen", "move"]) {
+    const group = stageBuckets[stageKey];
+    for (let gi = 0; gi < group.length; gi++) {
+      const a = group[gi];
+      const prior = actions.slice(0, actions.indexOf(a));
+      const atPos = effectivePositions(prevFrame.pos, nextFrame.pos, prior);
+      const from = atPos[a.by] ?? prevFrame.pos[a.by];
+      const end = a.path?.length ? a.path[a.path.length - 1] : nextFrame.pos[a.by];
+      const route = a.path?.length >= 2 ? a.path : [from, end];
+      const window = actionStage(a.type);
+      const localF = localProgressInStage(f, window, gi, group.length);
+      out[a.by] = samplePolyline(route, localF);
+    }
   }
 
   return out;
 }
 
+export function getTransitionPositions(prevFrame, nextFrame, f, opts = {}) {
+  if (opts.staged) return getStagedTransitionPositions(prevFrame, nextFrame, f);
+  return getSmoothTransitionPositions(prevFrame, nextFrame, f);
+}
+
 const HANDOFF_BALL_MEET = 0.88;
 
-function resolveBall(prevFrame, nextFrame, f) {
-  const handoff = nextFrame.actions.find((a) => a.type === "handoff");
+function animatePassAlongRoute(route, ballF) {
+  const releaseAt = 0.22;
+  const catchAt = 0.78;
+
+  if (ballF < releaseAt) {
+    return { inAir: false, progress: 0, phase: "hold" };
+  }
+  if (ballF >= catchAt) {
+    return { inAir: false, progress: 1, phase: "caught" };
+  }
+
+  const t = (ballF - releaseAt) / (catchAt - releaseAt);
+  const eased = easeInOut(t);
+  const p = samplePolyline(route, eased);
+  const arc = Math.sin(t * Math.PI) * 16;
+  return { inAir: true, point: { x: p.x, y: p.y - arc }, phase: "air" };
+}
+
+function resolveBall(prevFrame, nextFrame, f, opts = {}) {
+  const actions = frameActions(nextFrame);
+  const ballF = opts.staged ? stageProgress(f, STAGE.ball) : f;
+  const startBall = prevFrame.ball;
+
+  const handoff = actions.find((a) => a.type === "handoff");
   if (handoff) {
-    if (f < HANDOFF_BALL_MEET) {
+    if (ballF < HANDOFF_BALL_MEET) {
       return { ballCarrier: handoff.by, ballInAir: null };
     }
     return { ballCarrier: handoff.for, ballInAir: null };
   }
 
-  const pass = nextFrame.actions.find((a) => a.type === "pass");
+  const ballActions = actions.filter((a) => a.type === "pass" || a.type === "handoff");
 
-  if (pass) {
-    const route = passRoute(pass, prevFrame, nextFrame);
-    const releaseAt = 0.22;
-    const catchAt = 0.78;
-
-    if (f < releaseAt) {
-      return { ballCarrier: pass.by, ballInAir: null };
+  if (ballActions.length) {
+    const slot = Math.min(ballActions.length - 1, Math.floor(ballF * ballActions.length));
+    const localF =
+      ballActions.length === 1 ? ballF : ballF * ballActions.length - slot;
+    const activePass = ballActions[slot];
+    const route = passRoute(activePass, prevFrame, nextFrame, actions);
+    if (route.length >= 2) {
+      const anim = animatePassAlongRoute(route, localF);
+      if (anim.phase === "hold") return { ballCarrier: activePass.by, ballInAir: null };
+      if (anim.phase === "caught") return { ballCarrier: activePass.for, ballInAir: null };
+      return { ballCarrier: null, ballInAir: anim.point };
     }
-    if (f >= catchAt) {
-      return { ballCarrier: pass.for, ballInAir: null };
-    }
-
-    const t = (f - releaseAt) / (catchAt - releaseAt);
-    const eased = easeInOut(t);
-    const p = samplePolyline(route, eased);
-    const arc = Math.sin(t * Math.PI) * 16;
-    return { ballCarrier: null, ballInAir: { x: p.x, y: p.y - arc } };
   }
 
-  const dribble = nextFrame.actions.find((a) => a.type === "dribble" && a.by === prevFrame.ball);
-  const carrier = dribble ? dribble.by : f < 0.5 ? prevFrame.ball : nextFrame.ball;
+  const dribble = actions.find((a) => a.type === "dribble" && a.by === startBall);
+  if (dribble) {
+    const dribF = opts.staged ? stageProgress(f, STAGE.dribble) : f;
+    if (dribF < 1) return { ballCarrier: dribble.by, ballInAir: null };
+  }
+
+  if (startBall && nextFrame.ball && startBall !== nextFrame.ball) {
+    const from = prevFrame.pos[startBall];
+    const to = prevFrame.pos[nextFrame.ball] ?? nextFrame.pos[nextFrame.ball];
+    if (from && to && dist(from, to) >= 14) {
+      const anim = animatePassAlongRoute([from, to], ballF);
+      if (anim.phase === "hold") return { ballCarrier: startBall, ballInAir: null };
+      if (anim.phase === "caught") return { ballCarrier: nextFrame.ball, ballInAir: null };
+      return { ballCarrier: null, ballInAir: anim.point };
+    }
+  }
+
+  const carrier = f < 0.5 ? startBall ?? prevFrame.ball : nextFrame.ball;
   return { ballCarrier: carrier, ballInAir: null };
 }
 
-/**
- * Playback state including animated in-air ball for passes.
- * ballCarrier — player who shows the ball on their token (null if in air)
- * ballInAir — { x, y } while the ball travels between players
- */
-export function getPlaybackState(frames, elapsedMs, speed) {
+export function getPlaybackState(frames, elapsedMs, speed, opts = {}) {
   if (!frames.length) return null;
-  const hold = BEAT_HOLD_MS / speed;
-  const trans = BEAT_DURATION_MS / speed;
+  const staged = opts.staged ?? false;
+  const hold = (staged ? QUIZ_BEAT_HOLD_MS : BEAT_HOLD_MS) / speed;
+  const trans = (staged ? QUIZ_BEAT_TRANS_MS : BEAT_DURATION_MS) / speed;
   let t = 0;
 
   for (let i = 0; i < frames.length; i++) {
@@ -143,6 +253,7 @@ export function getPlaybackState(frames, elapsedMs, speed) {
         note: frame.note,
         inTransition: false,
         transitionF: 0,
+        staged,
       };
     }
     t += hold;
@@ -151,8 +262,8 @@ export function getPlaybackState(frames, elapsedMs, speed) {
       if (elapsedMs < t + trans) {
         const raw = (elapsedMs - t) / trans;
         const f = easeInOut(raw);
-        const out = getTransitionPositions(frames[i], frames[i + 1], f);
-        const { ballCarrier, ballInAir } = resolveBall(frames[i], frames[i + 1], f);
+        const out = getTransitionPositions(frames[i], frames[i + 1], f, { staged });
+        const { ballCarrier, ballInAir } = resolveBall(frames[i], frames[i + 1], f, { staged });
         return {
           pos: out,
           ball: frames[i + 1].ball,
@@ -162,6 +273,7 @@ export function getPlaybackState(frames, elapsedMs, speed) {
           note: frames[i + 1].note,
           inTransition: true,
           transitionF: f,
+          staged,
         };
       }
       t += trans;
@@ -179,20 +291,20 @@ export function getPlaybackState(frames, elapsedMs, speed) {
     note: frame.note,
     inTransition: false,
     transitionF: 0,
+    staged,
   };
 }
 
-/** Whether a player token should show the ball dot */
 export function playerHasBall(playback, frame, playerId) {
   if (playback?.ballInAir) return false;
   const carrier = playback?.ballCarrier ?? playback?.ball ?? frame?.ball;
   return carrier === playerId;
 }
 
-/** Animate one beat transition (quiz reveal, etc.) */
 export function getBeatTransitionState(prevFrame, nextFrame, elapsedMs, opts = {}) {
-  const hold = (opts.holdMs ?? BEAT_HOLD_MS) / (opts.speed ?? 1);
-  const trans = (opts.transMs ?? BEAT_DURATION_MS) / (opts.speed ?? 1);
+  const staged = opts.staged ?? false;
+  const hold = (opts.holdMs ?? (staged ? QUIZ_BEAT_HOLD_MS : BEAT_HOLD_MS)) / (opts.speed ?? 1);
+  const trans = (opts.transMs ?? (staged ? QUIZ_BEAT_TRANS_MS : BEAT_DURATION_MS)) / (opts.speed ?? 1);
   const total = hold + trans;
 
   if (elapsedMs <= hold) {
@@ -203,13 +315,14 @@ export function getBeatTransitionState(prevFrame, nextFrame, elapsedMs, opts = {
       ballInAir: null,
       done: false,
       totalMs: total,
+      staged,
     };
   }
 
   if (elapsedMs <= hold + trans) {
     const f = easeInOut((elapsedMs - hold) / trans);
-    const out = getTransitionPositions(prevFrame, nextFrame, f);
-    const { ballCarrier, ballInAir } = resolveBall(prevFrame, nextFrame, f);
+    const out = getTransitionPositions(prevFrame, nextFrame, f, { staged });
+    const { ballCarrier, ballInAir } = resolveBall(prevFrame, nextFrame, f, { staged });
     return {
       pos: out,
       ball: nextFrame.ball,
@@ -217,6 +330,7 @@ export function getBeatTransitionState(prevFrame, nextFrame, elapsedMs, opts = {
       ballInAir,
       done: false,
       totalMs: total,
+      staged,
     };
   }
 
@@ -227,8 +341,9 @@ export function getBeatTransitionState(prevFrame, nextFrame, elapsedMs, opts = {
     ballInAir: null,
     done: true,
     totalMs: total,
+    staged,
   };
 }
 
-export const QUIZ_REVEAL_HOLD_MS = 500;
-export const QUIZ_REVEAL_TRANS_MS = 1600;
+export const QUIZ_REVEAL_HOLD_MS = 350;
+export const QUIZ_REVEAL_TRANS_MS = 900;

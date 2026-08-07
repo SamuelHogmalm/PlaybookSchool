@@ -7,6 +7,7 @@ import interpretedPlays from "@/data/plays-interpreted.json";
 import playBreakdowns from "@/data/plays-breakdowns.json";
 import { normalizeImportedPlay } from "@/lib/normalizePlay";
 import { enrichPlayFromImport } from "@/lib/enrichReview";
+import { stripBreakdown } from "@/lib/breakdownUtils";
 
 /** Attach sidecar breakdown JSON onto a normalized play. */
 export function attachBreakdown(play) {
@@ -14,16 +15,9 @@ export function attachBreakdown(play) {
   if (!bd) return play;
   return {
     ...play,
-    breakdown: bd,
+    breakdown: stripBreakdown(bd),
     breakdownStale: bd.breakdownStale ?? false,
-    counters:
-      play.counters?.length > 0
-        ? play.counters
-        : (bd.counters ?? []).map((c) => ({
-            trigger: c.trigger,
-            answer: c.response ?? c.answer,
-            response: c.response ?? c.answer,
-          })),
+    counters: [],
   };
 }
 

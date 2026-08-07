@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import { beatStartPositions } from "@/lib/playModel";
 
 /** @deprecated legacy demo palette — prefer paper theme via CourtSurface */
 export const C = {
@@ -204,52 +205,60 @@ function Defs({ suffix = "" }) {
 }
 
 export function ActionLayer({ frame, prev, suffix = "" }) {
-  if (!prev) return null;
+  if (!frame?.actions?.length) return null;
   const colors = useCourtColors();
   const cutMarker = `url(#arrowCut${suffix})`;
   const ballMarker = `url(#arrowBall${suffix})`;
+  const hasPrev = !!prev?.pos;
+  const startPos = hasPrev ? beatStartPositions(prev, frame) : null;
+  const lineW = 2;
 
   const effPos = (actionIndex) => {
-    const out = { ...frame.pos };
+    const out = hasPrev ? { ...startPos } : { ...frame.pos };
     for (const a of frame.actions.slice(0, actionIndex)) {
       if (
         (a.type === "cut" || a.type === "dribble" || a.type === "screen" || a.type === "handoff") &&
         a.path?.length
       ) {
         out[a.by] = a.path[a.path.length - 1];
+      } else if (hasPrev && (a.type === "cut" || a.type === "dribble" || a.type === "screen" || a.type === "handoff")) {
+        out[a.by] = frame.pos[a.by] ?? out[a.by];
       }
     }
     return out;
   };
 
   return (
-    <g>
+    <g opacity={0.92}>
       {frame.actions.map((a, actionIndex) => {
-        const atPos = effPos(actionIndex);
-        const from = atPos[a.by] ?? prev.pos[a.by];
-        const to = frame.pos[a.by];
         const route = a.path?.length >= 2 ? a.path : null;
+        const atPos = effPos(actionIndex);
+        const from = route?.[0] ?? (hasPrev ? (atPos[a.by] ?? startPos[a.by]) : null);
+        const to = route ? route[route.length - 1] : (hasPrev ? frame.pos[a.by] : null);
 
         if (a.type === "dribble") {
           if (route) {
             const end = pathArrowEnd(route);
             const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={colors.ball} strokeWidth="2.5" markerEnd={ballMarker} />;
+            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={colors.ball} strokeWidth={lineW} markerEnd={ballMarker} />;
           }
-          return <path key={a.id} d={squigglePath(from, to)} fill="none" stroke={colors.ball} strokeWidth="2.5" markerEnd={ballMarker} />;
+          if (!from || !to) return null;
+          return <path key={a.id} d={squigglePath(from, to)} fill="none" stroke={colors.ball} strokeWidth={lineW} markerEnd={ballMarker} />;
         }
         if (a.type === "cut") {
           if (route) {
             const end = pathArrowEnd(route);
             const trimmed = end ? route.slice(0, -1).concat([end]) : route;
-            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={colors.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
+            return <path key={a.id} d={pathToSvgD(trimmed)} fill="none" stroke={colors.cut} strokeWidth={lineW} markerEnd={cutMarker} />;
           }
+          if (!from || !to) return null;
           const [p, q] = shorten(from, to, 15, 15);
-          return <line key={a.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={colors.cut} strokeWidth="2.5" markerEnd={cutMarker} />;
+          return <line key={a.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={colors.cut} strokeWidth={lineW} markerEnd={cutMarker} />;
         }
         if (a.type === "pass") {
           const target = frame.pos[a.for];
           const passFrom = route ? route[0] : from;
+          if (!passFrom || !target) return null;
           if (route) {
             const end = pathArrowEnd(route);
             const trimmed = end ? route.slice(0, -1).concat([end]) : route;
@@ -259,8 +268,8 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
                 d={pathToSvgD(trimmed)}
                 fill="none"
                 stroke={colors.ball}
-                strokeWidth="2.5"
-                strokeDasharray="9 7"
+                strokeWidth={lineW}
+                strokeDasharray="8 6"
                 markerEnd={ballMarker}
               />
             );
@@ -271,13 +280,14 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
               key={a.id}
               x1={p.x} y1={p.y} x2={q.x} y2={q.y}
               stroke={colors.ball}
-              strokeWidth="2.5"
-              strokeDasharray="9 7"
+              strokeWidth={lineW}
+              strokeDasharray="8 6"
               markerEnd={ballMarker}
             />
           );
         }
         if (a.type === "handoff") {
+          if (!from || !to) return null;
           const meet = route ? route[route.length - 1] : to;
           const handRoute = route?.length >= 2 ? route : [from, meet];
           const end = pathArrowEnd(handRoute);
@@ -289,10 +299,10 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
                 d={pathToSvgD(trimmed)}
                 fill="none"
                 stroke={colors.cut}
-                strokeWidth="2.5"
+                strokeWidth={lineW}
                 markerEnd={cutMarker}
               />
-              <circle cx={meet.x} cy={meet.y} r="6" fill="none" stroke={colors.ball} strokeWidth="2" />
+              <circle cx={meet.x} cy={meet.y} r="5" fill="none" stroke={colors.ball} strokeWidth="1.5" />
               {receiver && (
                 <line
                   x1={meet.x}
@@ -300,30 +310,31 @@ export function ActionLayer({ frame, prev, suffix = "" }) {
                   x2={receiver.x}
                   y2={receiver.y}
                   stroke={colors.ball}
-                  strokeWidth="1.5"
+                  strokeWidth="1.2"
                   strokeDasharray="2 4"
-                  opacity="0.45"
+                  opacity="0.4"
                 />
               )}
             </g>
           );
         }
         if (a.type === "screen") {
+          if (!from || !to) return null;
           const target = frame.pos[a.for];
           const moveRoute = route || [from, to];
           const endPt = route ? route[route.length - 1] : to;
           const [p, q] = shorten(moveRoute[0], endPt, 15, 2);
           const len = dist(q, target) || 1;
-          const px = (-(target.y - q.y) / len) * 13;
-          const py = ((target.x - q.x) / len) * 13;
+          const px = (-(target.y - q.y) / len) * 11;
+          const py = ((target.x - q.x) / len) * 11;
           return (
             <g key={a.id}>
               {route ? (
-                <path d={pathToSvgD(moveRoute)} fill="none" stroke={colors.screen} strokeWidth="2.5" />
+                <path d={pathToSvgD(moveRoute)} fill="none" stroke={colors.screen} strokeWidth={lineW} />
               ) : (
-                <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={colors.screen} strokeWidth="2.5" />
+                <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke={colors.screen} strokeWidth={lineW} />
               )}
-              <line x1={q.x - px} y1={q.y - py} x2={q.x + px} y2={q.y + py} stroke={colors.screen} strokeWidth="3.5" strokeLinecap="round" />
+              <line x1={q.x - px} y1={q.y - py} x2={q.x + px} y2={q.y + py} stroke={colors.screen} strokeWidth="2.5" strokeLinecap="round" />
             </g>
           );
         }
@@ -464,21 +475,64 @@ export function BeatGhostMarkers({ positions, opacity = 0.38, showLabels = true 
   );
 }
 
-export function Token({ id, p, hasBall, highlight, faded, draggable, onDown }) {
+const AVATAR_JERSEY = {
+  1: "#3b82f6",
+  2: "#22c55e",
+  3: "#f97316",
+  4: "#a855f7",
+  5: "#ef4444",
+};
+
+function AvatarBody({ id, hasBall, highlight, colors }) {
+  const jersey = AVATAR_JERSEY[id] ?? colors.muted;
+  return (
+    <>
+      {highlight && <circle r="26" fill="none" stroke={colors.ok} strokeWidth="2" opacity="0.75" />}
+      <ellipse cx="0" cy="14" rx="11" ry="13" fill={jersey} stroke={colors.line} strokeWidth="1.5" />
+      <circle cx="0" cy="-10" r="8" fill="#d4a574" stroke={colors.line} strokeWidth="1.2" />
+      <text
+        textAnchor="middle"
+        y="18"
+        fontSize="11"
+        fontWeight="800"
+        fill="#fff"
+        style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif", userSelect: "none" }}
+      >
+        {id}
+      </text>
+      {hasBall && (
+        <g transform="translate(10 -4)">
+          <circle r="6" fill={colors.ball} stroke={colors.wood} strokeWidth="1.2" />
+          <path d="M -2 -1.5 Q 0 0.5 2 -1.5" fill="none" stroke={colors.wood} strokeWidth="0.8" opacity="0.4" />
+        </g>
+      )}
+    </>
+  );
+}
+
+export function Token({ id, p, hasBall, highlight, focus, faded, draggable, onDown, variant = "default" }) {
   if (!p) return null;
   const colors = useCourtColors();
+  const fill = focus ? "#f0ede8" : colors.panel2;
+  const stroke = focus ? colors.text : hasBall ? colors.ball : colors.muted;
   return (
     <g
       transform={`translate(${p.x} ${p.y})`}
       onPointerDown={draggable ? (e) => onDown(e, id) : undefined}
       style={{ cursor: draggable ? "grab" : "default", opacity: faded ? 0.28 : 1 }}
     >
-      {highlight && <circle r="24" fill="none" stroke={colors.ok} strokeWidth="2" opacity="0.7" />}
-      <circle r="15" fill={colors.panel2} stroke={hasBall ? colors.ball : colors.muted} strokeWidth={hasBall ? 3 : 2} />
-      <text textAnchor="middle" y="5.5" fontSize="15" fontWeight="700" fill={colors.text} style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}>
-        {id}
-      </text>
-      {hasBall && <circle cx="12" cy="-12" r="5" fill={colors.ball} />}
+      {variant === "avatar" ? (
+        <AvatarBody id={id} hasBall={hasBall} highlight={highlight} colors={colors} />
+      ) : (
+        <>
+          {highlight && <circle r="24" fill="none" stroke={colors.ok} strokeWidth="2" opacity="0.7" />}
+          <circle r="15" fill={fill} stroke={stroke} strokeWidth={hasBall ? 3 : focus ? 2.5 : 2} />
+          <text textAnchor="middle" y="5.5" fontSize="15" fontWeight="700" fill={colors.text} style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}>
+            {id}
+          </text>
+          {hasBall && <circle cx="12" cy="-12" r="5" fill={colors.ball} />}
+        </>
+      )}
     </g>
   );
 }
@@ -547,12 +601,13 @@ export function CourtFrameView({
 }) {
   if (!frame?.pos) return null;
   const hasExplicitActions = (frame.actions?.length ?? 0) > 0;
-  const showInferred = showMovementLines && prev?.pos && !(showActions && hasExplicitActions);
+  const showFullInfer =
+    showMovementLines && prev?.pos && !hasExplicitActions && frame.inferMoves === true;
   return (
     <div className={`overflow-hidden border border-rule w-full ${maxWidthClass} ${theme === "paper" ? "ps-court-frame" : "rounded-lg"}`} style={theme === "paper" ? undefined : { borderColor: C.line, background: C.wood }}>
       <CourtSurface suffix={suffix} theme={theme}>
         {showGhost && prev && <BeatGhostMarkers positions={prev.pos} />}
-        {showInferred && (
+        {showFullInfer && (
           <MovementArrows
             prev={prev}
             frame={frame}
@@ -561,11 +616,18 @@ export function CourtFrameView({
             toPositions={frame.pos}
           />
         )}
-        {showActions && hasExplicitActions && prev && (
+        {showActions && hasExplicitActions && (
           <ActionLayer frame={frame} prev={prev} suffix={suffix} />
         )}
         {IDS.map((id) => (
-          <Token key={id} id={id} p={frame.pos[id]} hasBall={frame.ball === id} draggable={draggable} onDown={onDown} />
+          <Token
+            key={id}
+            id={id}
+            p={frame.pos[id]}
+            hasBall={frame.ball === id}
+            draggable={draggable}
+            onDown={onDown}
+          />
         ))}
       </CourtSurface>
     </div>
