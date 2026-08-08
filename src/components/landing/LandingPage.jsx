@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import AutoPlayCourt from "@/components/court/AutoPlayCourt";
-import PlayerQuizSession from "@/components/player/PlayerQuizSession";
-import { heroPlay } from "@/lib/plays";
+import diagnosticImg from "../../../playlab-diagnostic.png";
+import playerModeImg from "../../../playlab-player-mode.png";
 
 function StatRow({ n, children }) {
   return (
@@ -67,8 +66,16 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="order-1 lg:order-2">
-            <AutoPlayCourt play={heroPlay} className="max-w-lg mx-auto lg:ml-auto" />
-            <p className="font-display text-center lg:text-right text-lg font-semibold mt-3">{heroPlay.name}</p>
+            {/* TEMPORARY: static image during rebuild. Restore live demo after Phase 3 */}
+            {/* (see MASTER-BUILD-PLAN.md). */}
+            <div className="ps-court-frame border border-rule max-w-lg mx-auto lg:ml-auto">
+              <img
+                src={diagnosticImg.src}
+                alt="Live play animation"
+                className="max-w-full w-full h-auto block"
+              />
+            </div>
+            <p className="font-display text-center lg:text-right text-lg font-semibold mt-3">Alabama</p>
             <p className="font-data text-center lg:text-right text-xs text-ink-soft">Live play animation</p>
           </div>
         </div>
@@ -134,7 +141,13 @@ export default function LandingPage() {
             Draw-the-route questions — no competitor does this. The quiz writes itself from your play.
           </p>
           <div className="border border-rule bg-paper p-4 max-h-[520px] overflow-auto">
-            <PlayerQuizSession play={heroPlay} myId="1" />
+            {/* TEMPORARY: static image during rebuild. Restore live demo after Phase 3 */}
+            {/* (see MASTER-BUILD-PLAN.md). */}
+            <img
+              src={playerModeImg.src}
+              alt="Player quiz session"
+              className="max-w-full w-full h-auto block"
+            />
           </div>
         </div>
       </section>
