@@ -5,7 +5,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "5": {
       "x": 157,
       "y": 87
@@ -27,35 +27,18 @@
       "y": 353
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "dribble",
-      "by": "1"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "2"
-     }
-    ],
-    "note": "Point guard dribbles left wing while the wing player cuts up to the top of the key."
-   },
-   {
-    "id": "b2",
     "pos": {
      "2": {
       "x": 483,
       "y": 46
      },
      "4": {
-      "x": 335,
-      "y": 72
+      "x": 337,
+      "y": 81
      },
      "3": {
-      "x": 41,
-      "y": 205
+      "x": 39,
+      "y": 211
      },
      "5": {
       "x": 243,
@@ -66,89 +49,144 @@
       "y": 329
      }
     },
-    "ball": "5",
+    "startBall": "1",
+    "ball": "1",
     "actions": [
      {
       "id": "a1",
-      "type": "pass",
+      "type": "dribble",
       "by": "1",
-      "for": "5"
+      "order": 1,
+      "path": [
+       {
+        "x": 250,
+        "y": 353
+       },
+       {
+        "x": 59,
+        "y": 329
+       }
+      ]
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "5"
+      "by": "2",
+      "order": 2,
+      "path": [
+       {
+        "x": 454,
+        "y": 224
+       },
+       {
+        "x": 483,
+        "y": 46
+       }
+      ]
      },
      {
       "id": "a3",
       "type": "cut",
-      "by": "3"
+      "by": "5",
+      "path": [
+       {
+        "x": 157,
+        "y": 87
+       },
+       {
+        "x": 243,
+        "y": 264
+       }
+      ],
+      "derived": true,
+      "order": 3
      }
     ],
-    "note": "Player 1 passes to 5 at the elbow, while 3 cuts along the three-point line and 5 cuts to the wing."
+    "note": "Point guard dribbles left wing while the wing player cuts up to the top of the key."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "2": {
+      "x": 483,
+      "y": 46
+     },
+     "4": {
+      "x": 337,
+      "y": 81
+     },
+     "3": {
+      "x": 39,
+      "y": 211
+     },
+     "5": {
+      "x": 243,
+      "y": 264
+     },
+     "1": {
+      "x": 59,
+      "y": 329
+     }
+    },
     "pos": {
      "2": {
       "x": 483,
-      "y": 38
+      "y": 46
      },
      "4": {
-      "x": 317,
-      "y": 92
+      "x": 337,
+      "y": 81
      },
      "3": {
-      "x": 30,
-      "y": 198
+      "x": 39,
+      "y": 211
      },
      "1": {
       "x": 420,
       "y": 235
      },
      "5": {
-      "x": 226,
-      "y": 266
+      "x": 243,
+      "y": 264
      }
     },
+    "startBall": "1",
     "ball": "5",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
-      "by": "5",
-      "for": "4"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "4"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a5",
-      "type": "cut",
-      "by": "5"
-     },
-     {
-      "id": "a6",
-      "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a7",
-      "type": "cut",
-      "by": "1"
+      "by": "1",
+      "for": "5",
+      "order": 1
      }
     ],
-    "note": "Player 5 has multiple passing options while all players are cutting to different spots on the floor."
+    "note": "Player 1 passes to 5 at the elbow, while 3 cuts along the three-point line and 5 cuts to the wing."
    },
    {
-    "id": "b4",
+    "id": "b3",
+    "startPos": {
+     "2": {
+      "x": 483,
+      "y": 46
+     },
+     "4": {
+      "x": 337,
+      "y": 81
+     },
+     "3": {
+      "x": 39,
+      "y": 211
+     },
+     "1": {
+      "x": 420,
+      "y": 235
+     },
+     "5": {
+      "x": 243,
+      "y": 264
+     }
+    },
     "pos": {
      "1": {
       "x": 478,
@@ -171,35 +209,175 @@
       "y": 311
      }
     },
+    "startBall": "5",
     "ball": "3",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
+      "by": "5",
+      "for": "4",
+      "order": 1
+     },
+     {
+      "id": "a8",
+      "type": "pass",
+      "by": "4",
+      "for": "3",
+      "needsReview": true,
+      "reason": "Inserted pass 4->3 to match next frame possession ring",
+      "order": 2
+     },
+     {
+      "id": "a2",
+      "type": "cut",
+      "by": "4",
+      "order": 3,
+      "path": [
+       {
+        "x": 337,
+        "y": 81
+       },
+       {
+        "x": 252,
+        "y": 311
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
       "by": "3",
-      "for": "5"
+      "order": 4,
+      "path": [
+       {
+        "x": 39,
+        "y": 211
+       },
+       {
+        "x": 50,
+        "y": 253
+       }
+      ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "5",
+      "order": 5,
+      "path": [
+       {
+        "x": 243,
+        "y": 264
+       },
+       {
+        "x": 167,
+        "y": 98
+       }
+      ]
+     },
+     {
+      "id": "a6",
+      "type": "cut",
+      "by": "2",
+      "order": 6,
+      "path": [
+       {
+        "x": 483,
+        "y": 46
+       },
+       {
+        "x": 441,
+        "y": 248
+       }
+      ]
+     },
+     {
+      "id": "a7",
+      "type": "cut",
+      "by": "1",
+      "order": 7,
+      "path": [
+       {
+        "x": 420,
+        "y": 235
+       },
+       {
+        "x": 478,
+        "y": 66
+       }
+      ]
+     }
+    ],
+    "note": "Player 5 has multiple passing options while all players are cutting to different spots on the floor."
+   },
+   {
+    "id": "b4",
+    "startPos": {
+     "1": {
+      "x": 478,
+      "y": 66
+     },
+     "5": {
+      "x": 167,
+      "y": 98
+     },
+     "3": {
+      "x": 50,
+      "y": 253
+     },
+     "2": {
+      "x": 441,
+      "y": 248
+     },
+     "4": {
+      "x": 252,
+      "y": 311
+     }
+    },
+    "pos": {
+     "1": {
+      "x": 478,
+      "y": 66
+     },
+     "5": {
+      "x": 167,
+      "y": 98
+     },
+     "3": {
+      "x": 50,
+      "y": 253
+     },
+     "2": {
+      "x": 441,
+      "y": 248
+     },
+     "4": {
+      "x": 252,
+      "y": 311
+     }
+    },
+    "startBall": "3",
+    "ball": "5",
+    "actions": [
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "3",
+      "for": "5",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "screen",
       "by": "5",
-      "for": "1"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "1"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "4"
+      "for": "1",
+      "order": 2
      }
     ],
     "note": "Player 3 passes to 5 who sets a screen for 1 cutting to the basket while 4 cuts along the wing."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Arkansas-Rip",
@@ -207,7 +385,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "5": {
       "x": 157,
       "y": 87
@@ -229,40 +407,18 @@
       "y": 433
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "dribble",
-      "by": "1"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "5"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "2"
-     }
-    ],
-    "note": "Player 1 dribbles up while 5 cuts to the basket and 2 cuts up the wing."
-   },
-   {
-    "id": "b2",
     "pos": {
      "2": {
       "x": 483,
       "y": 46
      },
      "4": {
-      "x": 335,
-      "y": 72
+      "x": 337,
+      "y": 81
      },
      "3": {
-      "x": 41,
-      "y": 205
+      "x": 39,
+      "y": 211
      },
      "5": {
       "x": 246,
@@ -273,41 +429,96 @@
       "y": 396
      }
     },
+    "startBall": "1",
     "ball": "1",
     "actions": [
      {
       "id": "a1",
-      "type": "pass",
+      "type": "dribble",
       "by": "1",
-      "for": "5"
+      "order": 1,
+      "path": [
+       {
+        "x": 250,
+        "y": 433
+       },
+       {
+        "x": 98,
+        "y": 396
+       }
+      ]
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "5"
+      "by": "5",
+      "order": 2,
+      "path": [
+       {
+        "x": 157,
+        "y": 87
+       },
+       {
+        "x": 246,
+        "y": 294
+       }
+      ]
      },
      {
       "id": "a3",
       "type": "cut",
-      "by": "2"
+      "by": "2",
+      "order": 3,
+      "path": [
+       {
+        "x": 454,
+        "y": 224
+       },
+       {
+        "x": 483,
+        "y": 46
+       }
+      ]
      }
     ],
-    "note": "Player 1 passes to 5 who cuts to the wing while 2 cuts along the three-point line."
+    "note": "Player 1 dribbles up while 5 cuts to the basket and 2 cuts up the wing."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "2": {
+      "x": 483,
+      "y": 46
+     },
+     "4": {
+      "x": 337,
+      "y": 81
+     },
+     "3": {
+      "x": 39,
+      "y": 211
+     },
+     "5": {
+      "x": 246,
+      "y": 294
+     },
+     "1": {
+      "x": 98,
+      "y": 396
+     }
+    },
     "pos": {
      "2": {
       "x": 483,
-      "y": 38
+      "y": 46
      },
      "4": {
-      "x": 317,
-      "y": 92
+      "x": 337,
+      "y": 81
      },
      "3": {
-      "x": 30,
-      "y": 198
+      "x": 39,
+      "y": 211
      },
      "1": {
       "x": 454,
@@ -318,29 +529,59 @@
       "y": 266
      }
     },
+    "startBall": "1",
     "ball": "5",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
-      "by": "5",
-      "for": "3"
+      "by": "1",
+      "for": "5",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "5"
+      "by": "5",
+      "order": 2,
+      "path": [
+       {
+        "x": 246,
+        "y": 294
+       },
+       {
+        "x": 226,
+        "y": 266
+       }
+      ]
      }
     ],
-    "note": "5 passes to 3 in the corner while 2 cuts to the wing and 5 cuts toward the basket."
+    "note": "Player 1 passes to 5 who cuts to the wing while 2 cuts along the three-point line."
    },
    {
-    "id": "b4",
+    "id": "b3",
+    "startPos": {
+     "2": {
+      "x": 483,
+      "y": 46
+     },
+     "4": {
+      "x": 337,
+      "y": 81
+     },
+     "3": {
+      "x": 39,
+      "y": 211
+     },
+     "1": {
+      "x": 454,
+      "y": 231
+     },
+     "5": {
+      "x": 226,
+      "y": 266
+     }
+    },
     "pos": {
      "2": {
       "x": 365,
@@ -363,35 +604,135 @@
       "y": 361
      }
     },
+    "startBall": "5",
     "ball": "3",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
-      "by": "3",
-      "for": "4"
+      "by": "5",
+      "for": "3",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "1"
+      "by": "2",
+      "order": 2,
+      "path": [
+       {
+        "x": 483,
+        "y": 46
+       },
+       {
+        "x": 365,
+        "y": 72
+       }
+      ]
      },
      {
       "id": "a3",
       "type": "cut",
-      "by": "2"
+      "by": "5",
+      "order": 3,
+      "path": [
+       {
+        "x": 226,
+        "y": 266
+       },
+       {
+        "x": 109,
+        "y": 218
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "4",
+      "path": [
+       {
+        "x": 337,
+        "y": 81
+       },
+       {
+        "x": 252,
+        "y": 361
+       }
+      ],
+      "derived": true,
+      "order": 4
+     }
+    ],
+    "note": "5 passes to 3 in the corner while 2 cuts to the wing and 5 cuts toward the basket."
+   },
+   {
+    "id": "b4",
+    "startPos": {
+     "2": {
+      "x": 365,
+      "y": 72
+     },
+     "5": {
+      "x": 109,
+      "y": 218
+     },
+     "1": {
+      "x": 420,
+      "y": 235
+     },
+     "3": {
+      "x": 52,
+      "y": 248
+     },
+     "4": {
+      "x": 252,
+      "y": 361
+     }
+    },
+    "pos": {
+     "2": {
+      "x": 365,
+      "y": 72
+     },
+     "5": {
+      "x": 109,
+      "y": 218
+     },
+     "1": {
+      "x": 420,
+      "y": 235
+     },
+     "3": {
+      "x": 52,
+      "y": 248
+     },
+     "4": {
+      "x": 252,
+      "y": 361
+     }
+    },
+    "startBall": "3",
+    "ball": "4",
+    "actions": [
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "3",
+      "for": "4",
+      "order": 1
      },
      {
       "id": "a4",
       "type": "screen",
       "by": "5",
-      "for": "2"
+      "for": "2",
+      "order": 2
      }
     ],
     "note": "5 screens for 2 who cuts to the ball, while 3 passes to 4 and 1 cuts along the wing."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Conn",
@@ -399,7 +740,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "4": {
       "x": 15,
       "y": 38
@@ -421,39 +762,6 @@
       "y": 372
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "2"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "1"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a5",
-      "type": "cut",
-      "by": "4"
-     }
-    ],
-    "note": "1 passes to 2 then cuts to the wing while 3 and 4 cut across the top and 2 cuts to the corner"
-   },
-   {
-    "id": "b2",
     "pos": {
      "3": {
       "x": 17,
@@ -476,24 +784,107 @@
       "y": 255
      }
     },
+    "startBall": "1",
     "ball": "2",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
-      "by": "2",
-      "for": "5"
+      "by": "1",
+      "for": "2",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "1"
+      "by": "1",
+      "order": 2,
+      "path": [
+       {
+        "x": 261,
+        "y": 372
+       },
+       {
+        "x": 461,
+        "y": 214
+       }
+      ]
+     },
+     {
+      "id": "a3",
+      "type": "cut",
+      "by": "2",
+      "order": 3,
+      "path": [
+       {
+        "x": 322,
+        "y": 220
+       },
+       {
+        "x": 372,
+        "y": 255
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "3",
+      "order": 4,
+      "path": [
+       {
+        "x": 485,
+        "y": 40
+       },
+       {
+        "x": 17,
+        "y": 29
+       }
+      ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "4",
+      "order": 5,
+      "path": [
+       {
+        "x": 15,
+        "y": 38
+       },
+       {
+        "x": 22,
+        "y": 170
+       }
+      ]
      }
     ],
-    "note": "Player 2 passes to player 5 while player 1 cuts to the basket."
+    "note": "1 passes to 2 then cuts to the wing while 3 and 4 cut across the top and 2 cuts to the corner"
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "3": {
+      "x": 17,
+      "y": 29
+     },
+     "4": {
+      "x": 22,
+      "y": 170
+     },
+     "5": {
+      "x": 176,
+      "y": 214
+     },
+     "1": {
+      "x": 461,
+      "y": 214
+     },
+     "2": {
+      "x": 372,
+      "y": 255
+     }
+    },
     "pos": {
      "3": {
       "x": 17,
@@ -516,39 +907,76 @@
       "y": 307
      }
     },
+    "startBall": "2",
     "ball": "5",
     "actions": [
      {
       "id": "a1",
-      "type": "cut",
-      "by": "3"
+      "type": "pass",
+      "by": "2",
+      "for": "5",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "2"
+      "by": "1",
+      "order": 2,
+      "path": [
+       {
+        "x": 461,
+        "y": 214
+       },
+       {
+        "x": 459,
+        "y": 251
+       }
+      ]
      },
      {
       "id": "a3",
-      "type": "screen",
-      "by": "4",
-      "for": "5"
-     },
-     {
-      "id": "a4",
-      "type": "dribble",
-      "by": "5"
-     },
-     {
-      "id": "a5",
       "type": "cut",
-      "by": "1"
+      "by": "5",
+      "path": [
+       {
+        "x": 176,
+        "y": 214
+       },
+       {
+        "x": 239,
+        "y": 307
+       }
+      ],
+      "derived": true,
+      "order": 3
      }
     ],
-    "note": "Player 4 sets a screen for ball handler 5 who dribbles off it, while players 3, 2, and 1 make cutting movements."
+    "note": "Player 2 passes to player 5 while player 1 cuts to the basket."
    },
    {
-    "id": "b4",
+    "id": "b3",
+    "startPos": {
+     "3": {
+      "x": 17,
+      "y": 29
+     },
+     "2": {
+      "x": 478,
+      "y": 87
+     },
+     "4": {
+      "x": 22,
+      "y": 170
+     },
+     "1": {
+      "x": 459,
+      "y": 251
+     },
+     "5": {
+      "x": 239,
+      "y": 307
+     }
+    },
     "pos": {
      "4": {
       "x": 483,
@@ -571,18 +999,153 @@
       "y": 359
      }
     },
+    "startBall": "5",
     "ball": "1",
     "actions": [
      {
+      "id": "a4",
+      "type": "dribble",
+      "by": "5",
+      "order": 1,
+      "path": [
+       {
+        "x": 239,
+        "y": 307
+       },
+       {
+        "x": 135,
+        "y": 201
+       }
+      ]
+     },
+     {
+      "id": "a6",
+      "type": "pass",
+      "by": "5",
+      "for": "1",
+      "needsReview": true,
+      "reason": "Inserted pass 5->1 to match next frame possession ring",
+      "order": 2
+     },
+     {
       "id": "a1",
       "type": "cut",
-      "by": "3"
+      "by": "3",
+      "order": 3,
+      "path": [
+       {
+        "x": 17,
+        "y": 29
+       },
+       {
+        "x": 126,
+        "y": 303
+       }
+      ]
+     },
+     {
+      "id": "a2",
+      "type": "cut",
+      "by": "2",
+      "order": 4,
+      "path": [
+       {
+        "x": 478,
+        "y": 87
+       },
+       {
+        "x": 465,
+        "y": 224
+       }
+      ]
+     },
+     {
+      "id": "a3",
+      "type": "cut",
+      "by": "4",
+      "order": 5,
+      "path": [
+       {
+        "x": 22,
+        "y": 170
+       },
+       {
+        "x": 483,
+        "y": 44
+       }
+      ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "1",
+      "order": 6,
+      "path": [
+       {
+        "x": 459,
+        "y": 251
+       },
+       {
+        "x": 243,
+        "y": 359
+       }
+      ]
      }
     ],
+    "note": "Player 4 sets a screen for ball handler 5 who dribbles off it, while players 3, 2, and 1 make cutting movements."
+   },
+   {
+    "id": "b4",
+    "startPos": {
+     "4": {
+      "x": 483,
+      "y": 44
+     },
+     "5": {
+      "x": 135,
+      "y": 201
+     },
+     "2": {
+      "x": 465,
+      "y": 224
+     },
+     "3": {
+      "x": 126,
+      "y": 303
+     },
+     "1": {
+      "x": 243,
+      "y": 359
+     }
+    },
+    "pos": {
+     "4": {
+      "x": 483,
+      "y": 44
+     },
+     "5": {
+      "x": 135,
+      "y": 201
+     },
+     "2": {
+      "x": 465,
+      "y": 224
+     },
+     "3": {
+      "x": 126,
+      "y": 303
+     },
+     "1": {
+      "x": 243,
+      "y": 359
+     }
+    },
+    "startBall": "1",
+    "ball": "1",
+    "actions": [],
     "note": "Player 3 cuts up the left side toward the wing."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Down",
@@ -590,7 +1153,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "2": {
       "x": 13,
       "y": 44
@@ -612,44 +1175,10 @@
       "y": 342
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "2"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a4",
-      "type": "screen",
-      "by": "4",
-      "for": "3"
-     },
-     {
-      "id": "a5",
-      "type": "cut",
-      "by": "5"
-     }
-    ],
-    "note": "Player 1 passes to 2 while 4 screens for 3 cutting across, and 5 cuts to the wing."
-   },
-   {
-    "id": "b2",
     "pos": {
      "2": {
-      "x": 17,
-      "y": 35
+      "x": 13,
+      "y": 44
      },
      "5": {
       "x": 350,
@@ -668,53 +1197,108 @@
       "y": 264
      }
     },
+    "startBall": "1",
     "ball": "3",
     "actions": [
      {
       "id": "a1",
-      "type": "dribble",
-      "by": "3"
+      "type": "pass",
+      "by": "1",
+      "for": "2",
+      "order": 1
      },
      {
-      "id": "a2",
+      "id": "a6",
       "type": "pass",
-      "by": "3",
-      "for": "4"
+      "by": "2",
+      "for": "3",
+      "needsReview": true,
+      "reason": "Inserted pass 2->3 to match next frame possession ring",
+      "order": 2
      },
      {
       "id": "a3",
-      "type": "screen",
-      "by": "1",
-      "for": "2"
+      "type": "cut",
+      "by": "3",
+      "order": 3,
+      "path": [
+       {
+        "x": 172,
+        "y": 198
+       },
+       {
+        "x": 113,
+        "y": 253
+       }
+      ]
      },
      {
       "id": "a4",
       "type": "cut",
-      "by": "2"
+      "by": "4",
+      "order": 4,
+      "path": [
+       {
+        "x": 326,
+        "y": 203
+       },
+       {
+        "x": 263,
+        "y": 264
+       }
+      ]
      },
      {
       "id": "a5",
       "type": "cut",
-      "by": "4"
-     },
-     {
-      "id": "a6",
-      "type": "cut",
-      "by": "5"
+      "by": "5",
+      "order": 5,
+      "path": [
+       {
+        "x": 483,
+        "y": 59
+       },
+       {
+        "x": 350,
+        "y": 85
+       }
+      ]
      }
     ],
-    "note": "3 dribbles and passes to 4 while 1 screens for 2 cutting to the corner, 4 and 5 also cut"
+    "note": "Player 1 passes to 2 while 4 screens for 3 cutting across, and 5 cuts to the wing."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "2": {
+      "x": 13,
+      "y": 44
+     },
+     "5": {
+      "x": 350,
+      "y": 85
+     },
+     "1": {
+      "x": 252,
+      "y": 96
+     },
+     "3": {
+      "x": 113,
+      "y": 253
+     },
+     "4": {
+      "x": 263,
+      "y": 264
+     }
+    },
     "pos": {
      "3": {
       "x": 17,
       "y": 48
      },
      "5": {
-      "x": 352,
-      "y": 83
+      "x": 350,
+      "y": 85
      },
      "2": {
       "x": 485,
@@ -729,35 +1313,143 @@
       "y": 242
      }
     },
+    "startBall": "3",
     "ball": "4",
     "actions": [
      {
       "id": "a1",
-      "type": "cut",
-      "by": "1"
+      "type": "dribble",
+      "by": "3",
+      "order": 1,
+      "path": [
+       {
+        "x": 113,
+        "y": 253
+       },
+       {
+        "x": 17,
+        "y": 48
+       }
+      ]
      },
      {
       "id": "a2",
       "type": "pass",
-      "by": "5",
-      "for": "5"
+      "by": "3",
+      "for": "4",
+      "order": 2
      },
+     {
+      "id": "a3",
+      "type": "cut",
+      "by": "1",
+      "order": 3,
+      "path": [
+       {
+        "x": 252,
+        "y": 96
+       },
+       {
+        "x": 61,
+        "y": 209
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "2",
+      "order": 4,
+      "path": [
+       {
+        "x": 13,
+        "y": 44
+       },
+       {
+        "x": 485,
+        "y": 77
+       }
+      ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "4",
+      "order": 5,
+      "path": [
+       {
+        "x": 263,
+        "y": 264
+       },
+       {
+        "x": 241,
+        "y": 242
+       }
+      ]
+     }
+    ],
+    "note": "3 dribbles and passes to 4 while 1 screens for 2 cutting to the corner, 4 and 5 also cut"
+   },
+   {
+    "id": "b3",
+    "startPos": {
+     "3": {
+      "x": 17,
+      "y": 48
+     },
+     "5": {
+      "x": 350,
+      "y": 85
+     },
+     "2": {
+      "x": 485,
+      "y": 77
+     },
+     "1": {
+      "x": 61,
+      "y": 209
+     },
+     "4": {
+      "x": 241,
+      "y": 242
+     }
+    },
+    "pos": {
+     "3": {
+      "x": 17,
+      "y": 48
+     },
+     "5": {
+      "x": 350,
+      "y": 85
+     },
+     "2": {
+      "x": 485,
+      "y": 77
+     },
+     "1": {
+      "x": 61,
+      "y": 209
+     },
+     "4": {
+      "x": 241,
+      "y": 242
+     }
+    },
+    "startBall": "4",
+    "ball": "4",
+    "actions": [
      {
       "id": "a3",
       "type": "screen",
       "by": "5",
-      "for": "1"
-     },
-     {
-      "id": "a4",
-      "type": "dribble",
-      "by": "4"
+      "for": "1",
+      "order": 1
      }
     ],
     "note": "1 cuts baseline using 5's screen while 4 dribbles toward the wing and 5 receives a pass"
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "gswhat",
@@ -765,7 +1457,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "3": {
       "x": 16,
       "y": 38
@@ -787,34 +1479,6 @@
       "y": 395
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a3",
-      "type": "pass",
-      "by": "1",
-      "for": "4"
-     },
-     {
-      "id": "a4",
-      "type": "dribble",
-      "by": "1"
-     }
-    ],
-    "note": "Players 3 and 2 cut to the corners while 1 dribbles and passes to 4."
-   },
-   {
-    "id": "b2",
     "pos": {
      "3": {
       "x": 482,
@@ -837,34 +1501,120 @@
       "y": 291
      }
     },
+    "startBall": "1",
     "ball": "2",
     "actions": [
      {
-      "id": "a1",
-      "type": "cut",
-      "by": "1"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "5"
-     },
-     {
       "id": "a3",
-      "type": "cut",
-      "by": "4"
+      "type": "pass",
+      "by": "1",
+      "for": "4",
+      "order": 1
      },
      {
       "id": "a4",
       "type": "pass",
+      "by": "4",
+      "for": "2",
+      "needsReview": true,
+      "reason": "Inserted pass 4->2 to match next frame possession ring",
+      "order": 2
+     },
+     {
+      "id": "a1",
+      "type": "cut",
+      "by": "3",
+      "order": 3,
+      "path": [
+       {
+        "x": 16,
+        "y": 38
+       },
+       {
+        "x": 482,
+        "y": 33
+       }
+      ]
+     },
+     {
+      "id": "a2",
+      "type": "cut",
       "by": "2",
-      "for": "4"
+      "order": 4,
+      "path": [
+       {
+        "x": 482,
+        "y": 40
+       },
+       {
+        "x": 448,
+        "y": 291
+       }
+      ]
+     }
+    ],
+    "note": "Players 3 and 2 cut to the corners while 1 dribbles and passes to 4."
+   },
+   {
+    "id": "b2",
+    "startPos": {
+     "3": {
+      "x": 482,
+      "y": 33
+     },
+     "5": {
+      "x": 176,
+      "y": 78
+     },
+     "1": {
+      "x": 44,
+      "y": 208
+     },
+     "4": {
+      "x": 461,
+      "y": 231
+     },
+     "2": {
+      "x": 448,
+      "y": 291
+     }
+    },
+    "pos": {
+     "3": {
+      "x": 482,
+      "y": 33
+     },
+     "5": {
+      "x": 176,
+      "y": 78
+     },
+     "1": {
+      "x": 44,
+      "y": 208
+     },
+     "4": {
+      "x": 461,
+      "y": 231
+     },
+     "2": {
+      "x": 448,
+      "y": 291
+     }
+    },
+    "startBall": "2",
+    "ball": "4",
+    "actions": [
+     {
+      "id": "a4",
+      "type": "pass",
+      "by": "2",
+      "for": "4",
+      "order": 1
      }
     ],
     "note": "Three players cut to different spots while player 2 passes to player 4."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Horns",
@@ -872,7 +1622,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "3": {
       "x": 22,
       "y": 34
@@ -894,34 +1644,6 @@
       "y": 355
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "5"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "5"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "4"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "2"
-     }
-    ],
-    "note": "Player 1 passes to 5 while 5, 4, and 2 all make cutting movements."
-   },
-   {
-    "id": "b2",
     "pos": {
      "3": {
       "x": 22,
@@ -944,30 +1666,75 @@
       "y": 332
      }
     },
+    "startBall": "1",
     "ball": "5",
     "actions": [
      {
       "id": "a1",
-      "type": "cut",
-      "by": "2"
+      "type": "pass",
+      "by": "1",
+      "for": "5",
+      "order": 1
      },
      {
       "id": "a2",
-      "type": "pass",
+      "type": "cut",
       "by": "5",
-      "for": "4"
+      "order": 2,
+      "path": [
+       {
+        "x": 177,
+        "y": 204
+       },
+       {
+        "x": 145,
+        "y": 300
+       }
+      ]
      },
      {
       "id": "a3",
-      "type": "pass",
+      "type": "cut",
       "by": "4",
-      "for": "1"
+      "order": 3,
+      "path": [
+       {
+        "x": 323,
+        "y": 209
+       },
+       {
+        "x": 303,
+        "y": 332
+       }
+      ]
      }
     ],
-    "note": "Player 5 passes to 4, who passes to 1, while 2 cuts to the basket."
+    "note": "Player 1 passes to 5 while 5, 4, and 2 all make cutting movements."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "3": {
+      "x": 22,
+      "y": 34
+     },
+     "2": {
+      "x": 477,
+      "y": 30
+     },
+     "1": {
+      "x": 437,
+      "y": 238
+     },
+     "5": {
+      "x": 145,
+      "y": 300
+     },
+     "4": {
+      "x": 303,
+      "y": 332
+     }
+    },
     "pos": {
      "2": {
       "x": 341,
@@ -990,35 +1757,126 @@
       "y": 332
      }
     },
+    "startBall": "5",
     "ball": "1",
+    "actions": [
+     {
+      "id": "a2",
+      "type": "pass",
+      "by": "5",
+      "for": "4",
+      "order": 1
+     },
+     {
+      "id": "a3",
+      "type": "pass",
+      "by": "4",
+      "for": "1",
+      "order": 2
+     },
+     {
+      "id": "a1",
+      "type": "cut",
+      "by": "2",
+      "order": 3,
+      "path": [
+       {
+        "x": 477,
+        "y": 30
+       },
+       {
+        "x": 341,
+        "y": 49
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "3",
+      "path": [
+       {
+        "x": 22,
+        "y": 34
+       },
+       {
+        "x": 477,
+        "y": 134
+       }
+      ],
+      "derived": true,
+      "order": 4
+     }
+    ],
+    "note": "Player 5 passes to 4, who passes to 1, while 2 cuts to the basket."
+   },
+   {
+    "id": "b3",
+    "startPos": {
+     "2": {
+      "x": 341,
+      "y": 49
+     },
+     "3": {
+      "x": 477,
+      "y": 134
+     },
+     "1": {
+      "x": 437,
+      "y": 238
+     },
+     "5": {
+      "x": 145,
+      "y": 300
+     },
+     "4": {
+      "x": 303,
+      "y": 332
+     }
+    },
+    "pos": {
+     "2": {
+      "x": 341,
+      "y": 49
+     },
+     "3": {
+      "x": 477,
+      "y": 134
+     },
+     "1": {
+      "x": 437,
+      "y": 238
+     },
+     "5": {
+      "x": 145,
+      "y": 300
+     },
+     "4": {
+      "x": 303,
+      "y": 332
+     }
+    },
+    "startBall": "1",
+    "ball": "2",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
       "by": "1",
-      "for": "2"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "2"
+      "for": "2",
+      "order": 1
      },
      {
       "id": "a3",
       "type": "screen",
       "by": "5",
-      "for": "4"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "4"
+      "for": "4",
+      "order": 2
      }
     ],
     "note": "Player 1 passes to 2 cutting to the wing while 5 screens for 4 cutting to the basket."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Idaho",
@@ -1026,7 +1884,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "5": {
       "x": 17,
       "y": 53
@@ -1048,33 +1906,6 @@
       "y": 379
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "dribble",
-      "by": "1"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "4"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "5"
-     }
-    ],
-    "note": "Player 1 dribbles up while 3, 4, and 5 all cut to different spots on the floor."
-   },
-   {
-    "id": "b2",
     "pos": {
      "2": {
       "x": 485,
@@ -1097,35 +1928,143 @@
       "y": 305
      }
     },
+    "startBall": "1",
     "ball": "1",
     "actions": [
      {
       "id": "a1",
+      "type": "dribble",
+      "by": "1",
+      "order": 1,
+      "path": [
+       {
+        "x": 274,
+        "y": 379
+       },
+       {
+        "x": 437,
+        "y": 305
+       }
+      ]
+     },
+     {
+      "id": "a2",
       "type": "cut",
-      "by": "5"
+      "by": "3",
+      "order": 2,
+      "path": [
+       {
+        "x": 367,
+        "y": 277
+       },
+       {
+        "x": 326,
+        "y": 111
+       }
+      ]
+     },
+     {
+      "id": "a3",
+      "type": "cut",
+      "by": "4",
+      "order": 3,
+      "path": [
+       {
+        "x": 170,
+        "y": 114
+       },
+       {
+        "x": 317,
+        "y": 305
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "5",
+      "order": 4,
+      "path": [
+       {
+        "x": 17,
+        "y": 53
+       },
+       {
+        "x": 22,
+        "y": 170
+       }
+      ]
+     }
+    ],
+    "note": "Player 1 dribbles up while 3, 4, and 5 all cut to different spots on the floor."
+   },
+   {
+    "id": "b2",
+    "startPos": {
+     "2": {
+      "x": 485,
+      "y": 48
+     },
+     "3": {
+      "x": 326,
+      "y": 111
+     },
+     "5": {
+      "x": 22,
+      "y": 170
+     },
+     "4": {
+      "x": 317,
+      "y": 305
+     },
+     "1": {
+      "x": 437,
+      "y": 305
+     }
+    },
+    "pos": {
+     "2": {
+      "x": 485,
+      "y": 48
+     },
+     "3": {
+      "x": 326,
+      "y": 111
+     },
+     "5": {
+      "x": 22,
+      "y": 170
+     },
+     "4": {
+      "x": 317,
+      "y": 305
+     },
+     "1": {
+      "x": 437,
+      "y": 305
+     }
+    },
+    "startBall": "1",
+    "ball": "4",
+    "actions": [
+     {
+      "id": "a4",
+      "type": "pass",
+      "by": "1",
+      "for": "4",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "screen",
       "by": "3",
-      "for": "5"
-     },
-     {
-      "id": "a3",
-      "type": "dribble",
-      "by": "1"
-     },
-     {
-      "id": "a4",
-      "type": "pass",
-      "by": "1",
-      "for": "4"
+      "for": "5",
+      "order": 2
      }
     ],
     "note": "1 dribbles and passes to 4 while 5 cuts off a screen from 3"
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Kansas",
@@ -1133,7 +2072,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "3": {
       "x": 20,
       "y": 40
@@ -1155,24 +2094,6 @@
       "y": 361
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "2"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "2"
-     }
-    ],
-    "note": "Player 1 passes to player 2 who then cuts toward the basket."
-   },
-   {
-    "id": "b2",
     "pos": {
      "3": {
       "x": 20,
@@ -1195,24 +2116,68 @@
       "y": 277
      }
     },
+    "startBall": "1",
     "ball": "1",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
       "by": "1",
-      "for": "5"
+      "for": "2",
+      "order": 1
+     },
+     {
+      "id": "a3",
+      "type": "pass",
+      "by": "2",
+      "for": "1",
+      "needsReview": true,
+      "reason": "Inserted pass 2->1 to match next frame possession ring",
+      "order": 2
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "5"
+      "by": "2",
+      "order": 3,
+      "path": [
+       {
+        "x": 437,
+        "y": 198
+       },
+       {
+        "x": 367,
+        "y": 222
+       }
+      ]
      }
     ],
-    "note": "Player 1 passes to player 5 at the elbow, then 5 cuts toward the basket."
+    "note": "Player 1 passes to player 2 who then cuts toward the basket."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "3": {
+      "x": 20,
+      "y": 40
+     },
+     "4": {
+      "x": 483,
+      "y": 33
+     },
+     "5": {
+      "x": 198,
+      "y": 201
+     },
+     "2": {
+      "x": 367,
+      "y": 222
+     },
+     "1": {
+      "x": 435,
+      "y": 277
+     }
+    },
     "pos": {
      "3": {
       "x": 20,
@@ -1227,49 +2192,127 @@
       "y": 92
      },
      "5": {
-      "x": 220,
-      "y": 203
+      "x": 198,
+      "y": 201
      },
      "1": {
       "x": 435,
-      "y": 281
+      "y": 277
      }
     },
+    "startBall": "1",
     "ball": "1",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
       "by": "1",
-      "for": "5"
+      "for": "5",
+      "order": 1
      },
      {
       "id": "a2",
-      "type": "cut",
-      "by": "3"
+      "type": "pass",
+      "by": "5",
+      "for": "1",
+      "needsReview": true,
+      "reason": "Inserted pass 5->1 to match next frame possession ring",
+      "order": 2
      },
      {
       "id": "a3",
-      "type": "screen",
-      "by": "5",
-      "for": "3"
+      "type": "cut",
+      "by": "2",
+      "path": [
+       {
+        "x": 367,
+        "y": 222
+       },
+       {
+        "x": 267,
+        "y": 92
+       }
+      ],
+      "derived": true,
+      "order": 3
+     }
+    ],
+    "note": "Player 1 passes to player 5 at the elbow, then 5 cuts toward the basket."
+   },
+   {
+    "id": "b3",
+    "startPos": {
+     "3": {
+      "x": 20,
+      "y": 40
+     },
+     "4": {
+      "x": 483,
+      "y": 33
+     },
+     "2": {
+      "x": 267,
+      "y": 92
+     },
+     "5": {
+      "x": 198,
+      "y": 201
+     },
+     "1": {
+      "x": 435,
+      "y": 277
+     }
+    },
+    "pos": {
+     "3": {
+      "x": 20,
+      "y": 40
+     },
+     "4": {
+      "x": 483,
+      "y": 33
+     },
+     "2": {
+      "x": 267,
+      "y": 92
+     },
+     "5": {
+      "x": 198,
+      "y": 201
+     },
+     "1": {
+      "x": 435,
+      "y": 277
+     }
+    },
+    "startBall": "1",
+    "ball": "2",
+    "actions": [
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "1",
+      "for": "5",
+      "order": 1
      },
      {
       "id": "a4",
       "type": "pass",
       "by": "5",
-      "for": "2"
+      "for": "2",
+      "order": 2
      },
      {
-      "id": "a5",
-      "type": "cut",
-      "by": "4"
+      "id": "a3",
+      "type": "screen",
+      "by": "5",
+      "for": "3",
+      "order": 3
      }
     ],
     "note": "1 passes to 5 who screens for 3 cutting to the wing, then 5 can pass to 2 at the top while 4 cuts to the corner"
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Kentucky",
@@ -1277,7 +2320,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "3": {
       "x": 20,
       "y": 40
@@ -1299,34 +2342,6 @@
       "y": 361
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "2"
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "4"
-     }
-    ],
-    "note": "1 passes to 2 while 3 cuts down the left side, 4 cuts to the top, and 2 cuts toward the basket."
-   },
-   {
-    "id": "b2",
     "pos": {
      "4": {
       "x": 22,
@@ -1349,35 +2364,108 @@
       "y": 335
      }
     },
+    "startBall": "1",
     "ball": "2",
     "actions": [
      {
       "id": "a1",
-      "type": "cut",
-      "by": "4"
+      "type": "pass",
+      "by": "1",
+      "for": "2",
+      "order": 1
      },
      {
       "id": "a2",
-      "type": "screen",
-      "by": "3",
-      "for": "4"
+      "type": "cut",
+      "by": "2",
+      "order": 2,
+      "path": [
+       {
+        "x": 437,
+        "y": 198
+       },
+       {
+        "x": 404,
+        "y": 231
+       }
+      ]
      },
      {
       "id": "a3",
-      "type": "dribble",
-      "by": "2"
+      "type": "cut",
+      "by": "3",
+      "order": 3,
+      "path": [
+       {
+        "x": 20,
+        "y": 40
+       },
+       {
+        "x": 35,
+        "y": 170
+       }
+      ]
      },
      {
       "id": "a4",
-      "type": "pass",
-      "by": "2",
-      "for": "5"
+      "type": "cut",
+      "by": "4",
+      "order": 4,
+      "path": [
+       {
+        "x": 483,
+        "y": 33
+       },
+       {
+        "x": 22,
+        "y": 33
+       }
+      ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "5",
+      "path": [
+       {
+        "x": 198,
+        "y": 201
+       },
+       {
+        "x": 250,
+        "y": 335
+       }
+      ],
+      "derived": true,
+      "order": 5
      }
     ],
-    "note": "4 cuts off a screen from 3 while 2 dribbles and passes to 5."
+    "note": "1 passes to 2 while 3 cuts down the left side, 4 cuts to the top, and 2 cuts toward the basket."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "4": {
+      "x": 22,
+      "y": 33
+     },
+     "1": {
+      "x": 488,
+      "y": 37
+     },
+     "3": {
+      "x": 35,
+      "y": 170
+     },
+     "2": {
+      "x": 404,
+      "y": 231
+     },
+     "5": {
+      "x": 250,
+      "y": 335
+     }
+    },
     "pos": {
      "1": {
       "x": 488,
@@ -1400,28 +2488,112 @@
       "y": 331
      }
     },
+    "startBall": "2",
     "ball": "4",
     "actions": [
      {
+      "id": "a4",
+      "type": "pass",
+      "by": "2",
+      "for": "5",
+      "order": 1
+     },
+     {
+      "id": "a5",
+      "type": "pass",
+      "by": "5",
+      "for": "4",
+      "needsReview": true,
+      "reason": "Inserted pass 5->4 to match next frame possession ring",
+      "order": 2
+     },
+     {
       "id": "a1",
       "type": "cut",
-      "by": "5"
+      "by": "4",
+      "order": 3,
+      "path": [
+       {
+        "x": 22,
+        "y": 33
+       },
+       {
+        "x": 207,
+        "y": 331
+       }
+      ]
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "1"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "2"
+      "by": "3",
+      "order": 4,
+      "path": [
+       {
+        "x": 35,
+        "y": 170
+       },
+       {
+        "x": 185,
+        "y": 85
+       }
+      ]
      }
     ],
+    "note": "4 cuts off a screen from 3 while 2 dribbles and passes to 5."
+   },
+   {
+    "id": "b3",
+    "startPos": {
+     "1": {
+      "x": 488,
+      "y": 37
+     },
+     "3": {
+      "x": 185,
+      "y": 85
+     },
+     "5": {
+      "x": 130,
+      "y": 222
+     },
+     "2": {
+      "x": 404,
+      "y": 231
+     },
+     "4": {
+      "x": 207,
+      "y": 331
+     }
+    },
+    "pos": {
+     "1": {
+      "x": 488,
+      "y": 37
+     },
+     "3": {
+      "x": 185,
+      "y": 85
+     },
+     "5": {
+      "x": 130,
+      "y": 222
+     },
+     "2": {
+      "x": 404,
+      "y": 231
+     },
+     "4": {
+      "x": 207,
+      "y": 331
+     }
+    },
+    "startBall": "4",
+    "ball": "4",
+    "actions": [],
     "note": "Players 5, 1, and 2 all cut to different spots while 4 has the ball."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Kickup",
@@ -1429,7 +2601,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "3": {
       "x": 24,
       "y": 30
@@ -1451,29 +2623,6 @@
       "y": 376
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "dribble",
-      "by": "1"
-     },
-     {
-      "id": "a2",
-      "type": "pass",
-      "by": "1",
-      "for": "2"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "2"
-     }
-    ],
-    "note": "Player 1 dribbles up, passes to player 2 in the corner, and player 2 cuts to the basket."
-   },
-   {
-    "id": "b2",
     "pos": {
      "3": {
       "x": 24,
@@ -1496,39 +2645,84 @@
       "y": 370
      }
     },
+    "startBall": "1",
     "ball": "1",
     "actions": [
      {
       "id": "a1",
-      "type": "pass",
+      "type": "dribble",
       "by": "1",
-      "for": "2"
+      "order": 1,
+      "path": [
+       {
+        "x": 341,
+        "y": 376
+       },
+       {
+        "x": 407,
+        "y": 170
+       }
+      ]
      },
      {
       "id": "a2",
-      "type": "cut",
-      "by": "1"
+      "type": "pass",
+      "by": "1",
+      "for": "2",
+      "order": 2
+     },
+     {
+      "id": "a4",
+      "type": "pass",
+      "by": "2",
+      "for": "1",
+      "needsReview": true,
+      "reason": "Inserted pass 2->1 to match next frame possession ring",
+      "order": 3
      },
      {
       "id": "a3",
       "type": "cut",
-      "by": "2"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a5",
-      "type": "cut",
-      "by": "4"
+      "by": "2",
+      "order": 4,
+      "path": [
+       {
+        "x": 477,
+        "y": 34
+       },
+       {
+        "x": 328,
+        "y": 61
+       }
+      ]
      }
     ],
-    "note": "Player 1 passes to 2 then cuts to the corner while 2 cuts to the wing, 3 cuts across the top, and 4 moves along the baseline."
+    "note": "Player 1 dribbles up, passes to player 2 in the corner, and player 2 cuts to the basket."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "3": {
+      "x": 24,
+      "y": 30
+     },
+     "5": {
+      "x": 147,
+      "y": 50
+     },
+     "2": {
+      "x": 328,
+      "y": 61
+     },
+     "1": {
+      "x": 407,
+      "y": 170
+     },
+     "4": {
+      "x": 139,
+      "y": 370
+     }
+    },
     "pos": {
      "2": {
       "x": 20,
@@ -1551,29 +2745,152 @@
       "y": 342
      }
     },
+    "startBall": "1",
     "ball": "4",
     "actions": [
      {
       "id": "a1",
-      "type": "cut",
-      "by": "5"
+      "type": "pass",
+      "by": "1",
+      "for": "2",
+      "order": 1
      },
+     {
+      "id": "a6",
+      "type": "pass",
+      "by": "2",
+      "for": "4",
+      "needsReview": true,
+      "reason": "Inserted pass 2->4 to match next frame possession ring",
+      "order": 2
+     },
+     {
+      "id": "a2",
+      "type": "cut",
+      "by": "1",
+      "order": 3,
+      "path": [
+       {
+        "x": 407,
+        "y": 170
+       },
+       {
+        "x": 472,
+        "y": 40
+       }
+      ]
+     },
+     {
+      "id": "a3",
+      "type": "cut",
+      "by": "2",
+      "order": 4,
+      "path": [
+       {
+        "x": 328,
+        "y": 61
+       },
+       {
+        "x": 20,
+        "y": 33
+       }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "3",
+      "order": 5,
+      "path": [
+       {
+        "x": 24,
+        "y": 30
+       },
+       {
+        "x": 128,
+        "y": 338
+       }
+      ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "4",
+      "order": 6,
+      "path": [
+       {
+        "x": 139,
+        "y": 370
+       },
+       {
+        "x": 370,
+        "y": 342
+       }
+      ]
+     }
+    ],
+    "note": "Player 1 passes to 2 then cuts to the corner while 2 cuts to the wing, 3 cuts across the top, and 4 moves along the baseline."
+   },
+   {
+    "id": "b3",
+    "startPos": {
+     "2": {
+      "x": 20,
+      "y": 33
+     },
+     "5": {
+      "x": 147,
+      "y": 50
+     },
+     "1": {
+      "x": 472,
+      "y": 40
+     },
+     "3": {
+      "x": 128,
+      "y": 338
+     },
+     "4": {
+      "x": 370,
+      "y": 342
+     }
+    },
+    "pos": {
+     "2": {
+      "x": 20,
+      "y": 33
+     },
+     "5": {
+      "x": 147,
+      "y": 50
+     },
+     "1": {
+      "x": 472,
+      "y": 40
+     },
+     "3": {
+      "x": 128,
+      "y": 338
+     },
+     "4": {
+      "x": 370,
+      "y": 342
+     }
+    },
+    "startBall": "4",
+    "ball": "4",
+    "actions": [
      {
       "id": "a2",
       "type": "screen",
       "by": "5",
-      "for": "3"
-     },
-     {
-      "id": "a3",
-      "type": "dribble",
-      "by": "4"
+      "for": "3",
+      "order": 1
      }
     ],
     "note": "5 cuts to the basket then sets a screen for 3 while 4 dribbles up from the corner"
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Openkickbacks",
@@ -1581,7 +2898,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "3": {
       "x": 24,
       "y": 30
@@ -1603,34 +2920,6 @@
       "y": 376
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "4"
-     },
-     {
-      "id": "a2",
-      "type": "dribble",
-      "by": "4"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "3"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "2"
-     }
-    ],
-    "note": "1 passes to 4 who dribbles up while 3 and 2 cut down from the wings"
-   },
-   {
-    "id": "b2",
     "pos": {
      "3": {
       "x": 24,
@@ -1642,7 +2931,7 @@
      },
      "5": {
       "x": 161,
-      "y": 58
+      "y": 54
      },
      "2": {
       "x": 463,
@@ -1653,34 +2942,104 @@
       "y": 370
      }
     },
+    "startBall": "1",
     "ball": "2",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
-      "by": "2",
-      "for": "1"
+      "by": "1",
+      "for": "4",
+      "order": 1
      },
      {
-      "id": "a2",
-      "type": "dribble",
-      "by": "2"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "3"
+      "id": "a5",
+      "type": "pass",
+      "by": "4",
+      "for": "2",
+      "needsReview": true,
+      "reason": "Inserted pass 4->2 to match next frame possession ring",
+      "order": 2
      },
      {
       "id": "a4",
       "type": "cut",
-      "by": "5"
+      "by": "2",
+      "order": 3,
+      "path": [
+       {
+        "x": 477,
+        "y": 34
+       },
+       {
+        "x": 463,
+        "y": 255
+       }
+      ]
+     }
+    ],
+    "note": "1 passes to 4 who dribbles up while 3 and 2 cut down from the wings"
+   },
+   {
+    "id": "b2",
+    "startPos": {
+     "3": {
+      "x": 24,
+      "y": 30
+     },
+     "4": {
+      "x": 483,
+      "y": 42
+     },
+     "5": {
+      "x": 161,
+      "y": 54
+     },
+     "2": {
+      "x": 463,
+      "y": 255
+     },
+     "1": {
+      "x": 128,
+      "y": 370
+     }
+    },
+    "pos": {
+     "3": {
+      "x": 24,
+      "y": 30
+     },
+     "4": {
+      "x": 483,
+      "y": 42
+     },
+     "5": {
+      "x": 161,
+      "y": 54
+     },
+     "2": {
+      "x": 463,
+      "y": 255
+     },
+     "1": {
+      "x": 128,
+      "y": 370
+     }
+    },
+    "startBall": "2",
+    "ball": "1",
+    "actions": [
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "2",
+      "for": "1",
+      "order": 1
      }
     ],
     "note": "2 passes to 1 after dribbling over, while 3 cuts to the corner and 5 cuts diagonally across the lane."
    }
-  ],
-  "counters": []
+  ]
  },
  {
   "name": "Relax*",
@@ -1688,7 +3047,7 @@
   "beats": [
    {
     "id": "b1",
-    "pos": {
+    "startPos": {
      "2": {
       "x": 18,
       "y": 42
@@ -1710,30 +3069,6 @@
       "y": 347
      }
     },
-    "ball": "1",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "3"
-     },
-     {
-      "id": "a2",
-      "type": "screen",
-      "by": "5",
-      "for": "1"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "1"
-     }
-    ],
-    "note": "Player 1 passes to 3 while 5 sets a screen, then 1 cuts off the screen."
-   },
-   {
-    "id": "b2",
     "pos": {
      "2": {
       "x": 18,
@@ -1756,29 +3091,75 @@
       "y": 242
      }
     },
+    "startBall": "1",
     "ball": "3",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
-      "by": "3",
-      "for": "1"
+      "by": "1",
+      "for": "3",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "4"
+      "by": "5",
+      "order": 2,
+      "path": [
+       {
+        "x": 77,
+        "y": 236
+       },
+       {
+        "x": 135,
+        "y": 144
+       }
+      ]
      },
      {
       "id": "a3",
       "type": "cut",
-      "by": "2"
+      "by": "1",
+      "order": 3,
+      "path": [
+       {
+        "x": 255,
+        "y": 347
+       },
+       {
+        "x": 215,
+        "y": 122
+       }
+      ]
      }
     ],
-    "note": "Player 3 passes to player 1 at the top while players 2 and 4 cut from the corners toward the ball."
+    "note": "Player 1 passes to 3 while 5 sets a screen, then 1 cuts off the screen."
    },
    {
-    "id": "b3",
+    "id": "b2",
+    "startPos": {
+     "2": {
+      "x": 18,
+      "y": 42
+     },
+     "4": {
+      "x": 484,
+      "y": 47
+     },
+     "1": {
+      "x": 215,
+      "y": 122
+     },
+     "5": {
+      "x": 135,
+      "y": 144
+     },
+     "3": {
+      "x": 433,
+      "y": 242
+     }
+    },
     "pos": {
      "4": {
       "x": 320,
@@ -1801,34 +3182,126 @@
       "y": 354
      }
     },
+    "startBall": "3",
     "ball": "3",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
       "by": "3",
-      "for": "4"
+      "for": "1",
+      "order": 1
+     },
+     {
+      "id": "a4",
+      "type": "pass",
+      "by": "1",
+      "for": "3",
+      "needsReview": true,
+      "reason": "Inserted pass 1->3 to match next frame possession ring",
+      "order": 2
+     },
+     {
+      "id": "a2",
+      "type": "cut",
+      "by": "4",
+      "order": 3,
+      "path": [
+       {
+        "x": 484,
+        "y": 47
+       },
+       {
+        "x": 320,
+        "y": 77
+       }
+      ]
+     },
+     {
+      "id": "a3",
+      "type": "cut",
+      "by": "2",
+      "order": 4,
+      "path": [
+       {
+        "x": 18,
+        "y": 42
+       },
+       {
+        "x": 301,
+        "y": 354
+       }
+      ]
+     }
+    ],
+    "note": "Player 3 passes to player 1 at the top while players 2 and 4 cut from the corners toward the ball."
+   },
+   {
+    "id": "b3",
+    "startPos": {
+     "4": {
+      "x": 320,
+      "y": 77
+     },
+     "1": {
+      "x": 215,
+      "y": 122
+     },
+     "5": {
+      "x": 135,
+      "y": 144
+     },
+     "3": {
+      "x": 333,
+      "y": 192
+     },
+     "2": {
+      "x": 301,
+      "y": 354
+     }
+    },
+    "pos": {
+     "4": {
+      "x": 320,
+      "y": 77
+     },
+     "1": {
+      "x": 215,
+      "y": 122
+     },
+     "5": {
+      "x": 135,
+      "y": 144
+     },
+     "3": {
+      "x": 333,
+      "y": 192
+     },
+     "2": {
+      "x": 301,
+      "y": 354
+     }
+    },
+    "startBall": "3",
+    "ball": "4",
+    "actions": [
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "3",
+      "for": "4",
+      "order": 1
      },
      {
       "id": "a2",
       "type": "screen",
       "by": "1",
-      "for": "5"
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "5"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "2"
+      "for": "5",
+      "order": 2
      }
     ],
     "note": "3 passes to 4 while 1 screens for 5 who cuts to the corner and 2 cuts baseline."
    }
-  ],
-  "counters": []
+  ]
  }
 ]

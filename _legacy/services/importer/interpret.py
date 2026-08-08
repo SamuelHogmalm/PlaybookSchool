@@ -1,4 +1,4 @@
-"""Stage 2 — vision interpretation of frame crops (arrows only; never writes beat.ball)."""
+"""Stage 2 — vision interpretation of frame crops (arrows, notes)."""
 
 from __future__ import annotations
 
@@ -13,38 +13,41 @@ from typing import Any
 
 from anthropic import AsyncAnthropic
 
+from animation_validate import apply_animation_validation
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
 MAX_CONCURRENT = int(os.environ.get("INTERPRET_MAX_CONCURRENT", "5"))
-SKILL_PATH = Path(__file__).resolve().parents[2] / "docs" / "skills" / "play-interpretation.md"
+KNOWLEDGE_PATH = Path(__file__).resolve().parents[2] / "docs" / "basketball-diagram-knowledge.md"
 
 
-def load_skill() -> str:
-    if SKILL_PATH.is_file():
-        return SKILL_PATH.read_text(encoding="utf-8")
-    return "Read arrows only. Output actions JSON."
+def load_basketball_knowledge() -> str:
+    if KNOWLEDGE_PATH.is_file():
+        return KNOWLEDGE_PATH.read_text(encoding="utf-8")
+    return "Use standard basketball action order: dribble, pass, screen, cut."
 
 
 PROMPT_TEMPLATE = """Follow the skill document below exactly. It defines notation, disambiguation, cross-frame checks, and output shape.
 
 --- SKILL: READING BASKETBALL DIAGRAMS ---
-{skill}
+{knowledge}
 --- END SKILL ---
 
 ## This frame (context)
 
 Play: {play_name} ({category}) · Frame {beat_num} of {beat_total} · id {beat_id}
 
+Previous frame ball handler: {prev_ball}
 Previous frame positions: {prev_positions_json}
 
-This frame positions: {positions_json}
+This frame END positions: {positions_json}
+This frame END ball handler: {ball}
 
-Ball at START of this frame (circled number): {start_ball}
-Next frame START possession (circled number, for cross-frame check): {next_start_ball}
+Next frame ball handler (for cross-frame validation): {next_ball}
 
 Return strict JSON matching the Output section in the skill — no prose, no markdown fences.
-Do not output ball possession — only actions. Run the self-check before returning."""
+Run the self-check before returning."""
 
 
 def parse_model_json(text: str) -> dict[str, Any]:
@@ -60,7 +63,7 @@ def crop_key(play_name: str, beat_index: int) -> str:
     return f"{safe}_beat{beat_index + 1}"
 
 
-def sanitize_pass_reads(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def sanitize_pass_reads(actions: list[dict[str, Any]], ball: str | None) -> list[dict[str, Any]]:
     """Drop read-style duplicate passes (same passer, multiple receivers)."""
     pass_idx = [i for i, a in enumerate(actions) if a.get("type") in {"pass", "handoff"}]
     if len(pass_idx) <= 1:
@@ -85,7 +88,7 @@ def sanitize_pass_reads(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
 TYPE_ORDER = {"dribble": 1, "pass": 2, "handoff": 2, "screen": 3, "cut": 4}
 
 
-def normalize_actions(raw_actions: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def normalize_actions(raw_actions: list[dict[str, Any]] | None, ball: str | None = None) -> list[dict[str, Any]]:
     out = []
     for i, action in enumerate(raw_actions or []):
         if not isinstance(action, dict):
@@ -116,12 +119,43 @@ def normalize_actions(raw_actions: list[dict[str, Any]] | None) -> list[dict[str
             if reason:
                 entry["reason"] = str(reason)[:240]
         out.append(entry)
-    out = sanitize_pass_reads(out)
+    out = sanitize_pass_reads(out, ball)
     if out and not any(a.get("order") is not None for a in out):
         out.sort(key=lambda a: (TYPE_ORDER.get(a["type"], 99), a["id"]))
         for j, a in enumerate(out, 1):
             a["order"] = j
     return out
+
+
+def ensure_cross_frame_pass(prev: dict[str, Any] | None, beat: dict[str, Any]) -> None:
+    """Ball cannot teleport — inject missing pass with uncertain flag."""
+    if not prev:
+        return
+    pb = str(prev.get("ball") or "")
+    cb = str(beat.get("ball") or "")
+    if not pb or not cb or pb == cb or pb not in {"1", "2", "3", "4", "5"}:
+        return
+    actions: list[dict[str, Any]] = list(beat.get("actions") or [])
+    has_transfer = any(
+        a.get("type") in {"pass", "handoff"} and str(a.get("by")) == pb and str(a.get("for")) == cb
+        for a in actions
+    )
+    if has_transfer:
+        return
+    actions.append(
+        {
+            "id": f"a{len(actions) + 1}",
+            "type": "pass",
+            "by": pb,
+            "for": cb,
+            "order": 2,
+            "uncertain": True,
+            "reason": "Ball changed from previous frame but no pass line was detected",
+        }
+    )
+    beat["actions"] = actions
+    beat["needs_review"] = True
+    beat["review_reason"] = beat.get("review_reason") or "missing_pass_inferred"
 
 
 async def interpret_one_frame(
@@ -136,21 +170,23 @@ async def interpret_one_frame(
     beat_index: int,
     beat_total: int,
     model: str,
-    skill: str,
+    knowledge: str,
 ) -> tuple[dict[str, Any], dict[str, int]]:
-    prev_pos = prev_beat.get("startPos") or prev_beat.get("pos", {}) if prev_beat else {}
-    next_start = next_beat.get("startBall", "— (last frame)") if next_beat else "— (last frame)"
+    prev_ball = prev_beat.get("ball", "?") if prev_beat else "— (formation)"
+    prev_pos = prev_beat.get("pos", {}) if prev_beat else {}
+    next_ball = next_beat.get("ball", "— (last frame)") if next_beat else "— (last frame)"
     prompt = PROMPT_TEMPLATE.format(
-        skill=skill,
+        knowledge=knowledge,
         play_name=play_name,
         category=category or "Set",
         beat_num=beat_index + 1,
         beat_total=beat_total,
+        prev_ball=prev_ball,
         prev_positions_json=json.dumps(prev_pos),
         beat_id=beat.get("id", f"b{beat_index + 1}"),
-        positions_json=json.dumps(beat.get("startPos") or beat.get("pos", {})),
-        start_ball=beat.get("startBall", "1"),
-        next_start_ball=next_start,
+        positions_json=json.dumps(beat.get("pos", {})),
+        ball=beat.get("ball", "1"),
+        next_ball=next_ball,
     )
     message = await client.messages.create(
         model=model,
@@ -192,7 +228,7 @@ async def interpret_one_frame(
         )
 
     confidence = str(parsed.get("confidence", "low")).lower()
-    actions = normalize_actions(parsed.get("actions"))
+    actions = normalize_actions(parsed.get("actions"), str(beat.get("ball", "1")))
     has_uncertain = any(a.get("uncertain") for a in actions)
     needs_review = confidence in {"low", "medium"} or has_uncertain
     review_reason = None
@@ -229,7 +265,7 @@ async def interpret_plays(
 
     client = AsyncAnthropic(api_key=key)
     model = model or DEFAULT_MODEL
-    skill = load_skill()
+    knowledge = load_basketball_knowledge()
     sem = asyncio.Semaphore(MAX_CONCURRENT)
     total_in = 0
     total_out = 0
@@ -245,6 +281,7 @@ async def interpret_plays(
         if not image_b64:
             beat["needs_review"] = True
             beat["review_reason"] = "missing_crop"
+            beat["inferMoves"] = False
             review_beats.append(
                 {"play": play["name"], "beat_id": beat.get("id"), "reason": "missing_crop"}
             )
@@ -262,12 +299,16 @@ async def interpret_plays(
                 beat_index=beat_idx,
                 beat_total=len(beats),
                 model=model,
-                skill=skill,
+                knowledge=knowledge,
             )
         total_in += usage["input_tokens"]
         total_out += usage["output_tokens"]
         beat["actions"] = result["actions"]
         beat["note"] = result["note"]
+        beat["inferMoves"] = (
+            len(result["actions"]) == 0
+            or result.get("confidence") == "low"
+        )
         if result.get("alignment"):
             beat["alignment"] = result["alignment"]
         if result.get("needs_review"):
@@ -289,6 +330,24 @@ async def interpret_plays(
             tasks.append(process_beat(play, i, beat))
 
     await asyncio.gather(*tasks)
+
+    for play in plays:
+        beats = play.get("beats", [])
+        for i, beat in enumerate(beats):
+            if i > 0:
+                ensure_cross_frame_pass(beats[i - 1], beat)
+                beat["actions"] = normalize_actions(beat.get("actions"), str(beat.get("ball", "1")))
+        apply_animation_validation(play)
+        for i, beat in enumerate(play.get("beats", [])):
+            for issue in beat.get("animation_issues") or []:
+                if issue.get("severity") == "error":
+                    review_beats.append(
+                        {
+                            "play": play["name"],
+                            "beat_id": beat.get("id"),
+                            "reason": issue.get("code", "animation_error"),
+                        }
+                    )
 
     logger.info(
         "interpret complete import_id=%s input_tokens=%s output_tokens=%s review=%s",

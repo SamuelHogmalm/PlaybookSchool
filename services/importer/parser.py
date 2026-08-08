@@ -107,7 +107,7 @@ def parse_page(page):
         beats.append({
             "play": name,
             "pos": pos,
-            "ball": ball,
+            "startBall": ball,
             "page": page.page_number,
             "bbox": [x0, y0, x1, y1],
         })
@@ -129,12 +129,16 @@ def parse(pdf_path):
 
     out = []
     for name in order:
+        frames = plays[name]
         beats = []
-        for i, b in enumerate(plays[name]):
+        for i, b in enumerate(frames):
+            start_pos = b["pos"]
+            end_pos = frames[i + 1]["pos"] if i + 1 < len(frames) else start_pos
             beats.append({
                 "id": f"b{i+1}",
-                "pos": b["pos"],
-                "ball": b["ball"] or "1",
+                "startPos": start_pos,
+                "pos": end_pos,
+                "startBall": b["startBall"] or "1",
                 "actions": [],          # stage 2 fills this
                 "note": "",             # stage 2 fills this
                 "_source": {"page": b["page"], "bbox": b["bbox"]},
@@ -191,8 +195,8 @@ if __name__ == "__main__":
     plays = parse(src)
     print(f"{len(plays)} plays, {sum(len(p['beats']) for p in plays)} beats")
     for p in plays:
-        balls = "".join(b["ball"] for b in p["beats"])
-        print(f"  {p['name']:<18} {len(p['beats'])} beats   ball sequence: {balls}")
+        starts = "".join(b["startBall"] for b in p["beats"])
+        print(f"  {p['name']:<18} {len(p['beats'])} beats   startBall sequence: {starts}")
     frames = extract_frames(src, plays, "/home/claude/frames")
     print(f"\n{len(frames)} frame crops written")
     with open("/home/claude/plays.json", "w") as f:
