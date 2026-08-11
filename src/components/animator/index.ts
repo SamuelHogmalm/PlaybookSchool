@@ -1,1 +1,4 @@
-/** Phase 3 — single play animator (not built yet). */
+export { AnimatorCourt } from "./AnimatorCourt";
+export { PlayAnimator } from "./PlayAnimator";
+export type { PlayAnimatorProps } from "./PlayAnimator";
+export { usePlayPlayback } from "./usePlayPlayback";
