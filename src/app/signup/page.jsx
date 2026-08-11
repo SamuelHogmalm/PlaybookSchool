@@ -22,7 +22,7 @@ function SignupForm() {
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!configured) {
-      router.push("/coach/playbook");
+      router.push("/");
       return;
     }
     setWorking(true);

@@ -30,6 +30,6 @@ export async function GET(request) {
     return NextResponse.redirect(new URL(next, request.url));
   }
 
-  const dest = role === "coach" ? "/coach/playbook" : "/player/today";
-  return NextResponse.redirect(new URL(dest, request.url));
+  // Coach/player apps quarantined in _legacy/ during rebuild — land on home after login.
+  return NextResponse.redirect(new URL("/", request.url));
 }

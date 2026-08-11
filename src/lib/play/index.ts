@@ -29,3 +29,46 @@ export {
 
 export { normalizeSeedPlay } from "./normalize";
 export { validatePlay } from "./validation";
+export {
+  addBeat,
+  applyPresetToBeat,
+  createEmptyPlay,
+  deleteBeat,
+  duplicateBeat,
+  linkBeatPositions,
+  linkBeatBall,
+  reorderBeat,
+  setPlayBeats,
+  updateBeatPlayerPos,
+} from "./beatOps";
+export {
+  ALIGNMENT_PRESETS,
+  clientToCourt,
+  clampToCourt,
+  copyPositions,
+  GRID_SIZE,
+  PRESET_NAMES,
+  snapClampPoint,
+  snapPoint,
+  snapToGrid,
+  type AlignmentPresetName,
+} from "./editor";
+export {
+  addDrawnAction,
+  confirmAction,
+  confirmPlayActions,
+  isValidDraw,
+  removeAction,
+  type DrawnActionInput,
+} from "./actionOps";
+export {
+  actionHitPaths,
+  canDrawAction,
+  DRAW_TOOLS,
+  hitTestPath,
+  MIN_DRAW_LENGTH,
+  nearestPlayerAt,
+  pathLength,
+  type BuilderTool,
+  type DrawActionGate,
+} from "./drawing";

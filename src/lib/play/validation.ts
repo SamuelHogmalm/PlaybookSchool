@@ -199,10 +199,11 @@ function validateBeatTransition(
     }
   }
 
-  // Rule 7 — screener travel cap
+  // Rule 7 — screener travel cap (idle at spot); travel-to-screen uses an explicit path
   for (const a of cur.actions) {
     if (a.type !== "screen") continue;
-    const move = playerMove(prev.pos, cur.pos, a.by);
+    if (a.path && a.path.length >= 2) continue;
+    const move = playerMove(cur.startPos, cur.pos, a.by);
     if (move > MAX_SCREENER_MOVE) {
       err(
         errors,

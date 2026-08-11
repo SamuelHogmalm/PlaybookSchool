@@ -15,6 +15,8 @@ SPACING_MAX = 60  # 25–60: spacing adjustment — keep pos, no action
 REAL_MOVE_MIN = 60  # over: real move — derive cut/dribble
 MAX_BEAT_MOVE = 500  # flag for review, never split path
 MAX_SCREENER_MOVE = 60
+SPLIT_SCREEN_ENDPOINT_MAX = 40  # N-1 cut endpoint ≈ screener pos on beat N
+ZERO_TRAVEL_SCREEN_REASON = "Screen has no movement — verify against your playbook"
 
 
 def _dist(a: dict[str, float], b: dict[str, float]) -> float:
@@ -296,6 +298,122 @@ def derive_movement_actions(beats: list[dict[str, Any]]) -> list[dict[str, Any]]
     return derived
 
 
+def _action_endpoint(
+    action: dict[str, Any],
+    start_pos: dict[str, Any],
+    end_pos: dict[str, Any],
+) -> dict[str, float] | None:
+    path = action.get("path") or []
+    if path:
+        return path[-1]
+    pid = str(action.get("by") or "")
+    return end_pos.get(pid) or start_pos.get(pid)
+
+
+def merge_split_screens(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    One drawn travel+bar split into cut on N-1 and empty screen on N.
+    Merge back into a single screen on N-1 with path + for from the bar frame.
+    """
+    merged: list[dict[str, Any]] = []
+
+    for i in range(1, len(beats)):
+        beat_n = beats[i]
+        beat_prev = beats[i - 1]
+        start_n, end_n = _beat_positions(beat_n)
+        start_p, end_p = _beat_positions(beat_prev)
+        to_remove: list[dict[str, Any]] = []
+
+        for action in beat_n.get("actions") or []:
+            if action.get("type") != "screen" or action.get("derived"):
+                continue
+            pid = str(action.get("by") or "")
+            a = start_n.get(pid)
+            b = end_n.get(pid)
+            if not a or not b or _dist(a, b) > 0.1:
+                continue
+
+            screener_pos = b
+            match: dict[str, Any] | None = None
+            for prev_action in beat_prev.get("actions") or []:
+                if prev_action.get("derived"):
+                    continue
+                if str(prev_action.get("by")) != pid:
+                    continue
+                if prev_action.get("type") not in {"cut", "dribble"}:
+                    continue
+                endpoint = _action_endpoint(prev_action, start_p, end_p)
+                if endpoint and _dist(endpoint, screener_pos) <= SPLIT_SCREEN_ENDPOINT_MAX:
+                    match = prev_action
+                    break
+
+            if not match:
+                continue
+
+            screen_for = action.get("for")
+            match["type"] = "screen"
+            if screen_for is not None:
+                match["for"] = str(screen_for)
+            if not match.get("path") or len(match["path"]) < 2:
+                a0 = start_p.get(pid)
+                a1 = end_p.get(pid)
+                if a0 and a1:
+                    match["path"] = _simple_path(a0, a1)
+            match["needsReview"] = True
+            match["reason"] = (
+                f"Merged split screen: travel on {beat_prev.get('id')} + bar on {beat_n.get('id')}"
+            )
+            to_remove.append(action)
+            merged.append(
+                {
+                    "prev_beat": beat_prev.get("id"),
+                    "screen_beat": beat_n.get("id"),
+                    "player": pid,
+                    "for": screen_for,
+                    "merged_action": match.get("id"),
+                    "removed_action": action.get("id"),
+                }
+            )
+
+        if to_remove:
+            remove_ids = {a.get("id") for a in to_remove}
+            beat_n["actions"] = [
+                a for a in (beat_n.get("actions") or []) if a.get("id") not in remove_ids
+            ]
+
+    return merged
+
+
+def flag_zero_travel_screens(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Flag idle screens with no N-1 cut to merge — coach must verify."""
+    flagged: list[dict[str, Any]] = []
+
+    for beat in beats:
+        start_pos, end_pos = _beat_positions(beat)
+        for action in beat.get("actions") or []:
+            if action.get("type") != "screen":
+                continue
+            pid = str(action.get("by") or "")
+            a = start_pos.get(pid)
+            b = end_pos.get(pid)
+            if not a or not b or _dist(a, b) > 0.1:
+                continue
+            if action.get("reason", "").startswith("Merged split screen"):
+                continue
+            action["needsReview"] = True
+            action["reason"] = ZERO_TRAVEL_SCREEN_REASON
+            flagged.append(
+                {
+                    "beat": beat.get("id"),
+                    "action": action.get("id"),
+                    "player": pid,
+                    "for": action.get("for"),
+                }
+            )
+
+    return flagged
+
+
 def reclassify_traveling_screens(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Screens where the screener moves too far become cuts — within-beat travel."""
     changed: list[dict[str, Any]] = []
@@ -304,6 +422,8 @@ def reclassify_traveling_screens(beats: list[dict[str, Any]]) -> list[dict[str, 
         start_pos, end_pos = _beat_positions(beat)
         for action in beat.get("actions") or []:
             if action.get("type") != "screen":
+                continue
+            if action.get("path") and len(action["path"]) >= 2:
                 continue
             pid = str(action.get("by") or "")
             a = start_pos.get(pid)
@@ -357,6 +477,8 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
     jitter_snapped = snap_jitter_positions(beats)
     ball_repairs = derive_ball(beats)
     movement_derived = derive_movement_actions(beats)
+    split_merged = merge_split_screens(beats)
+    zero_travel_flagged = flag_zero_travel_screens(beats)
     screen_changes = reclassify_traveling_screens(beats)
     paths_enriched = enrich_action_paths(beats)
     sanitize_removed += sanitize_actions(beats)
@@ -376,6 +498,8 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
         "derived_remaining": derived_remaining,
         "ball_repairs": ball_repairs,
         "movement_derived": movement_derived,
+        "split_merged": split_merged,
+        "zero_travel_flagged": zero_travel_flagged,
         "screen_changes": screen_changes,
         "paths_enriched": paths_enriched,
         "sanitize_removed": sanitize_removed,

@@ -13,9 +13,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:test-users": "node scripts/seed-test-users.mjs",
-    "test:animator": "node scripts/test-positions-at.mjs",
-    "reset:accounts": "node scripts/reset-accounts.mjs"
+    "test": "tsx --test tests/play/**/*.test.ts",
+    "test:seed": "tsx scripts/validate-seed-plays.ts",
+    "build:repairs": "python scripts/build-repairs-review.py",
+    "seed:test-users": "node scripts/seed-test-users.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
@@ -32,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

@@ -229,10 +229,29 @@
       "order": 2
      },
      {
+      "id": "a5",
+      "type": "screen",
+      "by": "5",
+      "order": 3,
+      "for": "1",
+      "path": [
+       {
+        "x": 243,
+        "y": 264
+       },
+       {
+        "x": 167,
+        "y": 98
+       }
+      ],
+      "needsReview": true,
+      "reason": "Merged split screen: travel on b3 + bar on b4"
+     },
+     {
       "id": "a2",
       "type": "cut",
       "by": "4",
-      "order": 3,
+      "order": 4,
       "path": [
        {
         "x": 337,
@@ -248,7 +267,7 @@
       "id": "a4",
       "type": "cut",
       "by": "3",
-      "order": 4,
+      "order": 5,
       "path": [
        {
         "x": 39,
@@ -257,22 +276,6 @@
        {
         "x": 50,
         "y": 253
-       }
-      ]
-     },
-     {
-      "id": "a5",
-      "type": "cut",
-      "by": "5",
-      "order": 5,
-      "path": [
-       {
-        "x": 243,
-        "y": 264
-       },
-       {
-        "x": 167,
-        "y": 98
        }
       ]
      },
@@ -366,13 +369,6 @@
       "by": "3",
       "for": "5",
       "order": 1
-     },
-     {
-      "id": "a2",
-      "type": "screen",
-      "by": "5",
-      "for": "1",
-      "order": 2
      }
     ],
     "note": "Player 3 passes to 5 who sets a screen for 1 cutting to the basket while 4 cuts along the wing."
@@ -615,26 +611,11 @@
       "order": 1
      },
      {
-      "id": "a2",
-      "type": "cut",
-      "by": "2",
-      "order": 2,
-      "path": [
-       {
-        "x": 483,
-        "y": 46
-       },
-       {
-        "x": 365,
-        "y": 72
-       }
-      ]
-     },
-     {
       "id": "a3",
-      "type": "cut",
+      "type": "screen",
       "by": "5",
-      "order": 3,
+      "order": 2,
+      "for": "2",
       "path": [
        {
         "x": 226,
@@ -643,6 +624,24 @@
        {
         "x": 109,
         "y": 218
+       }
+      ],
+      "needsReview": true,
+      "reason": "Merged split screen: travel on b3 + bar on b4"
+     },
+     {
+      "id": "a2",
+      "type": "cut",
+      "by": "2",
+      "order": 3,
+      "path": [
+       {
+        "x": 483,
+        "y": 46
+       },
+       {
+        "x": 365,
+        "y": 72
        }
       ]
      },
@@ -721,13 +720,6 @@
       "by": "3",
       "for": "4",
       "order": 1
-     },
-     {
-      "id": "a4",
-      "type": "screen",
-      "by": "5",
-      "for": "2",
-      "order": 2
      }
     ],
     "note": "5 screens for 2 who cuts to the ball, while 3 passes to 4 and 1 cuts along the wing."
@@ -1444,7 +1436,9 @@
       "type": "screen",
       "by": "5",
       "for": "1",
-      "order": 1
+      "order": 1,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
     "note": "1 cuts baseline using 5's screen while 4 dribbles toward the wing and 5 receives a pass"
@@ -1871,7 +1865,9 @@
       "type": "screen",
       "by": "5",
       "for": "4",
-      "order": 2
+      "order": 2,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
     "note": "Player 1 passes to 2 cutting to the wing while 5 screens for 4 cutting to the basket."
@@ -1949,9 +1945,10 @@
      },
      {
       "id": "a2",
-      "type": "cut",
+      "type": "screen",
       "by": "3",
       "order": 2,
+      "for": "5",
       "path": [
        {
         "x": 367,
@@ -1961,7 +1958,9 @@
         "x": 326,
         "y": 111
        }
-      ]
+      ],
+      "needsReview": true,
+      "reason": "Merged split screen: travel on b1 + bar on b2"
      },
      {
       "id": "a3",
@@ -2053,13 +2052,6 @@
       "by": "1",
       "for": "4",
       "order": 1
-     },
-     {
-      "id": "a2",
-      "type": "screen",
-      "by": "3",
-      "for": "5",
-      "order": 2
      }
     ],
     "note": "1 dribbles and passes to 4 while 5 cuts off a screen from 3"
@@ -2307,7 +2299,9 @@
       "type": "screen",
       "by": "5",
       "for": "3",
-      "order": 3
+      "order": 3,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
     "note": "1 passes to 5 who screens for 3 cutting to the wing, then 5 can pass to 2 at the top while 4 cuts to the corner"
@@ -2885,7 +2879,9 @@
       "type": "screen",
       "by": "5",
       "for": "3",
-      "order": 1
+      "order": 1,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
     "note": "5 cuts to the basket then sets a screen for 3 while 4 dribbles up from the corner"
@@ -3297,7 +3293,9 @@
       "type": "screen",
       "by": "1",
       "for": "5",
-      "order": 2
+      "order": 2,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
     "note": "3 passes to 4 while 1 screens for 5 who cuts to the corner and 2 cuts baseline."

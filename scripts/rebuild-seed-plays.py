@@ -87,6 +87,8 @@ def main() -> None:
     all_repairs: list[dict] = []
     all_derived: list[dict] = []
     all_needs_review: list[dict] = []
+    all_merged: list[dict] = []
+    all_flagged_screens: list[dict] = []
     action_stats: list[dict] = []
     rebuilt = []
 
@@ -116,6 +118,12 @@ def main() -> None:
         ball_repairs = summary["ball_repairs"]
         if ball_repairs:
             all_repairs.append({"play": play["name"], "repairs": ball_repairs})
+        for item in summary.get("split_merged", []):
+            item["play"] = play["name"]
+            all_merged.append(item)
+        for item in summary.get("zero_travel_flagged", []):
+            item["play"] = play["name"]
+            all_flagged_screens.append(item)
         for item in summary["movement_derived"]:
             item["play"] = play["name"]
             all_derived.append(item)
@@ -179,7 +187,17 @@ def main() -> None:
     print(f"\nneedsReview actions: {len(all_needs_review)}")
     for n in all_needs_review:
         dest = f"->{n['for']}" if n.get("for") else ""
-        print(f"  {n['play']} {n['beat']} {n['action']} {n['type']} {n['by']}{dest}")
+        print(f"  {n['play']} {n['beat']} {n['action']} {n['type']} {n['by']}{dest}: {n.get('reason', '')}")
+
+    print(f"\nSplit screens merged: {len(all_merged)}")
+    for m in all_merged:
+        print(
+            f"  {m['play']} {m['prev_beat']}+{m['screen_beat']} P{m['player']} for P{m.get('for')} "
+            f"({m['merged_action']} <- {m['removed_action']})"
+        )
+    print(f"\nZero-travel screens flagged: {len(all_flagged_screens)}")
+    for f in all_flagged_screens:
+        print(f"  {f['play']} {f['beat']} {f['action']} P{f['player']} for P{f.get('for')}")
 
 
 if __name__ == "__main__":
