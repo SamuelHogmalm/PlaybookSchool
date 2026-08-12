@@ -173,17 +173,31 @@ export function sequenceBeat(beat: Beat): TimedAction[] {
   return timed.sort((a, b) => a.startAt - b.startAt || a.endAt - b.endAt);
 }
 
+/**
+ * Every movement a player makes in a beat, in the order they make them.
+ *
+ * A screener who screens and then rolls has two. Taking only the first drops the
+ * roll and leaves them standing at the screen for the rest of the beat.
+ */
+export function movementActionsForPlayer(
+  timed: TimedAction[],
+  playerId: string,
+): TimedAction[] {
+  return timed
+    .filter(
+      (a) =>
+        a.by === playerId &&
+        (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+    )
+    .sort((a, b) => a.startAt - b.startAt || a.endAt - b.endAt);
+}
+
+/** First movement only — for summaries like the /dev/animator beat table. */
 export function movementActionForPlayer(
   timed: TimedAction[],
   playerId: string,
 ): TimedAction | null {
-  return (
-    timed.find(
-      (a) =>
-        a.by === playerId &&
-        (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
-    ) ?? null
-  );
+  return movementActionsForPlayer(timed, playerId)[0] ?? null;
 }
 
 export { classifyAction, isMovement };

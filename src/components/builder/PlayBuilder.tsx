@@ -47,7 +47,79 @@ type SaveState =
   | { status: "idle" }
   | { status: "saving" }
   | { status: "saved"; version: number }
-  | { status: "error"; message: string; errors: string[] };
+  | {
+      status: "error";
+      title: string;
+      detail: string;
+      errors: string[];
+      tone: "warn" | "error";
+    };
+
+/**
+ * Save failures a coach can actually act on. Each status means something different
+ * about what to do next, so none of them share copy.
+ */
+function describeSaveFailure(
+  status: number,
+  body: { error?: string; validationErrors?: string[] },
+): Extract<SaveState, { status: "error" }> {
+  if (status === 401) {
+    return {
+      status: "error",
+      tone: "warn",
+      title: "Not signed in — this play is local only",
+      detail:
+        "Your work is safe in this tab, but nothing has been sent to the cloud. Sign in and press Save again to keep it.",
+      errors: [],
+    };
+  }
+  if (status === 409) {
+    return {
+      status: "error",
+      tone: "warn",
+      title: "Create your team before saving plays",
+      detail:
+        "Plays belong to a team, and your account isn't on one yet. Create a team, then press Save again — nothing here is lost.",
+      errors: [],
+    };
+  }
+  if (status === 403) {
+    return {
+      status: "error",
+      tone: "warn",
+      title: "Coach account required",
+      detail: "Only coaches can add plays to a team's playbook.",
+      errors: [],
+    };
+  }
+  if (status === 422) {
+    return {
+      status: "error",
+      tone: "error",
+      title: "This play isn't ready to save",
+      detail:
+        "Every play has to hold together as basketball before players can drill it. Fix these, then save:",
+      errors: body.validationErrors ?? [],
+    };
+  }
+  if (status === 503) {
+    return {
+      status: "error",
+      tone: "warn",
+      title: "Cloud saving isn't set up",
+      detail:
+        "The app has no database configured, so plays can't be stored yet. Keep this tab open — your play is still here.",
+      errors: [],
+    };
+  }
+  return {
+    status: "error",
+    tone: "error",
+    title: `Save failed (${status})`,
+    detail: body.error ?? "Something went wrong on the way to the server. Try again.",
+    errors: [],
+  };
+}
 
 export function PlayBuilder() {
   const [history, setHistory] = useState<History<Play>>(() =>
@@ -105,13 +177,9 @@ export function PlayBuilder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...play, valid: true, validationErrors: [] }),
       });
-      const body = await res.json();
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSaveState({
-          status: "error",
-          message: body.error ?? `Save failed (${res.status})`,
-          errors: body.validationErrors ?? [],
-        });
+        setSaveState(describeSaveFailure(res.status, body));
         return;
       }
       // Save echo is not an edit — it must not become an undo step.
@@ -119,10 +187,13 @@ export function PlayBuilder() {
         replacePresent(h, { ...h.present, version: body.play.version }),
       );
       setSaveState({ status: "saved", version: body.play.version });
-    } catch (err) {
+    } catch {
       setSaveState({
         status: "error",
-        message: err instanceof Error ? err.message : "Network error",
+        tone: "warn",
+        title: "Couldn't reach the server",
+        detail:
+          "Your play is still here in this tab. Check your connection and press Save again.",
         errors: [],
       });
     }
@@ -321,10 +392,26 @@ export function PlayBuilder() {
       </section>
 
       {saveState.status === "error" && (
-        <section className="rounded-md border border-red-800 bg-red-950/30 px-4 py-3 text-sm text-red-200">
-          <p className="font-medium">{saveState.message}</p>
+        <section
+          role="alert"
+          className={
+            saveState.tone === "warn"
+              ? "rounded-md border border-amber-700 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
+              : "rounded-md border border-red-800 bg-red-950/30 px-4 py-3 text-sm text-red-100"
+          }
+        >
+          <p className="font-medium">{saveState.title}</p>
+          <p
+            className={
+              saveState.tone === "warn"
+                ? "mt-1 text-amber-200/90"
+                : "mt-1 text-red-200/90"
+            }
+          >
+            {saveState.detail}
+          </p>
           {saveState.errors.length > 0 && (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-red-300">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-red-200">
               {saveState.errors.map((e) => (
                 <li key={e}>{e}</li>
               ))}

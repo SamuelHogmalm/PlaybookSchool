@@ -19,6 +19,7 @@ export {
   classifyAction,
   isMovement,
   movementActionForPlayer,
+  movementActionsForPlayer,
   sequenceBeat,
 } from "./sequence";
 export { actionArcProgress, routeRemaining } from "./routeRemaining";

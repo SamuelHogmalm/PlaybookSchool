@@ -12,8 +12,7 @@ import {
 import { lerpVec, samplePolyline } from "./pathSample";
 import {
   classifyAction,
-  isMovement,
-  movementActionForPlayer,
+  movementActionsForPlayer,
   sequenceBeat,
 } from "./sequence";
 import type { Phase, PositionsSnapshot, TimedAction } from "./types";
@@ -46,6 +45,12 @@ export function easeForAction(
   return easeInOutCut;
 }
 
+/**
+ * Where a player is at time t, walked across *all* their movements in order.
+ *
+ * Between two movements they hold at the end of the previous one — that is what
+ * makes a screener set the screen, wait, and then roll.
+ */
 function playerPosAtT(
   beat: Beat,
   timed: TimedAction[],
@@ -53,28 +58,37 @@ function playerPosAtT(
   t: number,
 ): Vec {
   const fallback = safeVec(beat.startPos[playerId], { x: 250, y: 235 });
-  const movement = movementActionForPlayer(timed, playerId);
+  const movements = movementActionsForPlayer(timed, playerId);
 
-  if (!movement) {
+  if (!movements.length) {
     return safeVec(beat.startPos[playerId], fallback);
   }
 
-  const route = buildActionRoute(beat, movement);
-  if (route.length < 2) {
-    return safeVec(beat.startPos[playerId], fallback);
+  let held = fallback;
+
+  for (const movement of movements) {
+    // Without a drawn path, travel runs from wherever they currently stand to the
+    // beat's end position — never from startPos again, which would rewind them.
+    const route =
+      movement.path && movement.path.length >= 2
+        ? buildActionRoute(beat, movement)
+        : [held, safeVec(beat.pos[playerId], held)];
+
+    if (route.length < 2) continue;
+
+    if (t <= movement.startAt) return held;
+
+    if (t >= movement.endAt) {
+      held = safeVec(route[route.length - 1], held);
+      continue;
+    }
+
+    const local = (t - movement.startAt) / (movement.endAt - movement.startAt);
+    const eased = easeForAction(movement, beat.actions)(local);
+    return samplePolyline(route, eased);
   }
 
-  if (t <= movement.startAt) {
-    return safeVec(route[0], fallback);
-  }
-
-  if (t >= movement.endAt) {
-    return safeVec(route[route.length - 1], fallback);
-  }
-
-  const local = (t - movement.startAt) / (movement.endAt - movement.startAt);
-  const eased = easeForAction(movement, beat.actions)(local);
-  return samplePolyline(route, eased);
+  return held;
 }
 
 function handOffset(playerPos: Vec, side = 1): Vec {
