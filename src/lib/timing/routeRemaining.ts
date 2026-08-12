@@ -1,30 +1,13 @@
-import type { Action, Beat, Vec } from "@/lib/play/types";
+import type { Action, Vec } from "@/lib/play/types";
 import { dist } from "@/lib/play/geometry";
 
-import {
-  easeInOutCut,
-  easeInOutDribble,
-  easeInRoll,
-  easeOutScreen,
-} from "./easing";
 import { polylineLength, samplePolyline } from "./pathSample";
-import { classifyAction } from "./sequence";
+import { easeForAction } from "./positionsAt";
 import type { TimedAction } from "./types";
 
 const MIN_ROUTE_PX = 12;
 
-function easeForAction(
-  action: TimedAction,
-  actions: Action[],
-): (u: number) => number {
-  const kind = classifyAction(action, actions);
-  if (action.type === "screen") return easeOutScreen;
-  if (action.type === "dribble") return easeInOutDribble;
-  if (kind === "roll") return easeInRoll;
-  return easeInOutCut;
-}
-
-/** Arc-length progress within an action window — matches positionsAt sampling. */
+/** Arc-length progress within an action window. */
 export function actionArcProgress(
   beatT: number,
   action: TimedAction,
@@ -36,20 +19,7 @@ export function actionArcProgress(
   return easeForAction(action, actions)(local);
 }
 
-export function buildActionRoute(beat: Beat, action: Action): Vec[] {
-  if (action.path && action.path.length >= 2) {
-    return action.path.map((p) => ({ x: p.x, y: p.y }));
-  }
-  const start = beat.startPos[action.by];
-  const end = beat.pos[action.by];
-  if (!start || !end) return [];
-  return [{ ...start }, { ...end }];
-}
-
-/**
- * Portion of a route not yet travelled at arc-length progress u ∈ [0, 1].
- * Uses the same polyline sampling as positionsAt so the line and token agree.
- */
+/** Portion of a route not yet travelled at arc-length progress u ∈ [0, 1]. */
 export function routeRemaining(route: Vec[], progress: number): Vec[] {
   if (!route?.length || route.length < 2) return [];
 

@@ -248,8 +248,13 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
       0,
       `Expected 12/12 valid:\n${failures.join("\n")}`,
     );
-    // 10 player-level pass+cut conflicts across seed (Kickup b2 has two players)
-    assert.equal(warningBeats, 10, `expected 10 rule-12 warnings, got ${warningBeats}`);
+    // Rule 12 (pass+cut on the same beat) is a non-blocking review queue, not a
+    // failure — the count moves whenever the interpret prompt improves. Ceiling, so
+    // a legitimate change doesn't look like a regression. 10 at last check.
+    assert.ok(
+      warningBeats <= 15,
+      `rule-12 warnings ${warningBeats} exceeds ceiling 15 — review queue is growing`,
+    );
   });
 
   it("no derived cut/dribble duplicates AI-read on previous beat (idle on N)", () => {
@@ -337,8 +342,8 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
   });
 
   // Derived actions are pipeline guesses, not read from the page. A sharp rise means
-  // either the AI is missing things or derivation is over-firing. ~23 of ~108 total
-  // actions is expected after lost-dribble recovery; a jump toward 40+ means investigate.
+  // either the AI is missing things or derivation is over-firing. Currently 21 derived
+  // of 123 total actions (17%); a jump toward 40+ means investigate.
   it("total derived actions across seed (canary)", () => {
     let derived = 0;
     for (const seed of raw as SeedPlay[]) {

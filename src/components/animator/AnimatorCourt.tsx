@@ -1,10 +1,10 @@
 "use client";
 
 import type { Beat, PlayerId, Play } from "@/lib/play/types";
-import { PLAYER_IDS } from "@/lib/play/types";
 import {
   CourtMarkers,
   CourtSurface,
+  PlayerTokens,
   COURT_HEIGHT,
   COURT_WIDTH,
 } from "@/components/court";
@@ -70,51 +70,14 @@ export function AnimatorCourt({
           />
         )}
 
-        {PLAYER_IDS.map((id) => {
-          if (hidePlayer === id) return null;
-          const p = snapshot.players[id];
-          if (!p) return null;
-          const highlighted = highlightPlayer === id;
-          const hasBall =
-            !snapshot.ballInFlight && snapshot.possession === id;
-
-          return (
-            <g key={id}>
-              {highlighted && (
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r="24"
-                  fill="none"
-                  stroke={palette.ok}
-                  strokeWidth="2"
-                  opacity="0.7"
-                />
-              )}
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r="15"
-                fill={palette.panel2}
-                stroke={
-                  highlighted ? palette.ok : hasBall ? palette.ball : palette.muted
-                }
-                strokeWidth={hasBall ? 3 : highlighted ? 2.5 : 2}
-              />
-              <text
-                x={p.x}
-                y={p.y + 5.5}
-                textAnchor="middle"
-                fontSize="15"
-                fontWeight="700"
-                fill={palette.text}
-                style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}
-              >
-                {id}
-              </text>
-            </g>
-          );
-        })}
+        <PlayerTokens
+          positions={snapshot.players}
+          possession={snapshot.ballInFlight ? null : snapshot.possession}
+          palette={palette}
+          highlightPlayerId={highlightPlayer ?? undefined}
+          hidePlayer={hidePlayer}
+          showBallDot={false}
+        />
 
         <circle
           cx={snapshot.ball.x}

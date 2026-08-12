@@ -24,6 +24,18 @@ import {
 import { PRESET_NAMES, type AlignmentPresetName } from "@/lib/play/editor";
 import { validatePlay } from "@/lib/play/validation";
 
+import {
+  canRedo,
+  canUndo,
+  commit as commitHistory,
+  type History,
+  initHistory,
+  redo as redoHistory,
+  replacePresent,
+  undo as undoHistory,
+} from "@/lib/play/history";
+import { PlayAnimator } from "@/components/animator";
+
 import type { BuilderTool } from "./ActionPalette";
 import { ActionPalette } from "./ActionPalette";
 import { BeatStrip } from "./BeatStrip";
@@ -31,8 +43,17 @@ import { EditableCourt } from "./EditableCourt";
 import { ScreenForPicker } from "./ScreenForPicker";
 import { ValidationBanner } from "./ValidationBanner";
 
+type SaveState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "saved"; version: number }
+  | { status: "error"; message: string; errors: string[] };
+
 export function PlayBuilder() {
-  const [play, setPlay] = useState<Play>(() => createEmptyPlay());
+  const [history, setHistory] = useState<History<Play>>(() =>
+    initHistory(createEmptyPlay()),
+  );
+  const play = history.present;
   const [beatIndex, setBeatIndex] = useState(0);
   const [tool, setTool] = useState<BuilderTool>("move");
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>("1");
@@ -41,15 +62,71 @@ export function PlayBuilder() {
     by: PlayerId;
     path: Vec[];
   } | null>(null);
+  // Bumping the nonce remounts PlayAnimator, which is how it resets (key={play.id}).
+  const [preview, setPreview] = useState<number | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   const beat = play.beats[beatIndex];
   const validation = useMemo(() => validatePlay(play), [play]);
 
   const selectedAction = beat?.actions.find((a) => a.id === selectedActionId);
 
-  const updateBeats = useCallback((beats: Play["beats"]) => {
-    setPlay((p) => setPlayBeats(p, beats));
+  /**
+   * The one mutation path. Everything that changes the play goes through here so
+   * a step can never bypass history — including the "confirm whole play" button.
+   */
+  const mutate = useCallback((fn: (current: Play) => Play) => {
+    setHistory((h) => commitHistory(h, fn(h.present)));
+    setSaveState({ status: "idle" });
   }, []);
+
+  const updateBeats = useCallback(
+    (beats: Play["beats"]) => mutate((p) => setPlayBeats(p, beats)),
+    [mutate],
+  );
+
+  const onUndo = useCallback(() => {
+    setHistory((h) => undoHistory(h));
+    setSelectedActionId(null);
+    setPendingScreen(null);
+  }, []);
+
+  const onRedo = useCallback(() => {
+    setHistory((h) => redoHistory(h));
+    setSelectedActionId(null);
+    setPendingScreen(null);
+  }, []);
+
+  const onSave = async () => {
+    setSaveState({ status: "saving" });
+    try {
+      const res = await fetch("/api/plays", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...play, valid: true, validationErrors: [] }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setSaveState({
+          status: "error",
+          message: body.error ?? `Save failed (${res.status})`,
+          errors: body.validationErrors ?? [],
+        });
+        return;
+      }
+      // Save echo is not an edit — it must not become an undo step.
+      setHistory((h) =>
+        replacePresent(h, { ...h.present, version: body.play.version }),
+      );
+      setSaveState({ status: "saved", version: body.play.version });
+    } catch (err) {
+      setSaveState({
+        status: "error",
+        message: err instanceof Error ? err.message : "Network error",
+        errors: [],
+      });
+    }
+  };
 
   const onMovePlayer = (playerId: PlayerId, pos: Vec) => {
     updateBeats(updateBeatPlayerPos(play.beats, beatIndex, playerId, pos));
@@ -84,10 +161,23 @@ export function PlayBuilder() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Delete" && e.key !== "Backspace") return;
-      if (!selectedActionId) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) onRedo();
+        else onUndo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        onRedo();
+        return;
+      }
+
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (!selectedActionId) return;
       e.preventDefault();
       updateBeats(removeAction(play.beats, beatIndex, selectedActionId));
       setSelectedActionId(null);
@@ -104,8 +194,30 @@ export function PlayBuilder() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 p-4 text-stone-100">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">{play.name}</h1>
+      <header className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">{play.name}</h1>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo(history)}
+              title="Undo (Ctrl+Z)"
+              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ↶ Undo
+            </button>
+            <button
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo(history)}
+              title="Redo (Ctrl+Shift+Z)"
+              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ↷ Redo
+            </button>
+          </div>
+        </div>
         <p className="text-sm text-stone-400">
           Select a tool, click a player to select them, drag from their token to draw.
           Move mode drags destination ghosts. Pass sets possession automatically.
@@ -141,17 +253,85 @@ export function PlayBuilder() {
         />
       )}
 
-      <EditableCourt
-        beat={beat}
-        tool={tool}
-        selectedPlayerId={selectedPlayerId}
-        selectedActionId={selectedActionId}
-        onSelectPlayer={setSelectedPlayerId}
-        onSelectAction={setSelectedActionId}
-        onMovePlayer={onMovePlayer}
-        onDrawComplete={onDrawComplete}
-        onScreenNeedsFor={setPendingScreen}
-      />
+      {preview === null ? (
+        <EditableCourt
+          beat={beat}
+          tool={tool}
+          selectedPlayerId={selectedPlayerId}
+          selectedActionId={selectedActionId}
+          onSelectPlayer={setSelectedPlayerId}
+          onSelectAction={setSelectedActionId}
+          onMovePlayer={onMovePlayer}
+          onDrawComplete={onDrawComplete}
+          onScreenNeedsFor={setPendingScreen}
+        />
+      ) : (
+        <section className="space-y-3">
+          <PlayAnimator
+            key={`${play.id}-${preview}`}
+            play={play}
+            from={0}
+            playing
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPreview((n) => (n ?? 0) + 1)}
+              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800"
+            >
+              Replay
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800"
+            >
+              Close preview
+            </button>
+          </div>
+        </section>
+      )}
+
+      <section className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setPreview((n) => (n ?? 0) + 1)}
+          disabled={!validation.valid}
+          title={
+            validation.valid ? undefined : "Fix validation errors before previewing"
+          }
+          className="rounded border border-amber-700 px-4 py-2 text-sm text-amber-200 hover:bg-amber-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Preview
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={!validation.valid || saveState.status === "saving"}
+          title={validation.valid ? undefined : "Fix validation errors before saving"}
+          className="rounded border border-emerald-700 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {saveState.status === "saving" ? "Saving…" : "Save play"}
+        </button>
+        {saveState.status === "saved" && (
+          <span className="text-sm text-emerald-300">
+            Saved — version {saveState.version}
+          </span>
+        )}
+      </section>
+
+      {saveState.status === "error" && (
+        <section className="rounded-md border border-red-800 bg-red-950/30 px-4 py-3 text-sm text-red-200">
+          <p className="font-medium">{saveState.message}</p>
+          {saveState.errors.length > 0 && (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-red-300">
+              {saveState.errors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {selectedAction && (
         <section className="rounded-md border border-stone-700 bg-stone-900/50 px-4 py-3 text-sm">
@@ -195,7 +375,7 @@ export function PlayBuilder() {
       {hasReviewFlags && (
         <button
           type="button"
-          onClick={() => setPlay(confirmPlayActions(play))}
+          onClick={() => mutate((p) => confirmPlayActions(p))}
           className="self-start rounded border border-emerald-700 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-950/40"
         >
           Looks right — confirm whole play

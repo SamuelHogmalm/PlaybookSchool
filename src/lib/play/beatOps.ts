@@ -29,12 +29,37 @@ function uid(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
-/** beat[N].startPos === beat[N-1].pos for N > 0. */
+function hasMovementAction(beat: Beat, id: PlayerId): boolean {
+  return beat.actions.some(
+    (a) =>
+      a.by === id &&
+      (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+  );
+}
+
+function samePoint(a: Vec | undefined, b: Vec | undefined): boolean {
+  return !!a && !!b && a.x === b.x && a.y === b.y;
+}
+
+/**
+ * Restore beat[N].startPos === beat[N-1].pos for every N.
+ *
+ * A player who is *holding* in beat N — no movement action, and pos already equal
+ * to startPos — has their pos carried along too. Without this, editing an earlier
+ * beat moves a later beat's startPos but leaves its stale pos behind, so the player
+ * silently snaps back mid-play. Players who act, or whose destination was placed by
+ * hand, keep the position they were given.
+ */
 export function linkBeatPositions(beats: Beat[]): Beat[] {
   const next = cloneBeats(beats);
   for (let i = 1; i < next.length; i++) {
     for (const id of PLAYER_IDS) {
-      next[i].startPos[id] = { ...next[i - 1].pos[id] };
+      const carried = { ...next[i - 1].pos[id] };
+      const holding =
+        !hasMovementAction(next[i], id) &&
+        samePoint(next[i].startPos[id], next[i].pos[id]);
+      next[i].startPos[id] = carried;
+      if (holding) next[i].pos[id] = { ...carried };
     }
   }
   return next;
@@ -49,9 +74,11 @@ export function updateBeatPlayerPos(
 ): Beat[] {
   const next = cloneBeats(beats);
   const snapped = snapClampPoint(pos);
-  next[beatIndex].pos[playerId] = snapped;
-  if (beatIndex + 1 < next.length) {
-    next[beatIndex + 1].startPos[playerId] = { ...snapped };
+  next[beatIndex].pos[playerId] = { ...snapped };
+  // Beat 1 has no previous beat to inherit from — its startPos *is* the opening
+  // alignment, so an idle player there moves as a whole rather than drifting.
+  if (beatIndex === 0 && !hasMovementAction(next[0], playerId)) {
+    next[0].startPos[playerId] = { ...snapped };
   }
   for (const a of next[beatIndex].actions) {
     if (a.by === playerId || a.for === playerId) {
@@ -60,7 +87,9 @@ export function updateBeatPlayerPos(
       delete a.reason;
     }
   }
-  return next;
+  // Downstream beats are relinked here, not patched by hand — patching startPos
+  // directly would hide whether a later player was holding or placed.
+  return linkBeatPositions(next);
 }
 
 export function applyPresetToBeat(
@@ -79,12 +108,7 @@ export function applyPresetToBeat(
   } else {
     next[beatIndex].pos = copyPositions(preset);
   }
-  if (beatIndex + 1 < next.length) {
-    for (const id of PLAYER_IDS) {
-      next[beatIndex + 1].startPos[id] = { ...next[beatIndex].pos[id] };
-    }
-  }
-  return next;
+  return linkBeatPositions(next);
 }
 
 export function addBeat(beats: Beat[]): Beat[] {
@@ -176,6 +200,11 @@ export function linkBeatBall(beats: Beat[]): Beat[] {
   return next;
 }
 
+/**
+ * The single write path for beats. Every builder mutation goes through here, so
+ * both chain invariants (positions, then possession) are restored exactly once,
+ * no matter which operation produced the beats.
+ */
 export function setPlayBeats(play: Play, beats: Beat[]): Play {
-  return touchPlay({ ...play, beats: linkBeatBall(beats) });
+  return touchPlay({ ...play, beats: linkBeatBall(linkBeatPositions(beats)) });
 }

@@ -1,5 +1,5 @@
 import type { Action, ActionType, Beat, Play, PlayerId, Vec } from "./types";
-import { cloneBeats, linkBeatBall } from "./beatOps";
+import { cloneBeats, linkBeatBall, linkBeatPositions } from "./beatOps";
 import { pathLength } from "./drawing";
 
 function uid(): string {
@@ -46,9 +46,6 @@ export function addDrawnAction(
 
   if (input.type === "cut" || input.type === "dribble" || input.type === "screen") {
     beat.pos[input.by] = { ...end };
-    if (beatIndex + 1 < next.length) {
-      next[beatIndex + 1].startPos[input.by] = { ...end };
-    }
   }
 
   if ((input.type === "pass" || input.type === "handoff") && input.for) {
@@ -56,7 +53,9 @@ export function addDrawnAction(
   }
 
   beat.actions = [...beat.actions, action];
-  return linkBeatBall(next);
+  // Relink rather than patching the next beat's startPos: later beats where this
+  // player was holding need to follow them, not just inherit a new start point.
+  return linkBeatBall(linkBeatPositions(next));
 }
 
 export function removeAction(
@@ -65,8 +64,27 @@ export function removeAction(
   actionId: string,
 ): Beat[] {
   const next = cloneBeats(beats);
-  next[beatIndex].actions = next[beatIndex].actions.filter((a) => a.id !== actionId);
-  return next;
+  const beat = next[beatIndex];
+  const removed = beat.actions.find((a) => a.id === actionId);
+  beat.actions = beat.actions.filter((a) => a.id !== actionId);
+
+  // Deleting the movement that carried a player there also undoes the travel,
+  // otherwise they keep a destination with nothing to explain it.
+  if (
+    removed &&
+    (removed.type === "cut" ||
+      removed.type === "dribble" ||
+      removed.type === "screen") &&
+    !beat.actions.some(
+      (a) =>
+        a.by === removed.by &&
+        (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+    )
+  ) {
+    beat.pos[removed.by] = { ...beat.startPos[removed.by] };
+  }
+
+  return linkBeatBall(next);
 }
 
 export function confirmAction(

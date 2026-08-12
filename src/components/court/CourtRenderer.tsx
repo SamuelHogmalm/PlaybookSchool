@@ -66,7 +66,8 @@ export function CourtRenderer({
           highlightActionId={highlightActionId}
         />
         <PlayerTokens
-          beat={beat}
+          positions={beat.startPos}
+          possession={beat.startBall}
           palette={palette}
           highlightPlayerId={highlightPlayerId}
         />

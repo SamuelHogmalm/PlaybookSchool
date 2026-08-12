@@ -23,7 +23,8 @@ function safeVec(v: Vec | undefined, fallback: Vec): Vec {
   return { x: v.x, y: v.y };
 }
 
-function buildRoute(beat: Beat, action: Action): Vec[] {
+/** The route a player travels for an action: drawn path, else a straight line. */
+export function buildActionRoute(beat: Beat, action: Action): Vec[] {
   if (action.path && action.path.length >= 2) {
     return action.path.map((p) => ({ x: p.x, y: p.y }));
   }
@@ -33,7 +34,11 @@ function buildRoute(beat: Beat, action: Action): Vec[] {
   return [{ ...start }, { ...end }];
 }
 
-function easeForAction(action: TimedAction, actions: Action[]): (u: number) => number {
+/** Easing curve for an action, by its classified kind. */
+export function easeForAction(
+  action: TimedAction,
+  actions: Action[],
+): (u: number) => number {
   const kind = classifyAction(action, actions);
   if (action.type === "screen") return easeOutScreen;
   if (action.type === "dribble") return easeInOutDribble;
@@ -54,7 +59,7 @@ function playerPosAtT(
     return safeVec(beat.startPos[playerId], fallback);
   }
 
-  const route = buildRoute(beat, movement);
+  const route = buildActionRoute(beat, movement);
   if (route.length < 2) {
     return safeVec(beat.startPos[playerId], fallback);
   }

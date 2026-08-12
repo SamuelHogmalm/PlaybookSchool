@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { addDrawnAction } from "../../src/lib/play/actionOps.js";
 import {
   addBeat,
   applyPresetToBeat,
@@ -30,15 +31,38 @@ function assertContinuity(beats: ReturnType<typeof createEmptyPlay>["beats"]) {
 }
 
 describe("play editor — position continuity", () => {
-  it("updateBeatPlayerPos updates pos and next beat startPos only", () => {
+  // Beat 1 is the opening alignment — there is no earlier beat to inherit from, so
+  // dragging an idle player there relocates them outright. Moving pos alone would
+  // leave startPos != pos with no action, which violates validation rule 9 on the
+  // first drag, and would disagree with applyPresetToBeat, which already moves both.
+  it("updateBeatPlayerPos on beat 1 moves an idle player's whole alignment", () => {
     const play = createEmptyPlay();
-    const originalStart = play.beats[0].startPos["2"].x;
     const beats = updateBeatPlayerPos(play.beats, 0, "2", { x: 103, y: 207 });
 
     assert.equal(beats[0].pos["2"].x, 100);
     assert.equal(beats[0].pos["2"].y, 210);
+    assert.equal(beats[0].startPos["2"].x, 100);
+    assert.equal(beats[0].startPos["2"].y, 210);
     assert.equal(beats[1].startPos["2"].x, 100);
     assert.equal(beats[1].startPos["2"].y, 210);
+    assertContinuity(beats);
+  });
+
+  // With an action, the drag is setting a destination, so startPos stays put.
+  it("updateBeatPlayerPos on beat 1 moves only pos when the player has an action", () => {
+    const play = createEmptyPlay();
+    const originalStart = play.beats[0].startPos["2"].x;
+    const withCut = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "2",
+      path: [
+        { x: 400, y: 200 },
+        { x: 300, y: 150 },
+      ],
+    });
+    const beats = updateBeatPlayerPos(withCut, 0, "2", { x: 103, y: 207 });
+
+    assert.equal(beats[0].pos["2"].x, 100);
     assert.equal(beats[0].startPos["2"].x, originalStart);
     assertContinuity(beats);
   });

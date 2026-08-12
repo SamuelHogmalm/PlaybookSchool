@@ -1,21 +1,38 @@
-import type { Beat, PlayerId, Vec } from "@/lib/play/types";
+import type { PlayerId, Vec } from "@/lib/play/types";
 import { PLAYER_IDS } from "@/lib/play/types";
 import { tokenStroke, type CourtPalette } from "@/lib/court";
 
 type Props = {
-  beat: Beat;
+  /** Where to draw each token. Static beats pass beat.startPos; the animator passes a snapshot. */
+  positions: Record<PlayerId, Vec>;
+  /** Who holds the ball, or null when it is in flight and drawn separately. */
+  possession: PlayerId | null;
   palette: CourtPalette;
   highlightPlayerId?: PlayerId;
+  hidePlayer?: PlayerId | null;
+  /**
+   * Draw the small possession dot beside the holder. The animator turns this off —
+   * it renders the ball from its own computed position, never attached to a token.
+   */
+  showBallDot?: boolean;
 };
 
-/** Player tokens at beat.startPos — possession from beat.startBall. */
-export function PlayerTokens({ beat, palette, highlightPlayerId }: Props) {
+/** Player tokens at the given positions. Pure presentation — no position derivation. */
+export function PlayerTokens({
+  positions,
+  possession,
+  palette,
+  highlightPlayerId,
+  hidePlayer = null,
+  showBallDot = true,
+}: Props) {
   return (
     <g>
       {PLAYER_IDS.map((id) => {
-        const p = beat.startPos[id];
+        if (hidePlayer === id) return null;
+        const p = positions[id];
         if (!p) return null;
-        const hasBall = beat.startBall === id;
+        const hasBall = possession === id;
         const highlighted = highlightPlayerId === id;
         const { fill, stroke, strokeWidth } = tokenStroke(
           id,
@@ -56,7 +73,9 @@ export function PlayerTokens({ beat, palette, highlightPlayerId }: Props) {
             >
               {id}
             </text>
-            {hasBall && <circle cx={p.x + 12} cy={p.y - 12} r="5" fill={palette.ball} />}
+            {hasBall && showBallDot && (
+              <circle cx={p.x + 12} cy={p.y - 12} r="5" fill={palette.ball} />
+            )}
           </g>
         );
       })}

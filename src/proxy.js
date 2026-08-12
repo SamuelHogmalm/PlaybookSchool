@@ -4,7 +4,7 @@ import { supabaseEnv } from "@/lib/supabase/config";
 
 const PRODUCTION_HOST = "playlab-omega.vercel.app";
 
-export async function middleware(request) {
+export async function proxy(request) {
   const host = request.nextUrl.hostname;
 
   // Preview deploy URLs (playlab-xxxx-....vercel.app) lack auth env — send users to production
