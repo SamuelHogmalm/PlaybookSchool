@@ -9,7 +9,7 @@ export const COURT_HEIGHT = 470;
 export const COURT_MARGIN = 18;
 
 export const MAX_BEAT_MOVE = 500;
-export const MAX_IDLE_MOVE = 60;
+export const MAX_IDLE_MOVE = 25;
 export const MAX_SCREENER_MOVE = 60;
 
 export function dist(a: Vec, b: Vec): number {

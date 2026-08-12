@@ -22,6 +22,11 @@ export {
   sequenceBeat,
 } from "./sequence";
 export {
+  actionArcProgress,
+  buildActionRoute,
+  routeRemaining,
+} from "./routeRemaining";
+export {
   passTravelDistance,
   playerPosAtT,
   positionsAt,

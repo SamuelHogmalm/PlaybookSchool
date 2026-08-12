@@ -32,7 +32,7 @@ export function PlayAnimator({
   onBeatEnd,
   onComplete,
 }: PlayAnimatorProps) {
-  const { snap } = usePlayPlayback({
+  const { frame, snap } = usePlayPlayback({
     play,
     from,
     to,
@@ -46,6 +46,10 @@ export function PlayAnimator({
   return (
     <AnimatorCourt
       snapshot={snap}
+      play={play}
+      beatIndex={frame.beatIndex}
+      beatT={frame.t}
+      phase={frame.phase}
       hidePlayer={hidePlayer}
       markerSuffix={`anim-${play.id}`}
     />

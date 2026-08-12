@@ -11,12 +11,16 @@ TYPE_ORDER = {"dribble": 1, "pass": 2, "handoff": 2, "screen": 3, "cut": 4}
 
 # 10 units ≈ 1 foot on the 500×470 court
 JITTER_MAX = 25  # under: token jitter — snap pos, no action
-SPACING_MAX = 60  # 25–60: spacing adjustment — keep pos, no action
-REAL_MOVE_MIN = 60  # over: real move — derive cut/dribble
+REAL_MOVE_MIN = 25  # over: real move — derive cut/dribble (matches validation rule 9)
 MAX_BEAT_MOVE = 500  # flag for review, never split path
 MAX_SCREENER_MOVE = 60
 SPLIT_SCREEN_ENDPOINT_MAX = 40  # N-1 cut endpoint ≈ screener pos on beat N
 ZERO_TRAVEL_SCREEN_REASON = "Screen has no movement — verify against your playbook"
+HOLDER_CUT_REASON = "Ball handler has a cut — should this be a dribble?"
+PASS_AND_CUT_REASON = (
+    "Player passes and cuts on the same beat — should the cut be a dribble, "
+    "or belong to the next beat?"
+)
 
 
 def _dist(a: dict[str, float], b: dict[str, float]) -> float:
@@ -237,21 +241,81 @@ def derive_ball(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return repairs
 
 
-def derive_movement_actions(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _holder_loco_covered(actions: list[dict[str, Any]], pid: str) -> bool:
+    return any(
+        str(a.get("by")) == pid
+        and a.get("type") in {"cut", "dribble", "handoff", "screen"}
+        for a in actions
+    )
+
+
+def _movement_covered(actions: list[dict[str, Any]], pid: str) -> bool:
+    return any(
+        str(a.get("by")) == pid and a.get("type") in {"cut", "dribble", "screen"}
+        for a in actions
+    )
+
+
+def derive_holder_dribbles(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
-    Rule 9 at import: player moved > REAL_MOVE_MIN within beat with no action -> derived cut/dribble.
-    Actions on the SAME beat cover the mover.
+    Ball handler moved > JITTER_MAX within beat with no cut/dribble/handoff -> derived dribble.
+    Pass alone does not cover relocation (lost dribble recovery).
     """
     derived: list[dict[str, Any]] = []
 
     for i, beat in enumerate(beats):
         actions: list[dict[str, Any]] = list(beat.get("actions") or [])
-        covered = {str(a.get("by")) for a in actions if a.get("by")}
+        holder = _beat_start_holder(beats, i)
+        if _holder_loco_covered(actions, holder):
+            continue
+        start_pos, end_pos = _beat_positions(beat)
+        a = start_pos.get(holder)
+        b = end_pos.get(holder)
+        if not a or not b:
+            continue
+        move = _dist(a, b)
+        if move <= JITTER_MAX:
+            continue
+
+        entry: dict[str, Any] = {
+            "id": _next_action_id(actions),
+            "type": "dribble",
+            "by": holder,
+            "path": _simple_path(a, b),
+            "derived": True,
+        }
+        if move > MAX_BEAT_MOVE:
+            entry["needsReview"] = True
+            entry["reason"] = f"Movement {move:.0f} units exceeds {MAX_BEAT_MOVE} (flagged, not split)"
+        actions.append(entry)
+        beat["actions"] = actions
+        derived.append(
+            {
+                "beat": beat.get("id"),
+                "player": holder,
+                "type": "dribble",
+                "move": round(move, 1),
+                "flagged": move > MAX_BEAT_MOVE,
+            }
+        )
+
+    return derived
+
+
+def derive_movement_actions(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Rule 9 at import: player moved > REAL_MOVE_MIN within beat with no movement action -> derived cut/dribble.
+    Pass/handoff alone do not cover player movement.
+    """
+    derived: list[dict[str, Any]] = []
+
+    for i, beat in enumerate(beats):
+        actions: list[dict[str, Any]] = list(beat.get("actions") or [])
         holder = _beat_start_holder(beats, i)
         start_pos, end_pos = _beat_positions(beat)
 
         for pid in PLAYER_IDS:
-            if pid in covered:
+            if _movement_covered(actions, pid):
                 continue
             a = start_pos.get(pid)
             b = end_pos.get(pid)
@@ -282,7 +346,6 @@ def derive_movement_actions(beats: list[dict[str, Any]]) -> list[dict[str, Any]]
                 entry["needsReview"] = True
                 entry["reason"] = f"Movement {move:.0f} units exceeds {MAX_BEAT_MOVE} (flagged, not split)"
             actions.append(entry)
-            covered.add(pid)
             derived.append(
                 {
                     "beat": beat.get("id"),
@@ -443,6 +506,66 @@ def reclassify_traveling_screens(beats: list[dict[str, Any]]) -> list[dict[str, 
     return changed
 
 
+def flag_holder_cuts(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """AI cut on ball handler at beat start — likely a misread dribble."""
+    flagged: list[dict[str, Any]] = []
+
+    for i, beat in enumerate(beats):
+        holder = _beat_start_holder(beats, i)
+        for action in beat.get("actions") or []:
+            if action.get("type") != "cut":
+                continue
+            if str(action.get("by")) != holder:
+                continue
+            if action.get("derived"):
+                continue
+            action["needsReview"] = True
+            action["reason"] = HOLDER_CUT_REASON
+            flagged.append(
+                {
+                    "beat": beat.get("id"),
+                    "action": action.get("id"),
+                    "player": holder,
+                }
+            )
+
+    return flagged
+
+
+def flag_pass_and_cut(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Same player cannot pass/handoff and cut on one beat."""
+    flagged: list[dict[str, Any]] = []
+
+    for beat in beats:
+        by_player: dict[str, list[dict[str, Any]]] = {}
+        for action in beat.get("actions") or []:
+            pid = str(action.get("by") or "")
+            if not pid:
+                continue
+            by_player.setdefault(pid, []).append(action)
+
+        for pid, actions in by_player.items():
+            has_transfer = any(a.get("type") in TRANSFERS for a in actions)
+            has_cut = any(a.get("type") == "cut" for a in actions)
+            if not has_transfer or not has_cut:
+                continue
+            for action in actions:
+                if action.get("type") not in {"pass", "handoff", "cut"}:
+                    continue
+                action["needsReview"] = True
+                action["reason"] = PASS_AND_CUT_REASON
+                flagged.append(
+                    {
+                        "beat": beat.get("id"),
+                        "action": action.get("id"),
+                        "player": pid,
+                        "type": action.get("type"),
+                    }
+                )
+
+    return flagged
+
+
 def enrich_action_paths(beats: list[dict[str, Any]]) -> int:
     """Fill path only when absent — startPos -> pos within beat."""
     enriched = 0
@@ -476,11 +599,14 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
     short_dropped = drop_short_movement_actions(beats)
     jitter_snapped = snap_jitter_positions(beats)
     ball_repairs = derive_ball(beats)
+    holder_dribbles = derive_holder_dribbles(beats)
     movement_derived = derive_movement_actions(beats)
     split_merged = merge_split_screens(beats)
     zero_travel_flagged = flag_zero_travel_screens(beats)
     screen_changes = reclassify_traveling_screens(beats)
     paths_enriched = enrich_action_paths(beats)
+    holder_cuts_flagged = flag_holder_cuts(beats)
+    pass_cut_flagged = flag_pass_and_cut(beats)
     sanitize_removed += sanitize_actions(beats)
     ball_repairs += derive_ball(beats)
 
@@ -497,11 +623,14 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
         "actions_after": actions_after,
         "derived_remaining": derived_remaining,
         "ball_repairs": ball_repairs,
+        "holder_dribbles": holder_dribbles,
         "movement_derived": movement_derived,
         "split_merged": split_merged,
         "zero_travel_flagged": zero_travel_flagged,
         "screen_changes": screen_changes,
         "paths_enriched": paths_enriched,
+        "holder_cuts_flagged": holder_cuts_flagged,
+        "pass_cut_flagged": pass_cut_flagged,
         "sanitize_removed": sanitize_removed,
         "jitter_snapped": jitter_snapped,
         "short_dropped": short_dropped,

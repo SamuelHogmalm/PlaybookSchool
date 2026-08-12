@@ -87,19 +87,20 @@ regardless of what the picture appears to show.
    feet who doesn't have the ball is not a dribble. Re-read it.
 2. **Nobody passes to themselves or screens for themselves.**
 3. **A pass needs a receiver.** A dashed line into empty floor is not a pass.
-4. **The ball cannot teleport.** If possession changes between this frame and the
+4. **Every pass and handoff MUST name a receiver (`for`).** A pass with no receiver
+   is not a pass — do not emit it. If you cannot tell who receives it from the arrow,
+   use the next frame's `startBall` to determine the receiver, or omit the action
+   entirely. **Never emit a pass or handoff without `for`.**
+5. **The ball cannot teleport.** If possession changes between this frame and the
    next, a pass or handoff caused it — emit that action even if you cannot see the
    line, flagged uncertain.
-5. **A pass you emit must match the next frame's possession.** If you read a pass
+6. **A pass you emit must match the next frame's possession.** If you read a pass
    from 1 to 3, player 3 holds the ball next frame. If they don't, your reading is
    wrong.
-6. **Exactly five offensive players.** Never invent a sixth.
-7. **Travel line ending in a screen bar is ONE screen action.** When a player's line
-   ends in a perpendicular bar on the same frame, emit a single `screen` with that
-   player as `by`, the screened player as `for`, and the full travel as the action
-   path. **Never** emit a separate `cut` or `dribble` for the travel and a bare
-   `screen` on the following frame — that duplicates one drawn action.
-8. **Nobody moves more than 350 units in one frame.** That's a teleport, not a cut.
+7. **Exactly five offensive players.** Never invent a sixth.
+8. **A screener holds still while the screen is used.** If a player both screens and
+   travels far in one frame, the travel belongs to the next frame.
+9. **Nobody moves more than 350 units in one frame.** That's a teleport, not a cut.
 
 ## Disambiguation, in order
 
@@ -128,16 +129,13 @@ holder. Use it to force the assignment.
 
 ## Cross-frame check
 
-Possession is your strongest correctness signal and it costs nothing. You are given
-the circled possession at the **start** of this frame and the circled possession at the
-**start** of the next frame. Use those to validate your arrow readings — do not output
-possession yourself.
+Possession is your strongest correctness signal and it costs nothing.
 
 - Holder unchanged and that player moved → **dribble**, even if the line looks solid.
-- Holder changed into the next frame → **pass or handoff**, old holder to new. Detected
-  none? You missed one. Emit it, flagged.
-- You emitted a pass to B but the next frame's circled holder isn't B → your assignment
-  is wrong. Re-resolve before returning.
+- Holder changed → **pass or handoff**, old holder to new. Detected none? You missed
+  one. Emit it, flagged.
+- You emitted a pass to B but next frame's holder isn't B → your assignment is wrong.
+  Re-resolve before returning.
 
 Run this on every frame before output.
 
@@ -203,14 +201,15 @@ the result doesn't hold together as basketball.
 Run all of these. Fix or flag anything that fails.
 
 1. Does every pass, dribble, and handoff belong to the player holding the ball?
-2. Does anyone pass to themselves or screen for themselves?
-3. If possession changes into the next frame, did I emit the pass causing it?
-4. If I emitted a pass, does the receiver hold the ball next frame?
-5. Did I emit one `screen` (not cut + next-frame screen) for every travel line that ends in a bar?
-6. More than five offensive players?
-7. Does anyone move more than 350 units?
-8. Is everything I'm unsure about flagged with a reason?
-9. Did I stay in scope — movements only, no coaching or strategy?
+2. Does every pass and handoff include a `for` receiver? (Never omit `for`.)
+3. Does anyone pass to themselves or screen for themselves?
+4. If possession changes into the next frame, did I emit the pass causing it?
+5. If I emitted a pass, does the receiver hold the ball next frame?
+6. Does any screener also travel far in the same frame?
+7. More than five offensive players?
+8. Does anyone move more than 350 units?
+9. Is everything I'm unsure about flagged with a reason?
+10. Did I stay in scope — movements only, no coaching or strategy?
 
 If a check fails and you cannot resolve it, lower confidence and record it in
 `logicErrors`. Do not paper over it.

@@ -171,7 +171,7 @@ describe("validatePlay — hand-written fixtures", () => {
     assert.ok(result.errors.some((e) => e.includes("500")));
   });
 
-  it("allows spacing adjustment without action (rule 9, ≤60 units)", () => {
+  it("allows jitter without action (rule 9, ≤25 units)", () => {
     const play = minimalPlay([
       beat("b1", "1", {}),
       beat(
@@ -180,14 +180,14 @@ describe("validatePlay — hand-written fixtures", () => {
         { "4": { x: 330, y: 100 } },
         [{ id: "a1", type: "cut", by: "2" }],
         "1",
-        { "4": { x: 310, y: 130 } },
+        { "4": { x: 320, y: 110 } },
       ),
     ]);
     const result = validatePlay(play);
     assert.equal(result.valid, true, result.errors.join("; "));
   });
 
-  it("rejects idle player movement beyond spacing (rule 9)", () => {
+  it("rejects idle player movement beyond jitter (rule 9)", () => {
     const play = minimalPlay([
       beat("b1", "1", {}),
       beat(
@@ -234,9 +234,11 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
 
   it("all 12 seed plays pass validatePlay (regression)", () => {
     const failures: string[] = [];
+    let warningBeats = 0;
     for (const seed of raw) {
       const play = normalizeSeedPlay(seed);
-      const { valid, errors } = validatePlay(play);
+      const { valid, errors, warnings } = validatePlay(play);
+      warningBeats += warnings.length;
       if (!valid) {
         failures.push(`${seed.name}: ${errors.join("; ")}`);
       }
@@ -246,6 +248,8 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
       0,
       `Expected 12/12 valid:\n${failures.join("\n")}`,
     );
+    // 10 player-level pass+cut conflicts across seed (Kickup b2 has two players)
+    assert.equal(warningBeats, 10, `expected 10 rule-12 warnings, got ${warningBeats}`);
   });
 
   it("no derived cut/dribble duplicates AI-read on previous beat (idle on N)", () => {
@@ -332,7 +336,10 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
     assert.equal(failures.length, 0, failures.join("\n"));
   });
 
-  it("total derived actions across seed stays at or below 15 (canary)", () => {
+  // Derived actions are pipeline guesses, not read from the page. A sharp rise means
+  // either the AI is missing things or derivation is over-firing. ~23 of ~108 total
+  // actions is expected after lost-dribble recovery; a jump toward 40+ means investigate.
+  it("total derived actions across seed (canary)", () => {
     let derived = 0;
     for (const seed of raw as SeedPlay[]) {
       for (const b of seed.beats ?? []) {
@@ -340,8 +347,8 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
       }
     }
     assert.ok(
-      derived <= 15,
-      `derived count ${derived} exceeds canary limit 15`,
+      derived <= 30,
+      `derived count ${derived} exceeds canary ceiling 30 — check AI misses or over-derivation`,
     );
   });
 });

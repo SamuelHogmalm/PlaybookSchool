@@ -102,7 +102,7 @@ function validateWithinBeatMovement(beat: Beat, beatIdx: number, errors: string[
     }
   }
 
-  // Rule 9 — idle players hold position within beat (≤60 units spacing allowed)
+  // Rule 9 — idle players hold position within beat (≤25 units jitter allowed)
   const movers = actionMovers(beat.actions);
   for (const id of PLAYER_IDS) {
     if (movers.has(id)) continue;
@@ -213,6 +213,26 @@ function validateBeatTransition(
   }
 }
 
+function validateActionConflicts(
+  beat: Beat,
+  beatIdx: number,
+  warnings: string[],
+): void {
+  const label = `Beat ${beatIdx + 1} (${beat.id})`;
+
+  // Rule 12 — pass/handoff and cut by same player on one beat (warning only)
+  for (const id of PLAYER_IDS) {
+    const acts = beat.actions.filter((a) => a.by === id);
+    const hasTransfer = acts.some((a) => isTransfer(a.type));
+    const hasCut = acts.some((a) => a.type === "cut");
+    if (hasTransfer && hasCut) {
+      warnings.push(
+        `${label}: player ${id} has both pass/handoff and cut — should the cut be a dribble, or belong to the next beat?`,
+      );
+    }
+  }
+}
+
 function validateFirstBeatActions(beat: Beat, errors: string[]): void {
   const label = `Beat 1 (${beat.id})`;
   let holder = beat.startBall;
@@ -249,15 +269,16 @@ function validateFirstBeatActions(beat: Beat, errors: string[]): void {
 }
 
 /**
- * Pure validation — spec rules 1–10.
+ * Pure validation — spec rules 1–12.
  * @see MASTER-BUILD-PLAN.md
  */
 export function validatePlay(play: Play): ValidationResult {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   if (!play?.beats?.length) {
     err(errors, "Play has no beats.");
-    return { valid: false, errors };
+    return { valid: false, errors, warnings };
   }
 
   // Rule 10
@@ -268,6 +289,7 @@ export function validatePlay(play: Play): ValidationResult {
   for (let i = 0; i < play.beats.length; i++) {
     validateBeatStructure(play.beats[i], i, errors);
     validateWithinBeatMovement(play.beats[i], i, errors);
+    validateActionConflicts(play.beats[i], i, warnings);
   }
 
   validateFirstBeatActions(play.beats[0], errors);
@@ -276,5 +298,5 @@ export function validatePlay(play: Play): ValidationResult {
     validateBeatTransition(play.beats[i - 1], play.beats[i], i, errors);
   }
 
-  return { valid: errors.length === 0, errors };
+  return { valid: errors.length === 0, errors, warnings };
 }

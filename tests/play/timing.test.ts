@@ -112,4 +112,19 @@ describe("sequencing", () => {
     const total = beatRangeDurationMs(conn, 0, 0);
     assert.equal(total, move + HOLD_MS);
   });
+
+  it("pass releases after passer movement completes (Horns b1)", () => {
+    const horns = normalizeSeedPlay(
+      (seedPlays as SeedPlay[]).find((p) => p.name === "Horns")!,
+    );
+    const beat = horns.beats[0];
+    const timed = sequenceBeat(beat);
+    const pass = timed.find((a) => a.id === "a1");
+    const dribble = timed.find((a) => a.id === "a4");
+    assert.ok(pass && dribble);
+    assert.ok(
+      pass!.startAt >= dribble!.endAt - 0.001,
+      `pass start ${pass!.startAt} before dribble end ${dribble!.endAt}`,
+    );
+  });
 });

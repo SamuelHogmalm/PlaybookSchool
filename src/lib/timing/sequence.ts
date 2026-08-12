@@ -97,6 +97,16 @@ function applyDependencies(timed: TimedAction[], actions: Action[]): void {
   for (const pass of timed.filter(
     (a) => a.type === "pass" || a.type === "handoff",
   )) {
+    const passerMove = timed.find((a) => a.by === pass.by && isMovement(a));
+    if (passerMove) {
+      pass.startAt = Math.max(pass.startAt, passerMove.endAt);
+      if (pass.endAt <= pass.startAt) pass.endAt = pass.startAt + 0.15;
+    }
+  }
+
+  for (const pass of timed.filter(
+    (a) => a.type === "pass" || a.type === "handoff",
+  )) {
     const recv = pass.for;
     if (!recv) continue;
     const recvMove = timed.find((a) => a.by === recv && isMovement(a));

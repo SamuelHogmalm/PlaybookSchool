@@ -72,7 +72,6 @@
       "id": "a2",
       "type": "cut",
       "by": "2",
-      "order": 2,
       "path": [
        {
         "x": 454,
@@ -82,7 +81,9 @@
         "x": 483,
         "y": 46
        }
-      ]
+      ],
+      "derived": true,
+      "order": 2
      },
      {
       "id": "a3",
@@ -102,7 +103,8 @@
       "order": 3
      }
     ],
-    "note": "Point guard dribbles left wing while the wing player cuts up to the top of the key."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -154,9 +156,10 @@
     "ball": "5",
     "actions": [
      {
-      "id": "a2",
+      "id": "a1",
       "type": "dribble",
       "by": "1",
+      "order": 1,
       "path": [
        {
         "x": 59,
@@ -166,19 +169,18 @@
         "x": 420,
         "y": 235
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
-      "id": "a1",
+      "id": "a2",
       "type": "pass",
       "by": "1",
       "for": "5",
       "order": 2
      }
     ],
-    "note": "Player 1 passes to 5 at the elbow, while 3 cuts along the three-point line and 5 cuts to the wing."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -230,45 +232,67 @@
     "ball": "3",
     "actions": [
      {
-      "id": "a1",
+      "id": "a2",
       "type": "pass",
       "by": "5",
-      "for": "4",
+      "for": "3",
       "order": 1
      },
      {
-      "id": "a8",
-      "type": "pass",
-      "by": "4",
-      "for": "3",
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
+      "id": "a4",
+      "type": "cut",
+      "by": "1",
+      "path": [
+       {
+        "x": 420,
+        "y": 235
+       },
+       {
+        "x": 478,
+        "y": 66
+       }
+      ],
+      "derived": true,
       "order": 2
      },
      {
       "id": "a5",
-      "type": "screen",
-      "by": "5",
-      "order": 3,
-      "for": "1",
+      "type": "cut",
+      "by": "2",
       "path": [
        {
-        "x": 243,
-        "y": 264
+        "x": 483,
+        "y": 46
        },
        {
-        "x": 167,
-        "y": 98
+        "x": 441,
+        "y": 248
        }
       ],
-      "needsReview": true,
-      "reason": "Merged split screen: travel on b3 + bar on b4"
+      "derived": true,
+      "order": 3
      },
      {
-      "id": "a2",
+      "id": "a6",
+      "type": "cut",
+      "by": "3",
+      "path": [
+       {
+        "x": 39,
+        "y": 211
+       },
+       {
+        "x": 50,
+        "y": 253
+       }
+      ],
+      "derived": true,
+      "order": 4
+     },
+     {
+      "id": "a7",
       "type": "cut",
       "by": "4",
-      "order": 4,
       "path": [
        {
         "x": 337,
@@ -279,59 +303,12 @@
         "y": 311
        }
       ],
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "3",
-      "order": 5,
-      "path": [
-       {
-        "x": 39,
-        "y": 211
-       },
-       {
-        "x": 50,
-        "y": 253
-       }
-      ]
-     },
-     {
-      "id": "a6",
-      "type": "cut",
-      "by": "2",
-      "order": 6,
-      "path": [
-       {
-        "x": 483,
-        "y": 46
-       },
-       {
-        "x": 441,
-        "y": 248
-       }
-      ]
-     },
-     {
-      "id": "a7",
-      "type": "cut",
-      "by": "1",
-      "order": 7,
-      "path": [
-       {
-        "x": 420,
-        "y": 235
-       },
-       {
-        "x": 478,
-        "y": 66
-       }
-      ]
+      "derived": true,
+      "order": 5
      }
     ],
-    "note": "Player 5 has multiple passing options while all players are cutting to different spots on the floor."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b4",
@@ -380,17 +357,18 @@
      }
     },
     "startBall": "3",
-    "ball": "5",
+    "ball": "4",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
       "by": "3",
-      "for": "5",
+      "for": "4",
       "order": 1
      }
     ],
-    "note": "Player 3 passes to 5 who sets a screen for 1 cutting to the basket while 4 cuts along the wing."
+    "alignment": "4-out",
+    "confidence": "high"
    }
   ]
  },
@@ -448,10 +426,9 @@
     "ball": "1",
     "actions": [
      {
-      "id": "a1",
+      "id": "a3",
       "type": "dribble",
       "by": "1",
-      "order": 1,
       "path": [
        {
         "x": 250,
@@ -461,10 +438,12 @@
         "x": 98,
         "y": 396
        }
-      ]
+      ],
+      "derived": true,
+      "order": 1
      },
      {
-      "id": "a2",
+      "id": "a1",
       "type": "cut",
       "by": "5",
       "order": 2,
@@ -480,7 +459,7 @@
       ]
      },
      {
-      "id": "a3",
+      "id": "a2",
       "type": "cut",
       "by": "2",
       "order": 3,
@@ -496,7 +475,8 @@
       ]
      }
     ],
-    "note": "Player 1 dribbles up while 5 cuts to the basket and 2 cuts up the wing."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -548,9 +528,10 @@
     "ball": "5",
     "actions": [
      {
-      "id": "a3",
+      "id": "a1",
       "type": "dribble",
       "by": "1",
+      "order": 1,
       "path": [
        {
         "x": 98,
@@ -560,22 +541,19 @@
         "x": 454,
         "y": 231
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
-      "id": "a1",
+      "id": "a2",
       "type": "pass",
       "by": "1",
       "for": "5",
       "order": 2
      },
      {
-      "id": "a2",
+      "id": "a3",
       "type": "cut",
       "by": "5",
-      "order": 3,
       "path": [
        {
         "x": 246,
@@ -585,10 +563,13 @@
         "x": 226,
         "y": 266
        }
-      ]
+      ],
+      "derived": true,
+      "order": 3
      }
     ],
-    "note": "Player 1 passes to 5 who cuts to the wing while 2 cuts along the three-point line."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -647,44 +628,10 @@
       "order": 1
      },
      {
-      "id": "a3",
-      "type": "screen",
-      "by": "5",
-      "order": 2,
-      "for": "2",
-      "path": [
-       {
-        "x": 226,
-        "y": 266
-       },
-       {
-        "x": 109,
-        "y": 218
-       }
-      ],
-      "needsReview": true,
-      "reason": "Merged split screen: travel on b3 + bar on b4"
-     },
-     {
       "id": "a2",
       "type": "cut",
-      "by": "2",
-      "order": 3,
-      "path": [
-       {
-        "x": 483,
-        "y": 46
-       },
-       {
-        "x": 365,
-        "y": 72
-       }
-      ]
-     },
-     {
-      "id": "a4",
-      "type": "cut",
       "by": "1",
+      "order": 2,
       "path": [
        {
         "x": 454,
@@ -694,9 +641,24 @@
         "x": 420,
         "y": 235
        }
+      ]
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "2",
+      "path": [
+       {
+        "x": 483,
+        "y": 46
+       },
+       {
+        "x": 365,
+        "y": 72
+       }
       ],
       "derived": true,
-      "order": 4
+      "order": 3
      },
      {
       "id": "a5",
@@ -713,7 +675,7 @@
        }
       ],
       "derived": true,
-      "order": 5
+      "order": 4
      },
      {
       "id": "a6",
@@ -730,10 +692,11 @@
        }
       ],
       "derived": true,
-      "order": 6
+      "order": 5
      }
     ],
-    "note": "5 passes to 3 in the corner while 2 cuts to the wing and 5 cuts toward the basket."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b4",
@@ -792,7 +755,8 @@
       "order": 1
      }
     ],
-    "note": "5 screens for 2 who cuts to the ball, while 3 passes to 4 and 1 cuts along the wing."
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -850,37 +814,42 @@
     "ball": "2",
     "actions": [
      {
-      "id": "a1",
+      "id": "a4",
       "type": "pass",
       "by": "1",
       "for": "2",
-      "order": 1,
+      "order": 1
+     },
+     {
+      "id": "a1",
+      "type": "screen",
+      "by": "5",
+      "for": "2",
+      "order": 2,
       "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      },
      {
       "id": "a2",
       "type": "cut",
-      "by": "1",
-      "order": 2,
+      "by": "4",
+      "order": 3,
       "path": [
        {
-        "x": 261,
-        "y": 372
+        "x": 15,
+        "y": 38
        },
        {
-        "x": 461,
-        "y": 214
+        "x": 22,
+        "y": 170
        }
-      ],
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      ]
      },
      {
       "id": "a3",
       "type": "cut",
       "by": "2",
-      "order": 3,
+      "order": 4,
       "path": [
        {
         "x": 322,
@@ -893,10 +862,9 @@
       ]
      },
      {
-      "id": "a4",
+      "id": "a6",
       "type": "cut",
       "by": "3",
-      "order": 4,
       "path": [
        {
         "x": 485,
@@ -906,26 +874,13 @@
         "x": 17,
         "y": 29
        }
-      ]
-     },
-     {
-      "id": "a5",
-      "type": "cut",
-      "by": "4",
-      "order": 5,
-      "path": [
-       {
-        "x": 15,
-        "y": 38
-       },
-       {
-        "x": 22,
-        "y": 170
-       }
-      ]
+      ],
+      "derived": true,
+      "order": 5
      }
     ],
-    "note": "1 passes to 2 then cuts to the wing while 3 and 4 cut across the top and 2 cuts to the corner"
+    "alignment": "4-out",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -980,6 +935,7 @@
       "id": "a3",
       "type": "dribble",
       "by": "2",
+      "order": 1,
       "path": [
        {
         "x": 372,
@@ -989,19 +945,17 @@
         "x": 478,
         "y": 87
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
-      "id": "a1",
+      "id": "a5",
       "type": "pass",
       "by": "2",
       "for": "5",
       "order": 2
      },
      {
-      "id": "a2",
+      "id": "a4",
       "type": "cut",
       "by": "1",
       "order": 3,
@@ -1017,7 +971,7 @@
       ]
      },
      {
-      "id": "a4",
+      "id": "a6",
       "type": "cut",
       "by": "5",
       "path": [
@@ -1034,7 +988,8 @@
       "order": 4
      }
     ],
-    "note": "Player 2 passes to player 5 while player 1 cuts to the basket."
+    "alignment": "other",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -1086,7 +1041,7 @@
     "ball": "1",
     "actions": [
      {
-      "id": "a4",
+      "id": "a2",
       "type": "dribble",
       "by": "5",
       "order": 1,
@@ -1102,32 +1057,30 @@
       ]
      },
      {
-      "id": "a6",
+      "id": "a3",
       "type": "pass",
       "by": "5",
       "for": "1",
-      "needsReview": true,
-      "reason": "Inserted pass 5->1 to match next frame possession ring",
       "order": 2
      },
      {
       "id": "a1",
       "type": "cut",
-      "by": "3",
+      "by": "4",
       "order": 3,
       "path": [
        {
-        "x": 17,
-        "y": 29
+        "x": 22,
+        "y": 170
        },
        {
-        "x": 126,
-        "y": 303
+        "x": 483,
+        "y": 44
        }
       ]
      },
      {
-      "id": "a2",
+      "id": "a4",
       "type": "cut",
       "by": "2",
       "order": 4,
@@ -1143,26 +1096,9 @@
       ]
      },
      {
-      "id": "a3",
-      "type": "cut",
-      "by": "4",
-      "order": 5,
-      "path": [
-       {
-        "x": 22,
-        "y": 170
-       },
-       {
-        "x": 483,
-        "y": 44
-       }
-      ]
-     },
-     {
       "id": "a5",
       "type": "cut",
       "by": "1",
-      "order": 6,
       "path": [
        {
         "x": 459,
@@ -1172,10 +1108,30 @@
         "x": 243,
         "y": 359
        }
-      ]
+      ],
+      "derived": true,
+      "order": 5
+     },
+     {
+      "id": "a6",
+      "type": "cut",
+      "by": "3",
+      "path": [
+       {
+        "x": 17,
+        "y": 29
+       },
+       {
+        "x": 126,
+        "y": 303
+       }
+      ],
+      "derived": true,
+      "order": 6
      }
     ],
-    "note": "Player 4 sets a screen for ball handler 5 who dribbles off it, while players 3, 2, and 1 make cutting movements."
+    "alignment": "other",
+    "confidence": "high"
    },
    {
     "id": "b4",
@@ -1224,9 +1180,18 @@
      }
     },
     "startBall": "1",
-    "ball": "1",
-    "actions": [],
-    "note": "Player 3 cuts up the left side toward the wing."
+    "ball": "3",
+    "actions": [
+     {
+      "id": "a2",
+      "type": "pass",
+      "by": "1",
+      "for": "3",
+      "order": 1
+     }
+    ],
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -1284,75 +1249,17 @@
     "ball": "3",
     "actions": [
      {
-      "id": "a7",
-      "type": "dribble",
-      "by": "1",
-      "path": [
-       {
-        "x": 248,
-        "y": 342
-       },
-       {
-        "x": 252,
-        "y": 96
-       }
-      ],
-      "derived": true,
-      "order": 1
-     },
-     {
       "id": "a1",
       "type": "pass",
       "by": "1",
-      "for": "2",
-      "order": 2
-     },
-     {
-      "id": "a6",
-      "type": "pass",
-      "by": "2",
       "for": "3",
-      "needsReview": true,
-      "reason": "Inserted pass 2->3 to match next frame possession ring",
-      "order": 3
+      "order": 1
      },
      {
       "id": "a3",
       "type": "cut",
-      "by": "3",
-      "order": 4,
-      "path": [
-       {
-        "x": 172,
-        "y": 198
-       },
-       {
-        "x": 113,
-        "y": 253
-       }
-      ]
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "4",
-      "order": 5,
-      "path": [
-       {
-        "x": 326,
-        "y": 203
-       },
-       {
-        "x": 263,
-        "y": 264
-       }
-      ]
-     },
-     {
-      "id": "a5",
-      "type": "cut",
       "by": "5",
-      "order": 6,
+      "order": 2,
       "path": [
        {
         "x": 483,
@@ -1363,9 +1270,44 @@
         "y": 85
        }
       ]
+     },
+     {
+      "id": "a5",
+      "type": "cut",
+      "by": "3",
+      "path": [
+       {
+        "x": 172,
+        "y": 198
+       },
+       {
+        "x": 113,
+        "y": 253
+       }
+      ],
+      "derived": true,
+      "order": 3
+     },
+     {
+      "id": "a6",
+      "type": "cut",
+      "by": "4",
+      "path": [
+       {
+        "x": 326,
+        "y": 203
+       },
+       {
+        "x": 263,
+        "y": 264
+       }
+      ],
+      "derived": true,
+      "order": 4
      }
     ],
-    "note": "Player 1 passes to 2 while 4 screens for 3 cutting across, and 5 cuts to the wing."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -1417,33 +1359,19 @@
     "ball": "4",
     "actions": [
      {
-      "id": "a1",
-      "type": "dribble",
-      "by": "3",
-      "order": 1,
-      "path": [
-       {
-        "x": 113,
-        "y": 253
-       },
-       {
-        "x": 17,
-        "y": 48
-       }
-      ]
-     },
-     {
-      "id": "a2",
+      "id": "a5",
       "type": "pass",
       "by": "3",
       "for": "4",
-      "order": 2
+      "order": 1,
+      "needsReview": true,
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
      },
      {
-      "id": "a3",
+      "id": "a1",
       "type": "cut",
       "by": "1",
-      "order": 3,
+      "order": 2,
       "path": [
        {
         "x": 252,
@@ -1456,7 +1384,25 @@
       ]
      },
      {
-      "id": "a4",
+      "id": "a2",
+      "type": "cut",
+      "by": "3",
+      "order": 3,
+      "path": [
+       {
+        "x": 113,
+        "y": 253
+       },
+       {
+        "x": 17,
+        "y": 48
+       }
+      ],
+      "needsReview": true,
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+     },
+     {
+      "id": "a3",
       "type": "cut",
       "by": "2",
       "order": 4,
@@ -1472,10 +1418,9 @@
       ]
      },
      {
-      "id": "a5",
+      "id": "a6",
       "type": "cut",
       "by": "4",
-      "order": 5,
       "path": [
        {
         "x": 263,
@@ -1485,10 +1430,13 @@
         "x": 241,
         "y": 242
        }
-      ]
+      ],
+      "derived": true,
+      "order": 5
      }
     ],
-    "note": "3 dribbles and passes to 4 while 1 screens for 2 cutting to the corner, 4 and 5 also cut"
+    "alignment": "4-out",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -1540,16 +1488,17 @@
     "ball": "4",
     "actions": [
      {
-      "id": "a3",
+      "id": "a1",
       "type": "screen",
       "by": "5",
-      "for": "1",
+      "for": "4",
       "order": 1,
       "needsReview": true,
       "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
-    "note": "1 cuts baseline using 5's screen while 4 dribbles toward the wing and 5 receives a pass"
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -1607,9 +1556,10 @@
     "ball": "2",
     "actions": [
      {
-      "id": "a5",
+      "id": "a4",
       "type": "dribble",
       "by": "1",
+      "order": 1,
       "path": [
        {
         "x": 329,
@@ -1619,28 +1569,26 @@
         "x": 44,
         "y": 208
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
-      "id": "a3",
+      "id": "a5",
       "type": "pass",
       "by": "1",
-      "for": "4",
+      "for": "2",
       "order": 2
      },
      {
-      "id": "a4",
-      "type": "pass",
-      "by": "4",
-      "for": "2",
+      "id": "a1",
+      "type": "screen",
+      "by": "5",
+      "for": "3",
+      "order": 3,
       "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
-      "order": 3
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      },
      {
-      "id": "a1",
+      "id": "a2",
       "type": "cut",
       "by": "3",
       "order": 4,
@@ -1656,7 +1604,7 @@
       ]
      },
      {
-      "id": "a2",
+      "id": "a3",
       "type": "cut",
       "by": "2",
       "order": 5,
@@ -1686,12 +1634,11 @@
        }
       ],
       "derived": true,
-      "order": 6,
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      "order": 6
      }
     ],
-    "note": "Players 3 and 2 cut to the corners while 1 dribbles and passes to 4."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -1740,17 +1687,20 @@
      }
     },
     "startBall": "2",
-    "ball": "4",
+    "ball": "2",
     "actions": [
      {
-      "id": "a4",
-      "type": "pass",
-      "by": "2",
-      "for": "4",
-      "order": 1
+      "id": "a1",
+      "type": "screen",
+      "by": "5",
+      "for": "1",
+      "order": 1,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
-    "note": "Three players cut to different spots while player 2 passes to player 4."
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -1808,9 +1758,10 @@
     "ball": "5",
     "actions": [
      {
-      "id": "a4",
+      "id": "a2",
       "type": "dribble",
       "by": "1",
+      "order": 1,
       "path": [
        {
         "x": 253,
@@ -1820,19 +1771,17 @@
         "x": 437,
         "y": 238
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
-      "id": "a1",
+      "id": "a3",
       "type": "pass",
       "by": "1",
       "for": "5",
       "order": 2
      },
      {
-      "id": "a2",
+      "id": "a1",
       "type": "cut",
       "by": "5",
       "order": 3,
@@ -1848,7 +1797,7 @@
       ]
      },
      {
-      "id": "a3",
+      "id": "a4",
       "type": "cut",
       "by": "4",
       "order": 4,
@@ -1864,7 +1813,8 @@
       ]
      }
     ],
-    "note": "Player 1 passes to 5 while 5, 4, and 2 all make cutting movements."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -1916,24 +1866,16 @@
     "ball": "1",
     "actions": [
      {
-      "id": "a2",
+      "id": "a3",
       "type": "pass",
       "by": "5",
-      "for": "4",
+      "for": "1",
       "order": 1
      },
      {
-      "id": "a3",
-      "type": "pass",
-      "by": "4",
-      "for": "1",
-      "order": 2
-     },
-     {
-      "id": "a1",
+      "id": "a4",
       "type": "cut",
       "by": "2",
-      "order": 3,
       "path": [
        {
         "x": 477,
@@ -1943,10 +1885,12 @@
         "x": 341,
         "y": 49
        }
-      ]
+      ],
+      "derived": true,
+      "order": 2
      },
      {
-      "id": "a4",
+      "id": "a5",
       "type": "cut",
       "by": "3",
       "path": [
@@ -1960,10 +1904,11 @@
        }
       ],
       "derived": true,
-      "order": 4
+      "order": 3
      }
     ],
-    "note": "Player 5 passes to 4, who passes to 1, while 2 cuts to the basket."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -2015,23 +1960,24 @@
     "ball": "2",
     "actions": [
      {
-      "id": "a1",
+      "id": "a3",
       "type": "pass",
       "by": "1",
       "for": "2",
       "order": 1
      },
      {
-      "id": "a3",
+      "id": "a1",
       "type": "screen",
       "by": "5",
-      "for": "4",
+      "for": "2",
       "order": 2,
       "needsReview": true,
       "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
-    "note": "Player 1 passes to 2 cutting to the wing while 5 screens for 4 cutting to the basket."
+    "alignment": "Horns",
+    "confidence": "high"
    }
   ]
  },
@@ -2089,10 +2035,9 @@
     "ball": "1",
     "actions": [
      {
-      "id": "a1",
+      "id": "a6",
       "type": "dribble",
       "by": "1",
-      "order": 1,
       "path": [
        {
         "x": 274,
@@ -2102,14 +2047,50 @@
         "x": 437,
         "y": 305
        }
-      ]
+      ],
+      "derived": true,
+      "order": 1
+     },
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "1",
+      "for": "3",
+      "order": 2
+     },
+     {
+      "id": "a5",
+      "type": "pass",
+      "by": "3",
+      "for": "1",
+      "needsReview": true,
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
+      "order": 3
+     },
+     {
+      "id": "a4",
+      "type": "screen",
+      "by": "5",
+      "order": 4,
+      "for": "3",
+      "path": [
+       {
+        "x": 17,
+        "y": 53
+       },
+       {
+        "x": 22,
+        "y": 170
+       }
+      ],
+      "needsReview": true,
+      "reason": "Merged split screen: travel on b1 + bar on b2"
      },
      {
       "id": "a2",
-      "type": "screen",
+      "type": "cut",
       "by": "3",
-      "order": 2,
-      "for": "5",
+      "order": 5,
       "path": [
        {
         "x": 367,
@@ -2121,13 +2102,13 @@
        }
       ],
       "needsReview": true,
-      "reason": "Merged split screen: travel on b1 + bar on b2"
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
      },
      {
       "id": "a3",
       "type": "cut",
       "by": "4",
-      "order": 3,
+      "order": 6,
       "path": [
        {
         "x": 170,
@@ -2138,25 +2119,12 @@
         "y": 305
        }
       ]
-     },
-     {
-      "id": "a4",
-      "type": "cut",
-      "by": "5",
-      "order": 4,
-      "path": [
-       {
-        "x": 17,
-        "y": 53
-       },
-       {
-        "x": 22,
-        "y": 170
-       }
-      ]
      }
     ],
-    "note": "Player 1 dribbles up while 3, 4, and 5 all cut to different spots on the floor."
+    "alignment": "4-out",
+    "needs_review": true,
+    "review_reason": "medium_confidence",
+    "confidence": "medium"
    },
    {
     "id": "b2",
@@ -2212,10 +2180,15 @@
       "type": "pass",
       "by": "1",
       "for": "4",
+      "uncertain": true,
+      "reason": "Dashed line from 1's end position toward 4, but this is last frame so cannot verify receiver via next frame possession",
       "order": 1
      }
     ],
-    "note": "1 dribbles and passes to 4 while 5 cuts off a screen from 3"
+    "alignment": "Horns",
+    "needs_review": true,
+    "review_reason": "uncertain_actions",
+    "confidence": "medium"
    }
   ]
  },
@@ -2273,9 +2246,10 @@
     "ball": "1",
     "actions": [
      {
-      "id": "a4",
+      "id": "a1",
       "type": "dribble",
       "by": "1",
+      "order": 1,
       "path": [
        {
         "x": 278,
@@ -2285,12 +2259,10 @@
         "x": 435,
         "y": 277
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
-      "id": "a1",
+      "id": "a2",
       "type": "pass",
       "by": "1",
       "for": "2",
@@ -2306,10 +2278,9 @@
       "order": 3
      },
      {
-      "id": "a2",
+      "id": "a4",
       "type": "cut",
       "by": "2",
-      "order": 4,
       "path": [
        {
         "x": 437,
@@ -2320,11 +2291,14 @@
         "y": 222
        }
       ],
+      "derived": true,
       "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
+      "order": 4
      }
     ],
-    "note": "Player 1 passes to player 2 who then cuts toward the basket."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -2377,22 +2351,15 @@
     "actions": [
      {
       "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "5",
-      "order": 1
+      "type": "screen",
+      "by": "5",
+      "for": "1",
+      "order": 1,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      },
      {
       "id": "a2",
-      "type": "pass",
-      "by": "5",
-      "for": "1",
-      "needsReview": true,
-      "reason": "Inserted pass 5->1 to match next frame possession ring",
-      "order": 2
-     },
-     {
-      "id": "a3",
       "type": "cut",
       "by": "2",
       "path": [
@@ -2406,10 +2373,11 @@
        }
       ],
       "derived": true,
-      "order": 3
+      "order": 2
      }
     ],
-    "note": "Player 1 passes to player 5 at the elbow, then 5 cuts toward the basket."
+    "alignment": "Horns",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -2458,33 +2426,27 @@
      }
     },
     "startBall": "1",
-    "ball": "2",
+    "ball": "4",
     "actions": [
      {
       "id": "a1",
       "type": "pass",
       "by": "1",
-      "for": "5",
+      "for": "4",
       "order": 1
      },
      {
-      "id": "a4",
-      "type": "pass",
-      "by": "5",
-      "for": "2",
-      "order": 2
-     },
-     {
-      "id": "a3",
+      "id": "a2",
       "type": "screen",
       "by": "5",
-      "for": "3",
-      "order": 3,
+      "for": "2",
+      "order": 2,
       "needsReview": true,
       "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
-    "note": "1 passes to 5 who screens for 3 cutting to the wing, then 5 can pass to 2 at the top while 4 cuts to the corner"
+    "alignment": "Horns",
+    "confidence": "high"
    }
   ]
  },
@@ -2542,50 +2504,33 @@
     "ball": "2",
     "actions": [
      {
-      "id": "a5",
-      "type": "dribble",
+      "id": "a4",
+      "type": "pass",
       "by": "1",
-      "path": [
-       {
-        "x": 278,
-        "y": 361
-       },
-       {
-        "x": 488,
-        "y": 37
-       }
-      ],
-      "derived": true,
+      "for": "2",
       "order": 1
      },
      {
       "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "2",
-      "order": 2
-     },
-     {
-      "id": "a2",
       "type": "cut",
-      "by": "2",
-      "order": 3,
+      "by": "5",
+      "order": 2,
       "path": [
        {
-        "x": 437,
-        "y": 198
+        "x": 198,
+        "y": 201
        },
        {
-        "x": 404,
-        "y": 231
+        "x": 250,
+        "y": 335
        }
       ]
      },
      {
-      "id": "a3",
+      "id": "a2",
       "type": "cut",
       "by": "3",
-      "order": 4,
+      "order": 3,
       "path": [
        {
         "x": 20,
@@ -2598,10 +2543,10 @@
       ]
      },
      {
-      "id": "a4",
+      "id": "a3",
       "type": "cut",
       "by": "4",
-      "order": 5,
+      "order": 4,
       "path": [
        {
         "x": 483,
@@ -2616,22 +2561,23 @@
      {
       "id": "a6",
       "type": "cut",
-      "by": "5",
+      "by": "2",
       "path": [
        {
-        "x": 198,
-        "y": 201
+        "x": 437,
+        "y": 198
        },
        {
-        "x": 250,
-        "y": 335
+        "x": 404,
+        "y": 231
        }
       ],
       "derived": true,
-      "order": 6
+      "order": 5
      }
     ],
-    "note": "1 passes to 2 while 3 cuts down the left side, 4 cuts to the top, and 2 cuts toward the basket."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -2687,6 +2633,8 @@
       "type": "pass",
       "by": "2",
       "for": "5",
+      "uncertain": true,
+      "reason": "Next frame shows 4 with ball, but passing lane unclear; dashed line appears to go toward 5's movement path",
       "order": 1
      },
      {
@@ -2701,24 +2649,8 @@
      {
       "id": "a1",
       "type": "cut",
-      "by": "4",
-      "order": 3,
-      "path": [
-       {
-        "x": 22,
-        "y": 33
-       },
-       {
-        "x": 207,
-        "y": 331
-       }
-      ]
-     },
-     {
-      "id": "a2",
-      "type": "cut",
       "by": "3",
-      "order": 4,
+      "order": 3,
       "path": [
        {
         "x": 35,
@@ -2727,6 +2659,22 @@
        {
         "x": 185,
         "y": 85
+       }
+      ]
+     },
+     {
+      "id": "a2",
+      "type": "cut",
+      "by": "4",
+      "order": 4,
+      "path": [
+       {
+        "x": 22,
+        "y": 33
+       },
+       {
+        "x": 207,
+        "y": 331
        }
       ]
      },
@@ -2745,12 +2693,15 @@
        }
       ],
       "derived": true,
-      "order": 5,
       "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
+      "order": 5
      }
     ],
-    "note": "4 cuts off a screen from 3 while 2 dribbles and passes to 5."
+    "alignment": "other",
+    "needs_review": true,
+    "review_reason": "low_confidence",
+    "confidence": "low"
    },
    {
     "id": "b3",
@@ -2799,9 +2750,18 @@
      }
     },
     "startBall": "4",
-    "ball": "4",
-    "actions": [],
-    "note": "Players 5, 1, and 2 all cut to different spots while 4 has the ball."
+    "ball": "3",
+    "actions": [
+     {
+      "id": "a1",
+      "type": "pass",
+      "by": "4",
+      "for": "3",
+      "order": 1
+     }
+    ],
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -2882,7 +2842,7 @@
       "order": 2
      },
      {
-      "id": "a4",
+      "id": "a3",
       "type": "pass",
       "by": "2",
       "for": "1",
@@ -2891,10 +2851,9 @@
       "order": 3
      },
      {
-      "id": "a3",
+      "id": "a4",
       "type": "cut",
       "by": "2",
-      "order": 4,
       "path": [
        {
         "x": 477,
@@ -2905,11 +2864,14 @@
         "y": 61
        }
       ],
+      "derived": true,
       "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
+      "order": 4
      }
     ],
-    "note": "Player 1 dribbles up, passes to player 2 in the corner, and player 2 cuts to the basket."
+    "alignment": "other",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -2961,28 +2923,10 @@
     "ball": "4",
     "actions": [
      {
-      "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "2",
-      "order": 1,
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
-     },
-     {
-      "id": "a6",
-      "type": "pass",
-      "by": "2",
-      "for": "4",
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
-      "order": 2
-     },
-     {
       "id": "a2",
-      "type": "cut",
+      "type": "dribble",
       "by": "1",
-      "order": 3,
+      "order": 1,
       "path": [
        {
         "x": 407,
@@ -2992,15 +2936,20 @@
         "x": 472,
         "y": 40
        }
-      ],
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      ]
      },
      {
       "id": "a3",
+      "type": "pass",
+      "by": "1",
+      "for": "4",
+      "order": 2
+     },
+     {
+      "id": "a1",
       "type": "cut",
       "by": "2",
-      "order": 4,
+      "order": 3,
       "path": [
        {
         "x": 328,
@@ -3010,15 +2959,12 @@
         "x": 20,
         "y": 33
        }
-      ],
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      ]
      },
      {
       "id": "a4",
       "type": "cut",
       "by": "3",
-      "order": 5,
       "path": [
        {
         "x": 24,
@@ -3028,13 +2974,14 @@
         "x": 128,
         "y": 338
        }
-      ]
+      ],
+      "derived": true,
+      "order": 4
      },
      {
       "id": "a5",
       "type": "cut",
       "by": "4",
-      "order": 6,
       "path": [
        {
         "x": 139,
@@ -3044,10 +2991,13 @@
         "x": 370,
         "y": 342
        }
-      ]
+      ],
+      "derived": true,
+      "order": 5
      }
     ],
-    "note": "Player 1 passes to 2 then cuts to the corner while 2 cuts to the wing, 3 cuts across the top, and 4 moves along the baseline."
+    "alignment": "other",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -3099,16 +3049,17 @@
     "ball": "4",
     "actions": [
      {
-      "id": "a2",
+      "id": "a1",
       "type": "screen",
       "by": "5",
-      "for": "3",
+      "for": "4",
       "order": 1,
       "needsReview": true,
       "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
-    "note": "5 cuts to the basket then sets a screen for 3 while 4 dribbles up from the corner"
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -3166,43 +3117,33 @@
     "ball": "2",
     "actions": [
      {
-      "id": "a6",
-      "type": "dribble",
+      "id": "a4",
+      "type": "pass",
       "by": "1",
-      "path": [
-       {
-        "x": 341,
-        "y": 376
-       },
-       {
-        "x": 128,
-        "y": 370
-       }
-      ],
-      "derived": true,
+      "for": "2",
       "order": 1
      },
      {
       "id": "a1",
-      "type": "pass",
-      "by": "1",
-      "for": "4",
-      "order": 2
-     },
-     {
-      "id": "a5",
-      "type": "pass",
+      "type": "cut",
       "by": "4",
-      "for": "2",
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?",
-      "order": 3
+      "order": 2,
+      "path": [
+       {
+        "x": 139,
+        "y": 370
+       },
+       {
+        "x": 483,
+        "y": 42
+       }
+      ]
      },
      {
-      "id": "a4",
+      "id": "a3",
       "type": "cut",
       "by": "2",
-      "order": 4,
+      "order": 3,
       "path": [
        {
         "x": 477,
@@ -3213,28 +3154,10 @@
         "y": 255
        }
       ]
-     },
-     {
-      "id": "a7",
-      "type": "cut",
-      "by": "4",
-      "path": [
-       {
-        "x": 139,
-        "y": 370
-       },
-       {
-        "x": 483,
-        "y": 42
-       }
-      ],
-      "derived": true,
-      "order": 5,
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
      }
     ],
-    "note": "1 passes to 4 who dribbles up while 3 and 2 cut down from the wings"
+    "alignment": "4-out",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -3283,17 +3206,20 @@
      }
     },
     "startBall": "2",
-    "ball": "1",
+    "ball": "2",
     "actions": [
      {
       "id": "a1",
-      "type": "pass",
-      "by": "2",
+      "type": "screen",
+      "by": "5",
       "for": "1",
-      "order": 1
+      "order": 1,
+      "needsReview": true,
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      }
     ],
-    "note": "2 passes to 1 after dribbling over, while 3 cuts to the corner and 5 cuts diagonally across the lane."
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  },
@@ -3351,16 +3277,14 @@
     "ball": "3",
     "actions": [
      {
-      "id": "a1",
+      "id": "a2",
       "type": "pass",
       "by": "1",
       "for": "3",
-      "order": 1,
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
+      "order": 1
      },
      {
-      "id": "a2",
+      "id": "a1",
       "type": "cut",
       "by": "5",
       "order": 2,
@@ -3374,27 +3298,10 @@
         "y": 144
        }
       ]
-     },
-     {
-      "id": "a3",
-      "type": "cut",
-      "by": "1",
-      "order": 3,
-      "path": [
-       {
-        "x": 255,
-        "y": 347
-       },
-       {
-        "x": 215,
-        "y": 122
-       }
-      ],
-      "needsReview": true,
-      "reason": "Player passes and cuts on the same beat \u2014 should the cut be a dribble, or belong to the next beat?"
      }
     ],
-    "note": "Player 1 passes to 3 while 5 sets a screen, then 1 cuts off the screen."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b2",
@@ -3446,9 +3353,10 @@
     "ball": "3",
     "actions": [
      {
-      "id": "a5",
+      "id": "a2",
       "type": "dribble",
       "by": "3",
+      "order": 1,
       "path": [
        {
         "x": 433,
@@ -3458,47 +3366,21 @@
         "x": 333,
         "y": 192
        }
-      ],
-      "derived": true,
-      "order": 1
+      ]
      },
      {
       "id": "a1",
-      "type": "pass",
-      "by": "3",
-      "for": "1",
-      "order": 2
-     },
-     {
-      "id": "a4",
-      "type": "pass",
+      "type": "screen",
       "by": "1",
-      "for": "3",
+      "for": "4",
+      "order": 2,
       "needsReview": true,
-      "reason": "Inserted pass 1->3 to match next frame possession ring",
-      "order": 3
-     },
-     {
-      "id": "a2",
-      "type": "cut",
-      "by": "4",
-      "order": 4,
-      "path": [
-       {
-        "x": 484,
-        "y": 47
-       },
-       {
-        "x": 320,
-        "y": 77
-       }
-      ]
+      "reason": "Screen has no movement \u2014 verify against your playbook"
      },
      {
       "id": "a3",
       "type": "cut",
       "by": "2",
-      "order": 5,
       "path": [
        {
         "x": 18,
@@ -3508,10 +3390,30 @@
         "x": 301,
         "y": 354
        }
-      ]
+      ],
+      "derived": true,
+      "order": 3
+     },
+     {
+      "id": "a4",
+      "type": "cut",
+      "by": "4",
+      "path": [
+       {
+        "x": 484,
+        "y": 47
+       },
+       {
+        "x": 320,
+        "y": 77
+       }
+      ],
+      "derived": true,
+      "order": 4
      }
     ],
-    "note": "Player 3 passes to player 1 at the top while players 2 and 4 cut from the corners toward the ball."
+    "alignment": "4-out 1-in",
+    "confidence": "high"
    },
    {
     "id": "b3",
@@ -3560,26 +3462,10 @@
      }
     },
     "startBall": "3",
-    "ball": "4",
-    "actions": [
-     {
-      "id": "a1",
-      "type": "pass",
-      "by": "3",
-      "for": "4",
-      "order": 1
-     },
-     {
-      "id": "a2",
-      "type": "screen",
-      "by": "1",
-      "for": "5",
-      "order": 2,
-      "needsReview": true,
-      "reason": "Screen has no movement \u2014 verify against your playbook"
-     }
-    ],
-    "note": "3 passes to 4 while 1 screens for 5 who cuts to the corner and 2 cuts baseline."
+    "ball": "3",
+    "actions": [],
+    "alignment": "other",
+    "confidence": "high"
    }
   ]
  }

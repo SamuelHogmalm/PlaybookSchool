@@ -11,6 +11,7 @@ export {
   pathArrowEnd,
   pathToSvgD,
   perpendicularBar,
+  perpendicularBarAtTravelEnd,
   shorten,
   squigglePath,
 } from "./paths";

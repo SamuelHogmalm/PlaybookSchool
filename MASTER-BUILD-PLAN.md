@@ -96,8 +96,16 @@ assign, or quiz on an invalid play.** Show the coach exactly what's wrong.
 8. No player moves more than 350 units in a single beat. That's a teleport.
 9. Players with no action do not change position.
 10. A play has at least two beats.
+11. **Derived-action ratio.** Actions marked `derived: true` are pipeline guesses,
+    not read from the page. They should stay well under a third of total actions
+    across a playbook. Above that ratio, the import is guessing more than reading —
+    tighten the interpret prompt or review derivation rules.
+12. **Pass and cut on same beat (warning).** A player may not have both a
+    pass/handoff and a cut on the same beat. Flag for review — the cut may be a
+    misread dribble or belong to the next beat. Does not block save while seed
+    data is being re-imported.
 
-Write these as a pure function `validatePlay(play) -> {valid, errors[]}` with unit
+Write these as a pure function `validatePlay(play) -> {valid, errors[], warnings[]}` with unit
 tests. It runs in the builder on every edit, in the importer before save, and in the
 quiz generator before a play is used.
 
@@ -199,8 +207,14 @@ last action ends at 1.0:
 
 1. A screener arrives and is set before the player they screen for starts moving.
 2. A screener's roll or pop begins after the cutter has cleared.
-3. A pass releases only after the receiver's movement is at least 60% complete.
-4. A receiver must catch before they can pass, dribble, or hand off.
+3. A pass releases only after the **passer's own** movement (cut, dribble, or screen travel) is complete — you throw from where you stand.
+4. A pass releases only after the receiver's movement is at least 60% complete.
+5. A receiver must catch before they can pass, dribble, or hand off.
+
+**Known limitation:** Rules 3–4 assume curl-and-pass timing (receiver gets open, then
+catches). Give-and-go (catch, then cut) cannot be distinguished from coordinates
+alone — 21 seed beats have a receiver cut timed before the pass under the default
+lanes. Do not guess; fixing this requires frame-splitting or coach review.
 
 Independent actions on opposite sides of the floor run **concurrently**. Weakside
 action happening at the same time as ball-side action is normal basketball — do not

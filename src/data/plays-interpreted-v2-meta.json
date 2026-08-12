@@ -1,0 +1,298 @@
+{
+  "model": "claude-sonnet-4-5-20250929",
+  "usage": {
+    "input_tokens": 128801,
+    "output_tokens": 6058
+  },
+  "cost_usd": 0.4773,
+  "v1": {
+    "ai_read_before": 98,
+    "after_derive": 115,
+    "derived": 13,
+    "short_dropped": 0,
+    "inserted_passes": 4,
+    "zero_travel_screens": 5,
+    "pass_cut_flags": 20,
+    "holder_cut_flags": 3,
+    "per_play": [
+      {
+        "play": "Alabama",
+        "ai_before": 11,
+        "ai_after": 12,
+        "derived": 1,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Arkansas-Rip",
+        "ai_before": 9,
+        "ai_after": 12,
+        "derived": 3,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Conn",
+        "ai_before": 12,
+        "ai_after": 14,
+        "derived": 1,
+        "short_dropped": 0,
+        "inserted_passes": 1,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 1
+      },
+      {
+        "play": "Down",
+        "ai_before": 10,
+        "ai_after": 11,
+        "derived": 0,
+        "short_dropped": 0,
+        "inserted_passes": 1,
+        "zero_travel": 1,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "gswhat",
+        "ai_before": 5,
+        "ai_after": 6,
+        "derived": 1,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Horns",
+        "ai_before": 8,
+        "ai_after": 9,
+        "derived": 1,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Idaho",
+        "ai_before": 5,
+        "ai_after": 5,
+        "derived": 0,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Kansas",
+        "ai_before": 7,
+        "ai_after": 10,
+        "derived": 2,
+        "short_dropped": 0,
+        "inserted_passes": 1,
+        "zero_travel": 1,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Kentucky",
+        "ai_before": 8,
+        "ai_after": 10,
+        "derived": 2,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Kickup",
+        "ai_before": 11,
+        "ai_after": 11,
+        "derived": 0,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 6,
+        "holder_cut": 1
+      },
+      {
+        "play": "Openkickbacks",
+        "ai_before": 4,
+        "ai_after": 5,
+        "derived": 1,
+        "short_dropped": 0,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Relax*",
+        "ai_before": 8,
+        "ai_after": 10,
+        "derived": 1,
+        "short_dropped": 0,
+        "inserted_passes": 1,
+        "zero_travel": 1,
+        "pass_cut": 2,
+        "holder_cut": 1
+      }
+    ]
+  },
+  "v2": {
+    "ai_read_before": 115,
+    "after_derive": 111,
+    "derived": 31,
+    "short_dropped": 34,
+    "inserted_passes": 4,
+    "zero_travel_screens": 10,
+    "pass_cut_flags": 10,
+    "holder_cut_flags": 1,
+    "per_play": [
+      {
+        "play": "Alabama",
+        "ai_before": 8,
+        "ai_after": 11,
+        "derived": 6,
+        "short_dropped": 2,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Arkansas-Rip",
+        "ai_before": 12,
+        "ai_after": 12,
+        "derived": 5,
+        "short_dropped": 5,
+        "inserted_passes": 0,
+        "zero_travel": 0,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Conn",
+        "ai_before": 15,
+        "ai_after": 16,
+        "derived": 4,
+        "short_dropped": 2,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Down",
+        "ai_before": 10,
+        "ai_after": 10,
+        "derived": 3,
+        "short_dropped": 2,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 2,
+        "holder_cut": 1
+      },
+      {
+        "play": "gswhat",
+        "ai_before": 9,
+        "ai_after": 7,
+        "derived": 1,
+        "short_dropped": 3,
+        "inserted_passes": 0,
+        "zero_travel": 2,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Horns",
+        "ai_before": 11,
+        "ai_after": 9,
+        "derived": 2,
+        "short_dropped": 3,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Idaho",
+        "ai_before": 8,
+        "ai_after": 7,
+        "derived": 1,
+        "short_dropped": 2,
+        "inserted_passes": 1,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Kansas",
+        "ai_before": 7,
+        "ai_after": 8,
+        "derived": 2,
+        "short_dropped": 2,
+        "inserted_passes": 1,
+        "zero_travel": 2,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Kentucky",
+        "ai_before": 11,
+        "ai_after": 11,
+        "derived": 2,
+        "short_dropped": 3,
+        "inserted_passes": 1,
+        "zero_travel": 0,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Kickup",
+        "ai_before": 8,
+        "ai_after": 10,
+        "derived": 3,
+        "short_dropped": 2,
+        "inserted_passes": 1,
+        "zero_travel": 1,
+        "pass_cut": 2,
+        "holder_cut": 0
+      },
+      {
+        "play": "Openkickbacks",
+        "ai_before": 9,
+        "ai_after": 4,
+        "derived": 0,
+        "short_dropped": 5,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 0,
+        "holder_cut": 0
+      },
+      {
+        "play": "Relax*",
+        "ai_before": 7,
+        "ai_after": 6,
+        "derived": 2,
+        "short_dropped": 3,
+        "inserted_passes": 0,
+        "zero_travel": 1,
+        "pass_cut": 0,
+        "holder_cut": 0
+      }
+    ]
+  },
+  "pass_cut_conflicts_v1": 10,
+  "pass_cut_conflicts_v2": 5
+}

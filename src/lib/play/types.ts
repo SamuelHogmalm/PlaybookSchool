@@ -48,6 +48,8 @@ export type Play = {
 export type ValidationResult = {
   valid: boolean;
   errors: string[];
+  /** Non-blocking issues (e.g. AI misreads flagged for review). */
+  warnings: string[];
 };
 
 /** Raw shape in src/data/plays-interpreted.json (seed import). */

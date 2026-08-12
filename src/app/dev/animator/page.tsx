@@ -154,7 +154,14 @@ export default function DevAnimatorPage() {
 
       <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
         <div className="space-y-3">
-          <AnimatorCourt snapshot={snap} markerSuffix={`dev-${play.id}`} />
+          <AnimatorCourt
+            snapshot={snap}
+            play={play}
+            beatIndex={frame.beatIndex}
+            beatT={frame.t}
+            phase={frame.phase}
+            markerSuffix={`dev-${play.id}`}
+          />
 
           <div className="rounded border border-stone-700 bg-stone-900/60 px-3 py-2 font-mono text-xs text-stone-300">
             <p>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlayerId } from "@/lib/play/types";
+import type { Beat, PlayerId, Play } from "@/lib/play/types";
 import { PLAYER_IDS } from "@/lib/play/types";
 import {
   CourtMarkers,
@@ -9,10 +9,16 @@ import {
   COURT_WIDTH,
 } from "@/components/court";
 import { courtPalette } from "@/lib/court";
-import type { PositionsSnapshot } from "@/lib/timing";
+import type { Phase, PositionsSnapshot } from "@/lib/timing";
+
+import { RouteLayer } from "./RouteLayer";
 
 type Props = {
   snapshot: PositionsSnapshot | null;
+  play?: Play | null;
+  beatIndex?: number;
+  beatT?: number;
+  phase?: Phase;
   hidePlayer?: PlayerId | null;
   highlightPlayer?: PlayerId | null;
   markerSuffix?: string;
@@ -21,11 +27,16 @@ type Props = {
 /** Renders court from a positionsAt snapshot — no position logic here. */
 export function AnimatorCourt({
   snapshot,
+  play = null,
+  beatIndex = 0,
+  beatT = 0,
+  phase = "move",
   hidePlayer = null,
   highlightPlayer = null,
   markerSuffix = "",
 }: Props) {
   const palette = courtPalette("paper");
+  const beat: Beat | null = play?.beats[beatIndex] ?? null;
 
   if (!snapshot) {
     return (
@@ -48,6 +59,16 @@ export function AnimatorCourt({
       >
         <CourtMarkers palette={palette} suffix={markerSuffix} />
         <CourtSurface palette={palette} />
+
+        {beat && (
+          <RouteLayer
+            beat={beat}
+            beatT={beatT}
+            phase={phase}
+            palette={palette}
+            markerSuffix={markerSuffix}
+          />
+        )}
 
         {PLAYER_IDS.map((id) => {
           if (hidePlayer === id) return null;

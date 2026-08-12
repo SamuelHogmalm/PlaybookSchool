@@ -62,3 +62,20 @@ export function perpendicularBar(
     { x: at.x + px, y: at.y + py },
   ];
 }
+
+/** T-bar perpendicular to travel direction, centered on route endpoint. */
+export function perpendicularBarAtTravelEnd(
+  from: Vec,
+  at: Vec,
+  halfLen = 11,
+): [Vec, Vec] {
+  const len = dist(from, at) || 1;
+  const ux = (at.x - from.x) / len;
+  const uy = (at.y - from.y) / len;
+  const px = -uy * halfLen;
+  const py = ux * halfLen;
+  return [
+    { x: at.x - px, y: at.y - py },
+    { x: at.x + px, y: at.y + py },
+  ];
+}
