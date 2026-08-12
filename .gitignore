@@ -44,3 +44,6 @@ next-env.d.ts
 /tools/poppler/
 
 .vercel
+
+# local scratch diagnostics
+/tmp/
