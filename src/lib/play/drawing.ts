@@ -86,6 +86,78 @@ export function nearestPlayerAt(
   return best;
 }
 
+/** Most points a stored action path keeps after simplification. */
+export const MAX_PATH_POINTS = 12;
+
+/** Perpendicular distance from p to the line through a and b. */
+function perpendicularDistance(p: Vec, a: Vec, b: Vec): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return dist(p, a);
+  const cross = Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x);
+  return cross / Math.sqrt(lenSq);
+}
+
+/** Ramer–Douglas–Peucker. Always keeps the first and last point. */
+function rdp(points: Vec[], epsilon: number): Vec[] {
+  if (points.length <= 2) return points.slice();
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  let maxDist = 0;
+  let pivot = 0;
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = perpendicularDistance(points[i], first, last);
+    if (d > maxDist) {
+      maxDist = d;
+      pivot = i;
+    }
+  }
+
+  if (maxDist <= epsilon) return [first, last];
+
+  const left = rdp(points.slice(0, pivot + 1), epsilon);
+  const right = rdp(points.slice(pivot), epsilon);
+  return left.slice(0, -1).concat(right);
+}
+
+/**
+ * Reduce a freehand stroke to at most `maxPoints`, keeping its shape.
+ *
+ * Pointer input lands a point every 8 court units, which is both jittery to look at
+ * and more detail than the motion engine needs. Paths already within budget are
+ * returned untouched — imported and AI-read paths are usually two or three points
+ * and must not be reshaped by a builder concern.
+ *
+ * The endpoints are the action's real start and finish, so RDP is used precisely
+ * because it can never move or drop them.
+ */
+export function simplifyPath(points: Vec[], maxPoints = MAX_PATH_POINTS): Vec[] {
+  const copy = points.map((p) => ({ x: p.x, y: p.y }));
+  if (copy.length <= Math.max(2, maxPoints)) return copy;
+
+  // Smallest epsilon that meets the budget keeps the most shape. 64 units is wider
+  // than any real stroke deviation, so it always collapses to the two endpoints.
+  let lo = 0;
+  let hi = 64;
+  let best = rdp(copy, hi);
+
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    const candidate = rdp(copy, mid);
+    if (candidate.length <= maxPoints) {
+      best = candidate;
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+
+  return best;
+}
+
 export function pathLength(points: Vec[]): number {
   let total = 0;
   for (let i = 1; i < points.length; i++) {

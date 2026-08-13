@@ -32,12 +32,57 @@ export function squigglePath(a: Vec, b: Vec, amp = 7, waves = 6): string {
   return d;
 }
 
-export function pathToSvgD(points: Vec[]): string {
+/** Straight segments between every point. Hit testing and tests want the raw shape. */
+export function polylineToSvgD(points: Vec[]): string {
   if (!points.length) return "";
   return points.reduce(
     (d, p, i) => d + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`),
     "",
   );
+}
+
+/** Control points are derived, not data — round them so the `d` string stays readable. */
+function ctrl(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/**
+ * A route as a smooth curve: Catmull-Rom through the points, emitted as cubic Béziers.
+ *
+ * Every consumer of a route calls this — the builder's committed arrows, the live draw
+ * preview, and the animator's `RouteLayer` — so a drawn route and a played route are the
+ * same curve rather than two renderings that happen to look similar.
+ *
+ * Catmull-Rom is an interpolating spline: the curve passes exactly through each point it
+ * is given, so the first and last stay put. A smoothing scheme that only approximates its
+ * control points would pull the arrow off the player it starts on.
+ */
+export function pathToSvgD(points: Vec[]): string {
+  if (!points.length) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  }
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    // Ends duplicate their neighbour, which makes the curve start and finish along the
+    // drawn direction instead of overshooting past the endpoint.
+    const p0 = points[i - 1] ?? points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] ?? points[i + 1];
+
+    const c1x = ctrl(p1.x + (p2.x - p0.x) / 6);
+    const c1y = ctrl(p1.y + (p2.y - p0.y) / 6);
+    const c2x = ctrl(p2.x - (p3.x - p1.x) / 6);
+    const c2y = ctrl(p2.y - (p3.y - p1.y) / 6);
+
+    d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
+  }
+
+  return d;
 }
 
 export function pathArrowEnd(points: Vec[], pad = 15): Vec | null {

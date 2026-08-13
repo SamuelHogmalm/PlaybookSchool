@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { CourtRenderer } from "@/components/court";
+import { polylineToSvgD } from "@/lib/court";
 import type { ActionType, Beat, PlayerId, Vec } from "@/lib/play/types";
 import { PLAYER_IDS } from "@/lib/play/types";
 import type { DrawnActionInput } from "@/lib/play/actionOps";
@@ -256,10 +257,9 @@ export function EditableCourt({
             actionHitPaths(beat).map(({ id, points }) => (
               <path
                 key={`hit-${id}`}
-                d={points.reduce(
-                  (d, p, i) => d + (i === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`),
-                  "",
-                )}
+                // Hit testing follows the stored polyline, not the rendered curve — the
+                // 16-unit stroke is wider than the curve ever strays from its chords.
+                d={polylineToSvgD(points)}
                 fill="none"
                 stroke="transparent"
                 strokeWidth={16}

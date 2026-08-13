@@ -169,3 +169,36 @@ and not *why*, and the absence of a record read as something having gone wrong.
 
 Rules out: leaving that kind of decision undocumented on the grounds that the people
 involved remember it.
+
+## 2026-08-13 — Paths are simplified when stored, smoothed when rendered
+
+`simplifyPath` in `src/lib/play/drawing.ts`; `pathToSvgD` in `src/lib/court/paths.ts`.
+
+Freehand input lands a point every 8 court units — jittery to look at, and more detail
+than the motion engine needs. Paths are now reduced with Ramer–Douglas–Peucker to at
+most 12 points in `addDrawnAction`, and rendered as a Catmull-Rom spline emitted as
+cubic Béziers.
+
+The split matters because the two halves have different consumers. The **stored**
+polyline is what `positionsAt` samples for motion; the **rendered** curve is what the
+coach sees. Simplifying on commit means the builder and the animator sample the same
+reduced points. Smoothing inside `pathToSvgD` means they render identically, because
+`ActionLayer`, `RouteLayer` and `DrawPreview` all call that one function — a drawn
+route and a played route are the same curve, not two that resemble each other.
+
+RDP was chosen over a resample because it can only *drop* points, never invent them,
+so endpoints survive untouched. Catmull-Rom was chosen over an approximating spline
+for the same reason: it interpolates its control points, so the arrow still starts on
+the player it belongs to.
+
+Paths already within budget are left alone. Imported and AI-read paths are two or three
+points, and a builder concern should not reshape them.
+
+**Known limit:** motion follows the chords between retained points, so a token cuts
+fractionally inside its own drawn curve. Deviation is bounded by the RDP epsilon — a
+few court units on a hand-drawn arc. Changing `positionsAt` to sample the spline would
+close the gap, but it is the timing singleton and the gap is not visible at playback
+size. Revisit if it ever is.
+
+Rules out: smoothing into stored data. What is saved stays a polyline the motion engine
+can sample, and hit testing stays on that polyline too.

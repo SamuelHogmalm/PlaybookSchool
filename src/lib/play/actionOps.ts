@@ -1,6 +1,6 @@
 import type { Action, ActionType, Beat, Play, PlayerId, Vec } from "./types";
 import { cloneBeats, linkBeatBall, linkBeatPositions } from "./beatOps";
-import { pathLength } from "./drawing";
+import { pathLength, simplifyPath } from "./drawing";
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 9);
@@ -33,7 +33,9 @@ export function addDrawnAction(
 ): Beat[] {
   const next = cloneBeats(beats);
   const beat = next[beatIndex];
-  const path = copyPath(input.path);
+  // Simplify on the way in, so what the animator samples for motion and what the
+  // builder renders are the same points. Endpoints survive RDP unchanged.
+  const path = simplifyPath(copyPath(input.path));
   const action: Action = {
     id: nextActionId(beat.actions),
     type: input.type,

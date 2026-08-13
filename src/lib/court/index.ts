@@ -10,6 +10,7 @@ export { collegeThreePointD, courtGeometry, COURT_HEIGHT, COURT_WIDTH, HOOP } fr
 export {
   pathArrowEnd,
   pathToSvgD,
+  polylineToSvgD,
   perpendicularBar,
   perpendicularBarAtTravelEnd,
   shorten,

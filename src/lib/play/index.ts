@@ -66,9 +66,11 @@ export {
   canDrawAction,
   DRAW_TOOLS,
   hitTestPath,
+  MAX_PATH_POINTS,
   MIN_DRAW_LENGTH,
   nearestPlayerAt,
   pathLength,
+  simplifyPath,
   type BuilderTool,
   type DrawActionGate,
 } from "./drawing";
