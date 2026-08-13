@@ -136,7 +136,7 @@ export function PlayBuilder() {
     initHistory(createEmptyPlay()),
   );
   const play = history.present;
-  const [beatIndex, setBeatIndex] = useState(0);
+  const [rawBeatIndex, setBeatIndex] = useState(0);
   const [tool, setTool] = useState<BuilderTool>("move");
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>("1");
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
@@ -147,6 +147,23 @@ export function PlayBuilder() {
   // Bumping the nonce remounts PlayAnimator, which is how it resets (key={play.id}).
   const [preview, setPreview] = useState<number | null>(null);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
+
+  /**
+   * Clamped, because the play can shrink under a stale index.
+   *
+   * Undo after "add beat" restores a shorter play while the selection still points at
+   * the beat that no longer exists. Reading `play.beats[2]` then returned undefined and
+   * the whole builder rendered null — including the beat strip needed to select a
+   * different beat, so there was no way back.
+   */
+  const beatIndex = Math.min(
+    Math.max(0, rawBeatIndex),
+    Math.max(0, play.beats.length - 1),
+  );
+
+  // Written back during render, not in an effect: the clamp above already makes this
+  // render safe, and this keeps a later add-beat from jumping to the stale selection.
+  if (rawBeatIndex !== beatIndex) setBeatIndex(beatIndex);
 
   const beat = play.beats[beatIndex];
   const validation = useMemo(() => validatePlay(play), [play]);

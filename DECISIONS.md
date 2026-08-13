@@ -312,3 +312,35 @@ discrepancy, so a future fix shows up as a deliberate diff rather than a surpris
 
 Carried to `PROPOSALS.md` for a decision: fix the curve, or fix the comment if a
 front-loaded dribble is what the animation actually wants.
+
+## 2026-08-13 — The builder's beat selection is clamped, not trusted
+
+`PlayBuilder` derives `beatIndex` from `rawBeatIndex` every render.
+
+Add a beat, then undo. The play returns to its previous length while the selection still
+points at the beat that no longer exists, `play.beats[2]` is `undefined`, and
+`if (!beat) return null` blanked the entire builder — beat strip included, so there was
+no control left to select a different beat with. Unrecoverable without a reload.
+
+The index is now clamped on read, and written back during render rather than in an
+effect (the same pattern `usePlayPlayback` uses, and it keeps a later add-beat from
+jumping to the stale selection).
+
+The general lesson: undo restores play *content* but nothing reconciles UI state that
+points into it. Any future selection — a chosen action, a chosen player, a scroll
+position — needs the same treatment.
+
+## 2026-08-13 — Strokes end on pointerup, never on leaving the court
+
+`EditableCourt` no longer binds `onPointerLeave`.
+
+Both gestures call `setPointerCapture` on pointerdown, which guarantees `pointerup` is
+delivered even when the pointer is released outside the SVG. Treating "left the court"
+as "finished" therefore added nothing and cost something real: drawing through the
+sideline and back ended the stroke at the sideline.
+
+`onPointerCancel` now abandons the stroke instead — that is the event that actually
+means the gesture was taken away (touch scroll, system gesture, lost device).
+
+Not verified in a browser this session. The reasoning is from the pointer-capture spec,
+so it wants a manual check on touch.

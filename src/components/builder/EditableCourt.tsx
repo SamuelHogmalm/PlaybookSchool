@@ -256,6 +256,19 @@ export function EditableCourt({
     else abandonDraw();
   };
 
+  /**
+   * The browser took the gesture away — touch scroll, a system gesture, a lost device.
+   * There is no end point to finish on, so drop whatever the stroke wrote.
+   */
+  const onOverlayPointerCancel = () => {
+    if (draggingPlayer) {
+      setDraggingPlayer(null);
+      onMoveEnd();
+      return;
+    }
+    if (drawingRef.current) abandonDraw();
+  };
+
   const onBackgroundClick = (e: React.PointerEvent) => {
     if (drawing || draggingPlayer) return;
     const pt = courtPoint(e.clientX, e.clientY);
@@ -307,10 +320,16 @@ export function EditableCourt({
           />
         )}
 
+        {/*
+          No onPointerLeave: both gestures call setPointerCapture on pointerdown, so
+          pointerup is delivered here even when the pointer is released off the court.
+          Treating "left the court" as "finished" ended a stroke early whenever a coach
+          drew through the sideline and back.
+        */}
         <g
           onPointerMove={onOverlayPointerMove}
           onPointerUp={onOverlayPointerUp}
-          onPointerLeave={onOverlayPointerUp}
+          onPointerCancel={onOverlayPointerCancel}
         >
           <rect
             x={0}
