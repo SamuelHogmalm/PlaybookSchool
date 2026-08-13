@@ -293,3 +293,22 @@ Eight warnings remain, all outside the play engine (scripts, auth `.js`, the lan
 page). `window.location.assign` in the login page is left alone deliberately — it dates
 from the Vercel-preview auth redirect work and a router push is not obviously equivalent
 there.
+
+## 2026-08-13 — The dribble easing contradicts its own comment; left unchanged for now
+
+`easeInOutDribble` in `src/lib/timing/easing.ts`.
+
+Documented as "~70% of cut speed (stretched time)". It is measurably the opposite: it
+leads `easeInOutCut` at every point, reaching twice the cut's progress at t=0.1.
+
+Cause is `Math.pow(t, 0.85)`. An exponent below 1 *raises* t, compressing early time
+rather than stretching it; a slowdown needs an exponent above 1. The lanes do not supply
+the difference either — cut is 0.10–0.70 and dribble 0.25–0.85, both 0.60 wide.
+
+Left unchanged. Changing a motion curve changes how all twelve seed plays animate, and
+this session's brief was builder work, not retiming the engine. The current behaviour is
+pinned by a test in `tests/play/sampling.test.ts` that says plainly it records a
+discrepancy, so a future fix shows up as a deliberate diff rather than a surprise.
+
+Carried to `PROPOSALS.md` for a decision: fix the curve, or fix the comment if a
+front-loaded dribble is what the animation actually wants.
