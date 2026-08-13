@@ -16,6 +16,9 @@ authoritative — the plan is — but read it before re-opening a settled questi
 undoing something that looks arbitrary. Add an entry when a choice closes off an
 alternative someone might reasonably try again later.
 
+`PROPOSALS.md` holds work deliberately *not* done, with the reasoning to decide against
+it quickly. `OVERNIGHT.md` is the log of the 13 Aug session.
+
 ## Commands
 
 ```bash
