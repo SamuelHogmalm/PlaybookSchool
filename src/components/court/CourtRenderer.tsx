@@ -4,12 +4,16 @@ import { COURT_HEIGHT, COURT_WIDTH, courtPalette } from "@/lib/court";
 import { ActionLayer } from "./ActionLayer";
 import { CourtMarkers } from "./CourtMarkers";
 import { CourtSurface } from "./CourtSurface";
-import { BeatGhostMarkers, PlayerTokens } from "./PlayerTokens";
+import { DestinationRoutes } from "./DestinationRoutes";
+import { PlayerTokens } from "./PlayerTokens";
 
 export type CourtRendererProps = {
   beat: Beat;
-  /** Faded destination markers at beat.pos (builder: where players are going). */
+  /** Draw routes to beat.pos for travel no action explains (builder). */
   showDestinations?: boolean;
+  /** Grab rings on every destination — move mode, where they can be dragged. */
+  showDestinationHandles?: boolean;
+  draggingPlayer?: PlayerId | null;
   highlightActionId?: string;
   highlightPlayerId?: PlayerId;
   /** Unique suffix when multiple courts share one page (SVG marker ids). */
@@ -30,6 +34,8 @@ export type CourtRendererProps = {
 export function CourtRenderer({
   beat,
   showDestinations = false,
+  showDestinationHandles = false,
+  draggingPlayer = null,
   highlightActionId,
   highlightPlayerId,
   markerSuffix = "",
@@ -57,7 +63,12 @@ export function CourtRenderer({
         <CourtMarkers palette={palette} suffix={markerSuffix} />
         <CourtSurface palette={palette} />
         {showDestinations && (
-          <BeatGhostMarkers positions={beat.pos} palette={palette} />
+          <DestinationRoutes
+            beat={beat}
+            palette={palette}
+            showHandles={showDestinationHandles}
+            draggingPlayer={draggingPlayer}
+          />
         )}
         <ActionLayer
           beat={beat}

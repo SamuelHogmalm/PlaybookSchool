@@ -40,7 +40,7 @@ const samples = [
     highlightActionId: "a8",
   },
   {
-    title: "Horns b1 — builder mode with destination ghosts",
+    title: "Horns b1 — builder mode with destination routes",
     play: "Horns",
     beatIndex: 0,
     showDestinations: true,
@@ -62,8 +62,9 @@ export default function CourtPreviewPage() {
       <h1 style={{ fontSize: 24, marginBottom: 4 }}>/dev/court — CourtRenderer</h1>
       <p style={{ marginTop: 0, color: "#555", maxWidth: 640 }}>
         Pure presentation layer. Tokens at <code>startPos</code>; actions drawn{" "}
-        <code>startPos → pos</code>. Destination ghosts (dashed) show{" "}
-        <code>beat.pos</code> when enabled.
+        <code>startPos → pos</code>. Destination routes (dashed) show travel toward{" "}
+        <code>beat.pos</code> that no action explains — players with a drawn movement
+        are left to <code>ActionLayer</code>.
       </p>
 
       <section

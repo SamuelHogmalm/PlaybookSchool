@@ -405,8 +405,9 @@ export function PlayBuilder() {
           </div>
         </div>
         <p className="text-sm text-stone-400">
-          Select a tool, click a player to select them, drag from their token to draw.
-          Move mode drags destination ghosts. Pass sets possession automatically.
+          Select a tool, click a player to select them, drag from their token to draw —
+          the play updates as you go. Move mode drags the ring at the end of a player&rsquo;s
+          route to set where they finish. Pass sets possession automatically.
         </p>
       </header>
 

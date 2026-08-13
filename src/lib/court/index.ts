@@ -1,10 +1,13 @@
 export {
   actionDrawStyle,
+  IDLE_EPSILON,
   isMutedAction,
   resolveActionEndpoints,
   tokenStroke,
+  unexplainedTravel,
   type ActionDrawStyle,
   type ActionEndpoints,
+  type DestinationRoute,
 } from "./actionGeometry";
 export { collegeThreePointD, courtGeometry, COURT_HEIGHT, COURT_WIDTH, HOOP } from "./courtLines";
 export {

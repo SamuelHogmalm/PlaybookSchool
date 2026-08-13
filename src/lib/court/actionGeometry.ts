@@ -1,5 +1,43 @@
 import type { Action, Beat, PlayerId, Vec } from "@/lib/play/types";
+import { PLAYER_IDS } from "@/lib/play/types";
+import { dist } from "@/lib/play/geometry";
 import type { CourtPalette } from "./palette";
+
+export type DestinationRoute = { id: PlayerId; from: Vec; to: Vec };
+
+/** Below this a destination is the player's own spot, not somewhere they travel to. */
+export const IDLE_EPSILON = 1;
+
+function hasMovementAction(beat: Beat, id: PlayerId): boolean {
+  return beat.actions.some(
+    (a) =>
+      a.by === id &&
+      (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+  );
+}
+
+/**
+ * Players who end the beat somewhere else with no action to explain it.
+ *
+ * A player with a drawn movement is left out — `ActionLayer` already draws their route,
+ * and a second line along the same path would only make it heavier. What remains is
+ * travel that validation rule 9 objects to, so drawing it makes the problem visible.
+ */
+export function unexplainedTravel(
+  beat: Beat,
+  epsilon = IDLE_EPSILON,
+): DestinationRoute[] {
+  const out: DestinationRoute[] = [];
+  for (const id of PLAYER_IDS) {
+    const from = beat.startPos[id];
+    const to = beat.pos[id];
+    if (!from || !to) continue;
+    if (dist(from, to) < epsilon) continue;
+    if (hasMovementAction(beat, id)) continue;
+    out.push({ id, from, to });
+  }
+  return out;
+}
 
 export type ActionEndpoints = {
   route: Vec[];

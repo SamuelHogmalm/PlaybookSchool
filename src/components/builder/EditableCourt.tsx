@@ -283,6 +283,8 @@ export function EditableCourt({
       <CourtRenderer
         beat={beat}
         showDestinations
+        showDestinationHandles={tool === "move"}
+        draggingPlayer={draggingPlayer}
         svgRef={svgRef}
         highlightActionId={selectedActionId ?? undefined}
         highlightPlayerId={selectedPlayerId ?? undefined}

@@ -243,3 +243,30 @@ cleaned up. Possession is now recomputed from `startBall` and the transfers that
 which also handles deleting one pass out of a chain.
 
 Found while building live-draw rollback, which depends on removal being complete.
+
+## 2026-08-13 — The builder draws destination routes, not ghost tokens
+
+`unexplainedTravel()` in `src/lib/court/actionGeometry.ts`, rendered by
+`DestinationRoutes`. `BeatGhostMarkers` is gone.
+
+Faded dashed tokens at `beat.pos` said where a player finishes but not how they get
+there, and for an idle player `pos` equals `startPos`, so the ghost sat under the live
+token and read as a rendering artefact. For a player with a drawn action it duplicated
+the arrow's endpoint.
+
+The builder now draws what the animator draws: a route toward `beat.pos`, through the
+same `pathToSvgD`. Players who already have a movement action are skipped, because
+`ActionLayer` draws their route and a second line along it is just heavier.
+
+What remains is travel with no action to explain it — which is precisely what validation
+rule 9 objects to. Drawing it makes the problem visible instead of hiding it behind a
+ghost that looked the same whether the play was valid or not.
+
+Move mode keeps a grab ring at each destination, including players standing still, so
+the drag affordance stays discoverable. The builder instruction text names the ring.
+
+Note: `MASTER-BUILD-PLAN.md` line 173 ("selecting a beat shows the previous beat as
+faded ghosts") is a different, still-unbuilt feature — beat-to-beat context, not
+destination markers. This does not implement or contradict it.
+
+Rules out: the builder and the animator depicting the same movement differently.

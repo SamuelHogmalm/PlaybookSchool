@@ -1,0 +1,81 @@
+import type { Beat, PlayerId, Vec } from "@/lib/play/types";
+import { PLAYER_IDS } from "@/lib/play/types";
+import {
+  pathToSvgD,
+  shorten,
+  unexplainedTravel,
+  type CourtPalette,
+} from "@/lib/court";
+
+type Props = {
+  beat: Beat;
+  palette: CourtPalette;
+  /** Show grab rings at each destination — move mode, where they can be dragged. */
+  showHandles?: boolean;
+  draggingPlayer?: PlayerId | null;
+};
+
+/**
+ * Where players end the beat, drawn the way the animator draws a route.
+ *
+ * This replaced a set of faded ghost tokens at `beat.pos`. A ghost said where a player
+ * finishes but not how they get there, and for an idle player `pos` equals `startPos`,
+ * so it sat under the live token and read as a rendering artefact.
+ *
+ * Players who already have a movement action are skipped — `ActionLayer` draws their
+ * route, and a second line along the same path would just be heavier. What is left is
+ * travel with no action to explain it, which is exactly what validation rule 9 objects
+ * to, so drawing it makes the problem visible rather than hiding it behind a ghost.
+ */
+export function DestinationRoutes({
+  beat,
+  palette,
+  showHandles = false,
+  draggingPlayer = null,
+}: Props) {
+  const routes = unexplainedTravel(beat);
+
+  // Every player is draggable in move mode, including those standing still.
+  const handles: Array<{ id: PlayerId; at: Vec }> = showHandles
+    ? PLAYER_IDS.flatMap((id) =>
+        beat.pos[id] ? [{ id, at: beat.pos[id] }] : [],
+      )
+    : [];
+
+  if (!routes.length && !handles.length) return null;
+
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      {routes.map(({ id, from, to }) => {
+        const [p, q] = shorten(from, to, 15, 9);
+        return (
+          <path
+            key={`dest-route-${id}`}
+            d={pathToSvgD([p, q])}
+            fill="none"
+            stroke={palette.muted}
+            strokeWidth={1.75}
+            strokeDasharray="5 5"
+            opacity={0.7}
+          />
+        );
+      })}
+
+      {handles.map(({ id, at }) => {
+        const active = draggingPlayer === id;
+        return (
+          <circle
+            key={`dest-handle-${id}`}
+            cx={at.x}
+            cy={at.y}
+            r={active ? 9 : 7}
+            fill="none"
+            stroke={active ? palette.ok : palette.muted}
+            strokeWidth={active ? 2 : 1.5}
+            opacity={active ? 0.95 : 0.6}
+          />
+        );
+      })}
+    </g>
+  );
+}
