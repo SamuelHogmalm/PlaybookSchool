@@ -17,6 +17,20 @@ const PLAYS: Play[] = (seedPlays as SeedPlay[]).map((p) =>
   normalizeSeedPlay(p),
 );
 
+/** Keeps the hooks below unconditional when the seed file is empty or unreadable. */
+const NO_PLAY: Play = {
+  id: "",
+  teamId: "seed",
+  name: "",
+  category: "Set",
+  beats: [],
+  version: 1,
+  valid: false,
+  validationErrors: [],
+  createdAt: "",
+  updatedAt: "",
+};
+
 function formatVec(v: { x: number; y: number } | undefined): string {
   if (!v) return "—";
   return `${Math.round(v.x)}, ${Math.round(v.y)}`;
@@ -30,7 +44,7 @@ export default function DevAnimatorPage() {
   const [beatTableIndex, setBeatTableIndex] = useState(0);
 
   const play = useMemo(
-    () => PLAYS.find((p) => p.id === playId) ?? PLAYS[0],
+    () => PLAYS.find((p) => p.id === playId) ?? PLAYS[0] ?? NO_PLAY,
     [playId],
   );
 
@@ -60,6 +74,19 @@ export default function DevAnimatorPage() {
     resume();
     setPlaying(true);
   };
+
+  if (!PLAYS.length) {
+    return (
+      <main className="mx-auto max-w-6xl p-4 text-stone-100">
+        <h1 className="text-2xl font-semibold">Animator debug</h1>
+        <p className="mt-2 text-sm text-stone-400">
+          No plays in <code className="text-stone-300">src/data/plays-interpreted.json</code>.
+          Rebuild the seed with{" "}
+          <code className="text-stone-300">python scripts/rebuild-seed-plays.py</code>.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-4 text-stone-100">
@@ -182,7 +209,11 @@ export default function DevAnimatorPage() {
           </div>
         </div>
 
-        <BeatTable play={play} beatIndex={beatTableIndex} onSelect={setBeatTableIndex} />
+        <BeatTable
+          play={play}
+          beatIndex={Math.min(beatTableIndex, play.beats.length - 1)}
+          onSelect={setBeatTableIndex}
+        />
       </div>
     </main>
   );

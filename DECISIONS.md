@@ -344,3 +344,28 @@ means the gesture was taken away (touch scroll, system gesture, lost device).
 
 Not verified in a browser this session. The reasoning is from the pointer-capture spec,
 so it wants a manual check on touch.
+
+## 2026-08-13 — Accessibility: label and announce, but drawing stays pointer-only
+
+Scope call. A keyboard-drawable court is a feature nobody asked for; labelling and
+announcements are a defect. This session did the second and wrote the first into
+`PROPOSALS.md`.
+
+Done:
+
+- `ValidationBanner` is now **one** always-mounted live region. It was three separate
+  elements, so the region appeared at the same moment as its content — which is the
+  case screen readers commonly do not announce. Errors are `role="alert"` /
+  `assertive`; ready and warnings are `role="status"` / `polite`.
+- Palette tools are toggle buttons (`aria-pressed`) in a labelled group.
+- Disabled tools use `aria-disabled` rather than `disabled`. A `disabled` button is
+  skipped entirely, which hid the tooltip explaining *why* the tool is off — and that
+  explanation is the whole teaching mechanism behind the ball gate.
+- Player tokens are focusable with `role="button"`, an `aria-label` naming the player,
+  whether they hold the ball and whether they are selected, and Enter/Space selects.
+- Undo/redo get real `aria-label`s and `aria-keyshortcuts`; the arrow glyphs are
+  `aria-hidden` so they stop being the accessible name.
+- Visible focus rings on the palette, undo/redo and the tokens.
+
+Not done, deliberately: drawing an action with the keyboard. Selection is reachable;
+the stroke is not.

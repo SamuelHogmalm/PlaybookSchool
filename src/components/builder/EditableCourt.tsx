@@ -304,6 +304,8 @@ export function EditableCourt({
       />
       <svg
         viewBox="0 0 500 470"
+        role="group"
+        aria-label={`Beat ${beat.id} — editing surface. Tool: ${tool}.`}
         className="absolute inset-0 h-full w-full touch-none select-none"
       >
         {previewPath && drawing && (
@@ -383,6 +385,8 @@ export function EditableCourt({
             const p = beat.startPos[id];
             if (!p) return null;
             const drawOk = tool !== "move" && canDrawFrom(id);
+            const holdsBall = beat.startBall === id;
+            const isSelected = selectedPlayerId === id;
             return (
               <circle
                 key={`start-${id}`}
@@ -390,9 +394,24 @@ export function EditableCourt({
                 cy={p.y}
                 r="16"
                 fill="transparent"
+                // Focusable so a player can be selected without a pointer. Drawing
+                // itself is still pointer-only — see PROPOSALS.md.
+                tabIndex={0}
+                role="button"
+                aria-pressed={isSelected}
+                aria-label={`Player ${id}${holdsBall ? ", has the ball" : ""}${
+                  isSelected ? ", selected" : ""
+                }`}
+                className="focus-visible:outline-none focus-visible:[stroke:#fbbf24] focus-visible:[stroke-width:3]"
                 style={{
                   pointerEvents: "all",
                   cursor: drawOk ? "crosshair" : tool === "move" ? "default" : "not-allowed",
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectPlayer(id);
+                  }
                 }}
                 onPointerDown={onStartPointerDown(id)}
               />

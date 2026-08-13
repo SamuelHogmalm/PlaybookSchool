@@ -406,18 +406,22 @@ export function PlayBuilder() {
               onClick={onUndo}
               disabled={!canUndo(history)}
               title="Undo (Ctrl+Z)"
-              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Undo (Control+Z)"
+              aria-keyshortcuts="Control+Z"
+              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ↶ Undo
+              <span aria-hidden="true">↶ </span>Undo
             </button>
             <button
               type="button"
               onClick={onRedo}
               disabled={!canRedo(history)}
               title="Redo (Ctrl+Shift+Z)"
-              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Redo (Control+Shift+Z)"
+              aria-keyshortcuts="Control+Shift+Z"
+              className="rounded border border-stone-600 px-3 py-1.5 text-sm hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ↷ Redo
+              <span aria-hidden="true">↷ </span>Redo
             </button>
           </div>
         </div>
