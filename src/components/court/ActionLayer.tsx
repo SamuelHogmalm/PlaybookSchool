@@ -1,5 +1,4 @@
-import type { Action, Beat, PlayerId } from "@/lib/play/types";
-import { PLAYER_IDS } from "@/lib/play/types";
+import type { Action, Beat } from "@/lib/play/types";
 import {
   actionDrawStyle,
   pathArrowEnd,

@@ -42,21 +42,34 @@ export function usePlayPlayback({
     [play, fromBeat, toBeat],
   );
 
-  const [elapsedMs, setElapsedMs] = useState(0);
+  /** Identity of the current run. Changing any part of it restarts playback. */
+  const runKey = `${play.id}|${fromBeat}|${toBeat}|${speed}`;
+
+  // Elapsed time is stored with the run it belongs to, so switching plays resets it
+  // during render rather than in an effect that would render the stale frame first.
+  const [run, setRun] = useState({ key: runKey, elapsedMs: 0 });
+  if (run.key !== runKey) setRun({ key: runKey, elapsedMs: 0 });
+  const elapsedMs = run.key === runKey ? run.elapsedMs : 0;
+
   const elapsedRef = useRef(0);
   const pausedRef = useRef(false);
   const lastHoldBeatRef = useRef<number | null>(null);
   const onBeatEndRef = useRef(onBeatEnd);
   const onCompleteRef = useRef(onComplete);
-  onBeatEndRef.current = onBeatEnd;
-  onCompleteRef.current = onComplete;
 
+  // Latest-callback refs, written after render: a render can be thrown away and
+  // replayed, and a ref written during one would keep the discarded value.
+  useEffect(() => {
+    onBeatEndRef.current = onBeatEnd;
+    onCompleteRef.current = onComplete;
+  });
+
+  // Declared before the frame loop so the refs are zeroed before it restarts.
   useEffect(() => {
     elapsedRef.current = 0;
-    setElapsedMs(0);
     pausedRef.current = false;
     lastHoldBeatRef.current = null;
-  }, [play.id, fromBeat, toBeat, speed]);
+  }, [runKey]);
 
   useEffect(() => {
     if (stepMode && playing) pausedRef.current = false;
@@ -79,7 +92,7 @@ export function usePlayPlayback({
       last = now;
       const next = Math.min(totalMs, elapsedRef.current + dt);
       elapsedRef.current = next;
-      setElapsedMs(next);
+      setRun({ key: runKey, elapsedMs: next });
 
       const frame = resolveTimelineFrame(play, fromBeat, toBeat, next, speed);
 
@@ -104,7 +117,7 @@ export function usePlayPlayback({
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, totalMs, play, fromBeat, toBeat, speed, stepMode]);
+  }, [playing, totalMs, play, fromBeat, toBeat, speed, stepMode, runKey]);
 
   const { frame, snap } = snapshotAtElapsed(
     play,
@@ -116,7 +129,7 @@ export function usePlayPlayback({
 
   const reset = () => {
     elapsedRef.current = 0;
-    setElapsedMs(0);
+    setRun({ key: runKey, elapsedMs: 0 });
     pausedRef.current = false;
     lastHoldBeatRef.current = null;
   };

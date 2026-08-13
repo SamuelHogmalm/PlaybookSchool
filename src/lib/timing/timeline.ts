@@ -2,7 +2,7 @@ import type { Play } from "@/lib/play/types";
 import { HOLD_MS } from "./constants";
 import { beatDurationMs } from "./beatDuration";
 import { positionsAt } from "./positionsAt";
-import type { Phase, TimelineFrame } from "./types";
+import type { TimelineFrame } from "./types";
 
 export function beatRangeDurationMs(play: Play, from: number, to: number): number {
   if (!play?.beats?.length) return 0;

@@ -2,10 +2,6 @@ import type { Action, ActionType, Beat, Play, PlayerId, Vec } from "./types";
 import { cloneBeats, linkBeatBall, linkBeatPositions } from "./beatOps";
 import { pathLength, simplifyPath } from "./drawing";
 
-function uid(): string {
-  return Math.random().toString(36).slice(2, 9);
-}
-
 /** Next free `aN` id in a beat. Exported so a drag can claim its id up front. */
 export function nextActionId(actions: Action[]): string {
   let max = 0;
@@ -147,6 +143,8 @@ export function confirmPlayActions(play: Play): Play {
   const beats = play.beats.map((beat) => ({
     ...beat,
     actions: beat.actions.map((a) => {
+      // Destructured only to drop the review flags from `rest`.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { derived, needsReview, reason, ...rest } = a;
       return rest;
     }),

@@ -10,7 +10,7 @@ import {
   reorderBeat,
   setPlayBeats,
 } from "../../src/lib/play/beatOps.js";
-import type { Beat, Play, PlayerId } from "../../src/lib/play/types.js";
+import type { Beat, Play } from "../../src/lib/play/types.js";
 import { PLAYER_IDS } from "../../src/lib/play/types.js";
 import { positionsAt } from "../../src/lib/timing/index.js";
 

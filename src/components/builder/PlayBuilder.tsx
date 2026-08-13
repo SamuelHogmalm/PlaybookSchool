@@ -370,7 +370,7 @@ export function PlayBuilder() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [beatIndex, play.beats, selectedActionId, updateBeats]);
+  }, [beatIndex, play.beats, selectedActionId, updateBeats, onRedo, onUndo]);
 
   if (!beat) return null;
 

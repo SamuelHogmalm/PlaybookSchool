@@ -270,3 +270,26 @@ faded ghosts") is a different, still-unbuilt feature — beat-to-beat context, n
 destination markers. This does not implement or contradict it.
 
 Rules out: the builder and the animator depicting the same movement differently.
+
+## 2026-08-13 — `npm run lint` passes; the playback hook stopped writing refs in render
+
+`src/components/animator/usePlayPlayback.ts`.
+
+Lint had been failing on `main` with three errors, all in the playback hook: two refs
+written during render, and a `setState` inside an effect.
+
+The ref writes were the real defect. React can discard a render and replay it, and a ref
+written during the discarded pass keeps the wrong callback — the latest-callback refs now
+update in an effect instead.
+
+Elapsed time is now stored alongside the identity of the run it belongs to
+(`play.id|from|to|speed`) and reset during render when that identity changes, rather than
+by a `setState` in an effect that rendered one stale frame first.
+
+`.eslintignore` was deleted: flat config ignores `_legacy/**` already, and the old file
+only produced a deprecation warning.
+
+Eight warnings remain, all outside the play engine (scripts, auth `.js`, the landing
+page). `window.location.assign` in the login page is left alone deliberately — it dates
+from the Vercel-preview auth redirect work and a router push is not obviously equivalent
+there.
