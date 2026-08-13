@@ -9,6 +9,20 @@ const COLLEGE_3PT_IN = 22 * 12 + 1.75;
 const CORNER_INSET_IN = 42;
 const THREE_PT_DIAGRAM_SCALE = 0.75;
 
+/**
+ * Round to a fixed number of places before it reaches the DOM.
+ *
+ * `Math.cos`/`Math.sin` are not required to be correctly rounded, so two engines can
+ * disagree in the last bit. Emitting raw floats put 17 significant digits per point
+ * into the `d` attribute, and a single last-digit difference between the server render
+ * and the browser is a hydration mismatch React reports and does not patch up.
+ *
+ * Three decimals is far below one screen pixel on a 500-unit court.
+ */
+function fixed(n: number): string {
+  return (Math.round(n * 1000) / 1000).toString();
+}
+
 /** NCAA 3pt: vertical corner segments from baseline up to arc, then arc across. */
 export function collegeThreePointD(
   cx: number,
@@ -27,16 +41,16 @@ export function collegeThreePointD(
   const leftA2 = leftA < bottomA ? leftA + 2 * Math.PI : leftA;
 
   const steps = 32;
-  let d = `M ${leftCornerX} 0 L ${leftCornerX} ${leftY}`;
+  let d = `M ${fixed(leftCornerX)} 0 L ${fixed(leftCornerX)} ${fixed(leftY)}`;
   for (let i = 0; i <= steps; i++) {
     const a = leftA2 + (i / steps) * (bottomA - leftA2);
-    d += ` L ${cx + r * Math.cos(a)} ${cy + r * Math.sin(a)}`;
+    d += ` L ${fixed(cx + r * Math.cos(a))} ${fixed(cy + r * Math.sin(a))}`;
   }
   for (let i = 1; i <= steps; i++) {
     const a = bottomA + (i / steps) * (rightA - bottomA);
-    d += ` L ${cx + r * Math.cos(a)} ${cy + r * Math.sin(a)}`;
+    d += ` L ${fixed(cx + r * Math.cos(a))} ${fixed(cy + r * Math.sin(a))}`;
   }
-  d += ` L ${rightCornerX} ${rightY} L ${rightCornerX} 0`;
+  d += ` L ${fixed(rightCornerX)} ${fixed(rightY)} L ${fixed(rightCornerX)} 0`;
   return d;
 }
 

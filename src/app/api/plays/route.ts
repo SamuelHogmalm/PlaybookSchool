@@ -96,6 +96,11 @@ export async function GET() {
     .order("updated_at", { ascending: false });
 
   if (error) {
+    console.error("[api/plays] list failed", {
+      code: error.code,
+      message: error.message,
+      hint: error.hint,
+    });
     return Response.json({ error: error.message }, { status: 500 });
   }
 
@@ -172,6 +177,16 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    // The response carries only `message`; code and hint are what actually distinguish
+    // "migration never applied" from "RLS refused this row", so log the whole thing.
+    console.error("[api/plays] upsert failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      teamId: ctx.teamId,
+      playId: play.id,
+    });
     return Response.json({ error: error.message }, { status: 500 });
   }
 

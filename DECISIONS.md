@@ -369,3 +369,22 @@ Done:
 
 Not done, deliberately: drawing an action with the keyboard. Selection is reachable;
 the stroke is not.
+
+## 2026-08-13 — Court line coordinates are rounded before they reach the DOM
+
+`collegeThreePointD` in `src/lib/court/courtLines.ts`.
+
+Running the dev server surfaced a hydration mismatch on the three-point arc, present
+since the Phase 2 court landed. The path emitted 65 points of raw float, ~17 significant
+digits each, straight from `Math.cos`/`Math.sin` — which the spec does not require to be
+correctly rounded, so the server render and the browser could disagree in the last bit.
+React reports that and explicitly does not patch it up.
+
+Coordinates are now rounded to three decimals, far below one screen pixel on a 500-unit
+court, which also removes about a kilobyte of noise from the markup.
+
+Unrelated to the arrow smoothing landed the same day: this path builds its own string
+and never goes through `pathToSvgD`.
+
+Rules out: emitting computed geometry at full float precision anywhere it is server
+rendered. If a future court feature computes coordinates, round them the same way.
