@@ -8,7 +8,7 @@ import type { Play, PlayerId, SeedPlay } from "@/lib/play/types";
 import { PLAYER_IDS } from "@/lib/play/types";
 import {
   beatDurationMs,
-  movementActionForPlayer,
+  movementActionsForPlayer,
   sequenceBeat,
 } from "@/lib/timing";
 import seedPlays from "@/data/plays-interpreted.json";
@@ -234,27 +234,31 @@ function BeatTable({
           </thead>
           <tbody>
             {PLAYER_IDS.map((id: PlayerId) => {
-              const action = movementActionForPlayer(timed, id);
+              // Every movement, in order — a screener who then rolls has two, and the
+              // point of this table is to see that the second one is really there.
+              const movements = movementActionsForPlayer(timed, id);
               const transfer = timed.find(
                 (a) =>
                   (a.type === "pass" || a.type === "handoff") &&
                   (a.by === id || a.for === id),
               );
-              const label = action
-                ? action.type
+              const label = movements.length
+                ? movements.map((m) => m.type).join(" → ")
                 : transfer
                   ? `${transfer.type}${transfer.by === id ? " (by)" : " (recv)"}`
                   : "idle";
-              const timing = action ?? transfer;
+              const windows = movements.length
+                ? movements
+                    .map((m) => `${m.startAt.toFixed(2)}–${m.endAt.toFixed(2)}`)
+                    .join(", ")
+                : transfer
+                  ? `${transfer.startAt.toFixed(2)}–${transfer.endAt.toFixed(2)}`
+                  : "—";
               return (
                 <tr key={id} className="border-t border-stone-800">
                   <td className="px-3 py-2 font-mono">{id}</td>
                   <td className="px-3 py-2">{label}</td>
-                  <td className="px-3 py-2 font-mono text-stone-400">
-                    {timing
-                      ? `${timing.startAt.toFixed(2)}–${timing.endAt.toFixed(2)}`
-                      : "—"}
-                  </td>
+                  <td className="px-3 py-2 font-mono text-stone-400">{windows}</td>
                   <td className="px-3 py-2 font-mono text-xs">
                     {formatVec(beat.startPos[id])}
                   </td>

@@ -192,12 +192,4 @@ export function movementActionsForPlayer(
     .sort((a, b) => a.startAt - b.startAt || a.endAt - b.endAt);
 }
 
-/** First movement only — for summaries like the /dev/animator beat table. */
-export function movementActionForPlayer(
-  timed: TimedAction[],
-  playerId: string,
-): TimedAction | null {
-  return movementActionsForPlayer(timed, playerId)[0] ?? null;
-}
-
 export { classifyAction, isMovement };

@@ -18,7 +18,6 @@ export { beatDurationMs } from "./beatDuration";
 export {
   classifyAction,
   isMovement,
-  movementActionForPlayer,
   movementActionsForPlayer,
   sequenceBeat,
 } from "./sequence";
