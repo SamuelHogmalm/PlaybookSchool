@@ -6,7 +6,9 @@ import {
   confirmAction,
   confirmPlayActions,
   isValidDraw,
+  nextActionId,
   removeAction,
+  upsertDrawnAction,
 } from "../../src/lib/play/actionOps.js";
 import { createEmptyPlay } from "../../src/lib/play/beatOps.js";
 import { canDrawAction } from "../../src/lib/play/drawing.js";
@@ -104,6 +106,141 @@ describe("actionOps", () => {
     beats[0].actions = [{ id: "a1", type: "cut", by: "2" }];
     const next = removeAction(beats, 0, "a1");
     assert.equal(next[0].actions.length, 0);
+  });
+});
+
+describe("upsertDrawnAction — a drag rewrites one action", () => {
+  /** Successive frames of one stroke, each a bit longer than the last. */
+  function strokeFrames(from: { x: number; y: number }, frames: number) {
+    return Array.from({ length: frames }, (_, f) =>
+      Array.from({ length: f + 2 }, (_, i) => ({
+        x: from.x + i * 14,
+        y: from.y - i * 9,
+      })),
+    );
+  }
+
+  it("replaces in place instead of appending a new action per frame", () => {
+    const play = createEmptyPlay();
+    const id = nextActionId(play.beats[0].actions);
+    let beats = play.beats;
+
+    for (const path of strokeFrames(play.beats[0].startPos["3"], 6)) {
+      beats = upsertDrawnAction(beats, 0, { type: "cut", by: "3", path }, id);
+    }
+
+    assert.equal(beats[0].actions.length, 1, "a drag must leave exactly one action");
+    assert.equal(beats[0].actions[0].id, id);
+  });
+
+  it("tracks the destination live as the stroke grows", () => {
+    const play = createEmptyPlay();
+    const id = nextActionId(play.beats[0].actions);
+    const frames = strokeFrames(play.beats[0].startPos["3"], 5);
+    let beats = play.beats;
+
+    for (const path of frames) {
+      beats = upsertDrawnAction(beats, 0, { type: "cut", by: "3", path }, id);
+      const end = path[path.length - 1];
+      assert.deepEqual(
+        beats[0].pos["3"],
+        end,
+        "pos must follow the stroke, not wait for pointer-up",
+      );
+      assert.deepEqual(beats[1].startPos["3"], end, "the next beat follows too");
+    }
+  });
+
+  it("a drag then a completed draw is indistinguishable from one draw", () => {
+    const play = createEmptyPlay();
+    const frames = strokeFrames(play.beats[0].startPos["2"], 5);
+    const finalPath = frames[frames.length - 1];
+    const id = nextActionId(play.beats[0].actions);
+
+    let dragged = play.beats;
+    for (const path of frames) {
+      dragged = upsertDrawnAction(dragged, 0, { type: "cut", by: "2", path }, id);
+    }
+    const direct = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "2",
+      path: finalPath,
+    });
+
+    assert.deepEqual(dragged[0].actions, direct[0].actions);
+    assert.deepEqual(dragged[0].pos, direct[0].pos);
+  });
+
+  it("without an id it appends, as addDrawnAction always did", () => {
+    const play = createEmptyPlay();
+    let beats = upsertDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "3",
+      path: [play.beats[0].startPos["3"], { x: 300, y: 300 }],
+    });
+    beats = upsertDrawnAction(beats, 0, {
+      type: "cut",
+      by: "4",
+      path: [play.beats[0].startPos["4"], { x: 200, y: 300 }],
+    });
+    assert.equal(beats[0].actions.length, 2);
+    assert.deepEqual(beats[0].actions.map((a) => a.id), ["a1", "a2"]);
+  });
+});
+
+describe("removeAction — possession is given back", () => {
+  it("deleting a pass returns the ball to the passer", () => {
+    const play = createEmptyPlay();
+    const withPass = addDrawnAction(play.beats, 0, {
+      type: "pass",
+      by: "1",
+      for: "5",
+      path: [play.beats[0].startPos["1"], play.beats[0].startPos["5"]],
+    });
+    assert.equal(withPass[0].ball, "5");
+
+    const cleaned = removeAction(withPass, 0, withPass[0].actions[0].id);
+    assert.equal(cleaned[0].ball, "1", "the ball must go back to the start holder");
+    assert.equal(cleaned[1].startBall, "1");
+    assert.ok(
+      validatePlay({ ...play, beats: cleaned }).errors.every(
+        (e) => !/ball/i.test(e),
+      ),
+      "removing a pass must not leave a ball-continuity error behind",
+    );
+  });
+
+  it("deleting one pass of a chain leaves the rest intact", () => {
+    const play = createEmptyPlay();
+    let beats = addDrawnAction(play.beats, 0, {
+      type: "pass",
+      by: "1",
+      for: "5",
+      path: [play.beats[0].startPos["1"], play.beats[0].startPos["5"]],
+    });
+    beats = addDrawnAction(beats, 1, {
+      type: "pass",
+      by: "5",
+      for: "3",
+      path: [beats[1].startPos["5"], beats[1].startPos["3"]],
+    });
+    assert.equal(beats[1].ball, "3");
+
+    const cleaned = removeAction(beats, 1, beats[1].actions[0].id);
+    assert.equal(cleaned[0].ball, "5", "the first beat's pass is untouched");
+    assert.equal(cleaned[1].ball, "5", "the second beat falls back to its start holder");
+  });
+
+  it("deleting a cut still returns the player to where they started", () => {
+    const play = createEmptyPlay();
+    const start = { ...play.beats[0].startPos["4"] };
+    const withCut = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "4",
+      path: [start, { x: 200, y: 320 }],
+    });
+    const cleaned = removeAction(withCut, 0, withCut[0].actions[0].id);
+    assert.deepEqual(cleaned[0].pos["4"], start);
   });
 });
 

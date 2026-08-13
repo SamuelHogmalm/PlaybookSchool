@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { Play, PlayerId, Vec } from "@/lib/play/types";
 import {
-  addDrawnAction,
   confirmAction,
   confirmPlayActions,
   type DrawnActionInput,
   isValidDraw,
+  nextActionId,
   removeAction,
+  upsertDrawnAction,
 } from "@/lib/play/actionOps";
 import {
   addBeat,
@@ -27,6 +28,7 @@ import { validatePlay } from "@/lib/play/validation";
 import {
   canRedo,
   canUndo,
+  checkpoint,
   commit as commitHistory,
   type History,
   initHistory,
@@ -42,6 +44,14 @@ import { BeatStrip } from "./BeatStrip";
 import { EditableCourt } from "./EditableCourt";
 import { ScreenForPicker } from "./ScreenForPicker";
 import { ValidationBanner } from "./ValidationBanner";
+
+/**
+ * How long a run of live edits coalesces before it becomes one undo step.
+ *
+ * Long enough that an ordinary stroke or token drag is a single Ctrl+Z, short enough
+ * that a slow deliberate drag still leaves intermediate states to go back to.
+ */
+const LIVE_CHECKPOINT_MS = 400;
 
 type SaveState =
   | { status: "idle" }
@@ -143,31 +153,85 @@ export function PlayBuilder() {
 
   const selectedAction = beat?.actions.find((a) => a.id === selectedActionId);
 
-  /**
-   * The one mutation path. Everything that changes the play goes through here so
-   * a step can never bypass history — including the "confirm whole play" button.
-   */
-  const mutate = useCallback((fn: (current: Play) => Play) => {
-    setHistory((h) => commitHistory(h, fn(h.present)));
-    setSaveState({ status: "idle" });
+  /** State from before the drag in progress, and the id the drag is writing to. */
+  const liveBaseRef = useRef<Play | null>(null);
+  const liveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftActionIdRef = useRef<string | null>(null);
+
+  /** Close the current run of live edits into one undo step. */
+  const flushLive = useCallback(() => {
+    if (liveTimerRef.current) {
+      clearTimeout(liveTimerRef.current);
+      liveTimerRef.current = null;
+    }
+    const base = liveBaseRef.current;
+    liveBaseRef.current = null;
+    if (base) setHistory((h) => checkpoint(h, base));
   }, []);
+
+  /**
+   * A live edit: the play changes now, but the undo step is deferred.
+   *
+   * A drag fires this on every pointer move. Each frame going onto the undo stack would
+   * make Ctrl+Z walk back through a stroke a few pixels at a time, so the frames replace
+   * the present and a checkpoint lands on the debounce — a long drag leaves a handful of
+   * coarse steps, a quick one leaves a single step.
+   */
+  const mutateLive = useCallback(
+    (fn: (current: Play) => Play) => {
+      if (liveBaseRef.current === null) liveBaseRef.current = play;
+      setHistory((h) => replacePresent(h, fn(h.present)));
+      setSaveState({ status: "idle" });
+      if (liveTimerRef.current) clearTimeout(liveTimerRef.current);
+      liveTimerRef.current = setTimeout(flushLive, LIVE_CHECKPOINT_MS);
+    },
+    [play, flushLive],
+  );
+
+  /**
+   * The one mutation path for discrete edits. Everything that changes the play goes
+   * through here or `mutateLive` so a step can never bypass history — including the
+   * "confirm whole play" button.
+   */
+  const mutate = useCallback(
+    (fn: (current: Play) => Play) => {
+      flushLive();
+      setHistory((h) => commitHistory(h, fn(h.present)));
+      setSaveState({ status: "idle" });
+    },
+    [flushLive],
+  );
 
   const updateBeats = useCallback(
     (beats: Play["beats"]) => mutate((p) => setPlayBeats(p, beats)),
     [mutate],
   );
 
+  const updateBeatsLive = useCallback(
+    (beats: Play["beats"]) => mutateLive((p) => setPlayBeats(p, beats)),
+    [mutateLive],
+  );
+
+  useEffect(
+    () => () => {
+      if (liveTimerRef.current) clearTimeout(liveTimerRef.current);
+    },
+    [],
+  );
+
   const onUndo = useCallback(() => {
+    flushLive();
     setHistory((h) => undoHistory(h));
     setSelectedActionId(null);
     setPendingScreen(null);
-  }, []);
+  }, [flushLive]);
 
   const onRedo = useCallback(() => {
+    flushLive();
     setHistory((h) => redoHistory(h));
     setSelectedActionId(null);
     setPendingScreen(null);
-  }, []);
+  }, [flushLive]);
 
   const onSave = async () => {
     setSaveState({ status: "saving" });
@@ -199,24 +263,70 @@ export function PlayBuilder() {
     }
   };
 
+  // Dragging a token is one gesture, not one edit per pixel of it.
   const onMovePlayer = (playerId: PlayerId, pos: Vec) => {
-    updateBeats(updateBeatPlayerPos(play.beats, beatIndex, playerId, pos));
+    updateBeatsLive(updateBeatPlayerPos(play.beats, beatIndex, playerId, pos));
   };
 
   const onPreset = (name: AlignmentPresetName) => {
     updateBeats(applyPresetToBeat(play.beats, beatIndex, name));
   };
 
-  const commitDraw = (input: DrawnActionInput) => {
+  /** The id this stroke owns, claimed once so every frame rewrites the same action. */
+  const draftId = (): string => {
+    if (!draftActionIdRef.current) {
+      draftActionIdRef.current = nextActionId(play.beats[beatIndex].actions);
+    }
+    return draftActionIdRef.current;
+  };
+
+  const onDrawProgress = (input: DrawnActionInput) => {
     if (!isValidDraw(input)) return;
-    const next = addDrawnAction(play.beats, beatIndex, input);
-    const added = next[beatIndex].actions[next[beatIndex].actions.length - 1];
-    updateBeats(next);
-    setSelectedActionId(added.id);
+    const id = draftId();
+    updateBeatsLive(upsertDrawnAction(play.beats, beatIndex, input, id));
+    setSelectedActionId(id);
+  };
+
+  const commitDraw = (input: DrawnActionInput) => {
+    if (!isValidDraw(input)) {
+      onDrawCancel();
+      return;
+    }
+    const id = draftId();
+    draftActionIdRef.current = null;
+    mutateLive((p) => setPlayBeats(p, upsertDrawnAction(p.beats, beatIndex, input, id)));
+    flushLive();
+    setSelectedActionId(id);
   };
 
   const onDrawComplete = (input: DrawnActionInput) => {
     commitDraw(input);
+  };
+
+  /**
+   * The stroke produced nothing usable — take back whatever it wrote on the way.
+   *
+   * Removal is itself a live edit, so an abandoned scribble leaves no undo step at all.
+   * (If the debounce happened to fire mid-stroke, one coarse step survives holding a
+   * partly-drawn action. It is a state the coach really passed through, and a stroke
+   * short enough to be abandoned is normally over before the timer runs.)
+   */
+  const onDrawCancel = () => {
+    const id = draftActionIdRef.current;
+    draftActionIdRef.current = null;
+    if (liveTimerRef.current) {
+      clearTimeout(liveTimerRef.current);
+      liveTimerRef.current = null;
+    }
+    liveBaseRef.current = null;
+    if (!id) return;
+    setHistory((h) =>
+      replacePresent(
+        h,
+        setPlayBeats(h.present, removeAction(h.present.beats, beatIndex, id)),
+      ),
+    );
+    setSelectedActionId(null);
   };
 
   const onScreenForPick = (forPlayer: PlayerId) => {
@@ -229,6 +339,11 @@ export function PlayBuilder() {
     });
     setPendingScreen(null);
   };
+
+  // A draft id is only meaningful for the beat it was allocated against.
+  useEffect(() => {
+    draftActionIdRef.current = null;
+  }, [beatIndex]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -333,7 +448,10 @@ export function PlayBuilder() {
           onSelectPlayer={setSelectedPlayerId}
           onSelectAction={setSelectedActionId}
           onMovePlayer={onMovePlayer}
+          onMoveEnd={flushLive}
+          onDrawProgress={onDrawProgress}
           onDrawComplete={onDrawComplete}
+          onDrawCancel={onDrawCancel}
           onScreenNeedsFor={setPendingScreen}
         />
       ) : (

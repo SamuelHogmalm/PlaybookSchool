@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   canRedo,
   canUndo,
+  checkpoint,
   commit,
   HISTORY_LIMIT,
   initHistory,
@@ -74,6 +75,51 @@ describe("builder history", () => {
     let h = initHistory("a");
     h = commit(h, "a");
     assert.equal(canUndo(h), false);
+  });
+
+  it("checkpoint closes a run of live edits into one step", () => {
+    // A drag: base state, then frames that replace the present without adding steps.
+    let h = initHistory("base");
+    const base = h.present;
+    h = replacePresent(h, "frame1");
+    h = replacePresent(h, "frame2");
+    h = replacePresent(h, "frame3");
+    assert.equal(canUndo(h), false, "live frames must not each be undoable");
+
+    h = checkpoint(h, base);
+    assert.equal(h.present, "frame3", "checkpoint keeps the live state");
+    assert.equal(h.past.length, 1, "the whole run is one step");
+
+    h = undo(h);
+    assert.equal(h.present, "base", "undo returns to before the drag");
+  });
+
+  it("checkpoint on an unchanged state is a no-op", () => {
+    const h = initHistory("base");
+    assert.equal(checkpoint(h, h.present), h);
+  });
+
+  it("checkpoint drops the redo branch", () => {
+    let h = initHistory("a");
+    h = commit(h, "b");
+    h = undo(h);
+    assert.equal(canRedo(h), true);
+
+    const base = h.present;
+    h = replacePresent(h, "live");
+    h = checkpoint(h, base);
+    assert.equal(canRedo(h), false, "a new edit invalidates the redo branch");
+  });
+
+  it("checkpoint respects the step limit", () => {
+    let h = initHistory(0);
+    for (let i = 1; i <= HISTORY_LIMIT + 20; i++) {
+      const base = h.present;
+      h = replacePresent(h, i);
+      h = checkpoint(h, base);
+    }
+    assert.equal(h.past.length, HISTORY_LIMIT);
+    assert.equal(h.present, HISTORY_LIMIT + 20);
   });
 
   it("replacePresent does not add a history step", () => {

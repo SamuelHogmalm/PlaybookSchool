@@ -202,3 +202,44 @@ size. Revisit if it ever is.
 
 Rules out: smoothing into stored data. What is saved stays a polyline the motion engine
 can sample, and hit testing stays on that polyline too.
+
+## 2026-08-13 — Drags write to the play live; undo steps are debounced
+
+`checkpoint()` in `src/lib/play/history.ts`, `mutateLive()` in `PlayBuilder`.
+
+Drawing used to write nothing until pointer-up, so a stroke in progress was a preview
+overlay and the play underneath was stale — the destination, the next beat's `startPos`,
+and the validation banner all lagged behind what the coach was doing.
+
+Every pointer move now writes the action through `upsertDrawnAction`, which rewrites one
+action by id rather than appending per frame. Those frames go through `replacePresent`
+(no undo step) and a `checkpoint` lands on a 400 ms debounce, so a normal stroke is one
+Ctrl+Z while a slow deliberate one still leaves intermediate states.
+
+The same treatment fixed token dragging, which was worse: it called `mutate` on every
+pointer move, so dragging a player across the court pushed dozens of undo steps.
+
+**Two types are held back, for data reasons rather than effort.** A screen needs the
+player it is set for, and the coach picks that after the stroke; a pass needs a receiver,
+which is unknown until the cursor finds one. Writing either early would put an action
+into the play that `validatePlay` rejects, and flash errors at the coach mid-stroke.
+Passes start writing as soon as a receiver is under the cursor.
+
+Abandoned strokes are rolled back with a live edit, so they leave no undo step. If the
+debounce fired mid-stroke one coarse step survives holding a partly-drawn action — a
+state the coach did pass through, and a stroke short enough to be abandoned is normally
+over inside 400 ms.
+
+Rules out: pointer-up as the moment the play changes. The court is the document.
+
+## 2026-08-13 — Deleting a pass gives possession back
+
+`recomputeBeatBall()` in `src/lib/play/actionOps.ts`.
+
+`removeAction` reset a player's position when their movement was deleted but never
+touched `beat.ball`, so deleting a pass left the beat with a ball that arrived by no
+visible means — rules 3 and 4 then failed on a play the coach thought they had just
+cleaned up. Possession is now recomputed from `startBall` and the transfers that remain,
+which also handles deleting one pass out of a chain.
+
+Found while building live-draw rollback, which depends on removal being complete.

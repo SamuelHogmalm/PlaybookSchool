@@ -29,7 +29,13 @@ type Props = {
   onSelectPlayer: (id: PlayerId | null) => void;
   onSelectAction: (id: string | null) => void;
   onMovePlayer: (playerId: PlayerId, pos: Vec) => void;
+  /** A player drag finished — close the live run into one undo step. */
+  onMoveEnd: () => void;
+  /** Fires on every pointer move of a draw, so the play updates while the coach draws. */
+  onDrawProgress: (input: DrawnActionInput) => void;
   onDrawComplete: (input: DrawnActionInput) => void;
+  /** A draw that ended without producing an action — anything live must be rolled back. */
+  onDrawCancel: () => void;
   onScreenNeedsFor: (draft: { by: PlayerId; path: Vec[] }) => void;
 };
 
@@ -47,13 +53,23 @@ export function EditableCourt({
   onSelectPlayer,
   onSelectAction,
   onMovePlayer,
+  onMoveEnd,
+  onDrawProgress,
   onDrawComplete,
+  onDrawCancel,
   onScreenNeedsFor,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingPlayer, setDraggingPlayer] = useState<PlayerId | null>(null);
   const [drawing, setDrawing] = useState<DrawState | null>(null);
   const [previewTarget, setPreviewTarget] = useState<Vec | null>(null);
+  /**
+   * Authoritative draw state. Several pointer moves can fire between renders, and each
+   * handler would otherwise close over the same stale path and drop points.
+   */
+  const drawingRef = useRef<DrawState | null>(null);
+  /** True once this stroke has written anything into the play. */
+  const wroteLiveRef = useRef(false);
 
   const courtPoint = useCallback((clientX: number, clientY: number): Vec | null => {
     const svg = svgRef.current;
@@ -73,24 +89,73 @@ export function EditableCourt({
     if (tool === "move") return;
     const start = beat.startPos[playerId];
     if (!start) return;
-    setDrawing({
-      type: tool,
-      by: playerId,
-      path: [start, pt],
-    });
+    const state: DrawState = { type: tool, by: playerId, path: [start, pt] };
+    drawingRef.current = state;
+    wroteLiveRef.current = false;
+    setDrawing(state);
     onSelectAction(null);
   };
 
-  const appendDrawPoint = (pt: Vec) => {
-    setDrawing((d) => {
-      if (!d) return d;
-      const last = d.path[d.path.length - 1];
-      if (dist(last, pt) < 8) return d;
-      return { ...d, path: [...d.path, pt] };
-    });
+  /** Grow the stroke. Returns the new path, or null if the move was too small to keep. */
+  const appendDrawPoint = (pt: Vec): Vec[] | null => {
+    const d = drawingRef.current;
+    if (!d) return null;
+    const last = d.path[d.path.length - 1];
+    if (dist(last, pt) < 8) return null;
+    const path = [...d.path, pt];
+    drawingRef.current = { ...d, path };
+    setDrawing(drawingRef.current);
+    return path;
+  };
+
+  /**
+   * Push the in-progress stroke into the play.
+   *
+   * Screens are held back: a screen needs the player it is set for, and the coach picks
+   * that after the stroke, so there is no valid action to write yet. Passes and handoffs
+   * wait for the cursor to find a receiver, for the same reason.
+   */
+  const emitProgress = (path: Vec[]) => {
+    const d = drawingRef.current;
+    if (!d || d.type === "screen") return;
+
+    if (d.type === "pass" || d.type === "handoff") {
+      const receiver = nearestPlayerAt(
+        beat.startPos,
+        path[path.length - 1],
+        36,
+        d.by,
+      );
+      if (!receiver) return;
+      wroteLiveRef.current = true;
+      onDrawProgress({
+        type: d.type,
+        by: d.by,
+        for: receiver,
+        path: [...path.slice(0, -1), { ...beat.startPos[receiver] }],
+      });
+      return;
+    }
+
+    wroteLiveRef.current = true;
+    onDrawProgress({ type: d.type, by: d.by, path });
+  };
+
+  const endDraw = () => {
+    drawingRef.current = null;
+    setDrawing(null);
+    setPreviewTarget(null);
+  };
+
+  /** Nothing usable came of the stroke — drop whatever it wrote along the way. */
+  const abandonDraw = () => {
+    if (wroteLiveRef.current) onDrawCancel();
+    wroteLiveRef.current = false;
+    endDraw();
   };
 
   const finishDraw = (end: Vec) => {
+    const drawing = drawingRef.current;
     if (!drawing) return;
     let path = [...drawing.path];
     const last = path[path.length - 1];
@@ -98,16 +163,14 @@ export function EditableCourt({
     path = path.map((p) => snapClampPoint(p));
 
     if (pathLength(path) < MIN_DRAW_LENGTH) {
-      setDrawing(null);
-      setPreviewTarget(null);
+      abandonDraw();
       return;
     }
 
     if (drawing.type === "pass" || drawing.type === "handoff") {
       const receiver = nearestPlayerAt(beat.startPos, end, 36, drawing.by);
       if (!receiver) {
-        setDrawing(null);
-        setPreviewTarget(null);
+        abandonDraw();
         return;
       }
       path[path.length - 1] = { ...beat.startPos[receiver] };
@@ -127,8 +190,8 @@ export function EditableCourt({
       });
     }
 
-    setDrawing(null);
-    setPreviewTarget(null);
+    wroteLiveRef.current = false;
+    endDraw();
   };
 
   const onStartPointerDown = (playerId: PlayerId) => (e: React.PointerEvent) => {
@@ -164,13 +227,16 @@ export function EditableCourt({
       return;
     }
 
-    if (drawing) {
-      appendDrawPoint(pt);
-      if (drawing.type === "pass" || drawing.type === "handoff") {
-        const recv = nearestPlayerAt(beat.startPos, pt, 36, drawing.by);
+    const active = drawingRef.current;
+    if (active) {
+      const path = appendDrawPoint(pt);
+      if (path) emitProgress(path);
+
+      if (active.type === "pass" || active.type === "handoff") {
+        const recv = nearestPlayerAt(beat.startPos, pt, 36, active.by);
         setPreviewTarget(recv ? beat.startPos[recv] : pt);
-      } else if (drawing.type === "screen") {
-        const cutter = nearestPlayerAt(beat.startPos, pt, 80, drawing.by);
+      } else if (active.type === "screen") {
+        const cutter = nearestPlayerAt(beat.startPos, pt, 80, active.by);
         setPreviewTarget(cutter ? beat.startPos[cutter] : pt);
       } else {
         setPreviewTarget(null);
@@ -182,11 +248,12 @@ export function EditableCourt({
     const pt = courtPoint(e.clientX, e.clientY);
     if (draggingPlayer) {
       setDraggingPlayer(null);
+      onMoveEnd();
       return;
     }
-    if (drawing && pt) {
-      finishDraw(pt);
-    }
+    if (!drawingRef.current) return;
+    if (pt) finishDraw(pt);
+    else abandonDraw();
   };
 
   const onBackgroundClick = (e: React.PointerEvent) => {

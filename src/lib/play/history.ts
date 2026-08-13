@@ -19,15 +19,18 @@ export function initHistory<T>(present: T): History<T> {
   return { past: [], present, future: [] };
 }
 
+function trim<T>(past: T[]): T[] {
+  return past.length > HISTORY_LIMIT ? past.slice(past.length - HISTORY_LIMIT) : past;
+}
+
 /**
  * Record a new state. Drops the redo branch, because redoing onto a diverged
  * history would reapply edits the coach has already replaced.
  */
 export function commit<T>(history: History<T>, next: T): History<T> {
   if (next === history.present) return history;
-  const past = [...history.past, history.present];
   return {
-    past: past.length > HISTORY_LIMIT ? past.slice(past.length - HISTORY_LIMIT) : past,
+    past: trim([...history.past, history.present]),
     present: next,
     future: [],
   };
@@ -36,6 +39,26 @@ export function commit<T>(history: History<T>, next: T): History<T> {
 /** Replace the current state without adding a history step (e.g. a save echo). */
 export function replacePresent<T>(history: History<T>, next: T): History<T> {
   return { ...history, present: next };
+}
+
+/**
+ * Close a run of live edits into one undoable step.
+ *
+ * A drag updates the play on every pointer move so the court stays live, but each of
+ * those frames is not a thing a coach would want to undo one at a time. Those frames
+ * go through `replacePresent`, and this records the state from *before* the run as the
+ * point undo returns to.
+ *
+ * `base` is the pre-run state, not the current one — that is what makes it different
+ * from `commit`, which pushes the present it is replacing.
+ */
+export function checkpoint<T>(history: History<T>, base: T): History<T> {
+  if (base === history.present) return history;
+  return {
+    past: trim([...history.past, base]),
+    present: history.present,
+    future: [],
+  };
 }
 
 export function canUndo<T>(history: History<T>): boolean {
