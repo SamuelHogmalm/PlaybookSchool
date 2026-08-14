@@ -33,6 +33,13 @@ alter table public.plays add constraint plays_must_be_valid check (valid);
 -- Row level security -------------------------------------------------------
 alter table public.plays enable row level security;
 
+-- Dropped first so this file can be re-run — pasting it into the SQL editor after a
+-- partial apply is a normal way to use it, and `create policy` is not idempotent.
+drop policy if exists "plays_select_team" on public.plays;
+drop policy if exists "plays_insert_coach" on public.plays;
+drop policy if exists "plays_update_coach" on public.plays;
+drop policy if exists "plays_delete_coach" on public.plays;
+
 -- Everyone on the team reads the playbook (players need it to drill).
 create policy "plays_select_team"
   on public.plays for select
