@@ -524,12 +524,29 @@ export function PlayBuilder() {
         >
           {saveState.status === "saving" ? "Saving…" : "Save play"}
         </button>
-        {saveState.status === "saved" && (
-          <span className="text-sm text-emerald-300">
-            Saved — version {saveState.version}
-          </span>
-        )}
       </section>
+
+      {/*
+        A success as loud as a failure. This was a small inline span beside the button
+        with no live region — a coach who pressed Save and looked at the court had no
+        way to tell a working save from a silent one.
+      */}
+      {saveState.status === "saved" && (
+        <section
+          role="status"
+          aria-live="polite"
+          className="rounded-md border border-emerald-700 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-100"
+        >
+          <p className="font-medium">
+            Saved to your team&rsquo;s playbook — version {saveState.version}
+          </p>
+          <p className="mt-1 text-emerald-200/90">
+            {saveState.version === 1
+              ? "This play is now stored, not just open in this tab."
+              : "Players who already learned an earlier version will be asked to re-learn this one."}
+          </p>
+        </section>
+      )}
 
       {saveState.status === "error" && (
         <section

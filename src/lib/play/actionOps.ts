@@ -49,12 +49,6 @@ export function upsertDrawnAction(
   };
   if (input.for) action.for = input.for;
 
-  const end = path[path.length - 1];
-
-  if (input.type === "cut" || input.type === "dribble" || input.type === "screen") {
-    beat.pos[input.by] = { ...end };
-  }
-
   if ((input.type === "pass" || input.type === "handoff") && input.for) {
     beat.ball = input.for;
   }
@@ -64,6 +58,10 @@ export function upsertDrawnAction(
     beat.actions = beat.actions.map((a, i) => (i === existing ? action : a));
   } else {
     beat.actions = [...beat.actions, action];
+  }
+
+  if (isMovementType(input.type)) {
+    chainPlayerMovements(beat, input.by);
   }
 
   // Relink rather than patching the next beat's startPos: later beats where this
@@ -78,6 +76,44 @@ export function addDrawnAction(
   input: DrawnActionInput,
 ): Beat[] {
   return upsertDrawnAction(beats, beatIndex, input);
+}
+
+function isMovementType(type: ActionType): boolean {
+  return type === "cut" || type === "dribble" || type === "screen";
+}
+
+/**
+ * Chain one player's movements end-to-start, and set their destination from the last.
+ *
+ * A second movement is a *continuation*: a screener who rolls starts from the screen,
+ * and a player who cuts twice starts the second cut where the first finished. Both were
+ * being stored starting from `startPos`, so the player snapped back to their original
+ * spot before the second leg.
+ *
+ * Only the first point moves. The route the coach drew and the destination they picked
+ * are theirs; this just reconnects the start to where the player actually is.
+ *
+ * Called after every add and every removal, so deleting the first of two movements
+ * re-anchors the second to `startPos` rather than leaving it starting in mid-air.
+ */
+function chainPlayerMovements(beat: Beat, playerId: PlayerId): void {
+  const movements = beat.actions.filter(
+    (a) => a.by === playerId && isMovementType(a.type),
+  );
+
+  if (!movements.length) {
+    beat.pos[playerId] = { ...beat.startPos[playerId] };
+    return;
+  }
+
+  let anchor: Vec = { ...beat.startPos[playerId] };
+  for (const movement of movements) {
+    if (movement.path && movement.path.length >= 2) {
+      movement.path[0] = { ...anchor };
+      anchor = { ...movement.path[movement.path.length - 1] };
+    }
+  }
+  beat.pos[playerId] = { ...anchor };
 }
 
 /** Possession at beat end, from startBall and whatever transfers remain, in order. */
@@ -106,20 +142,10 @@ export function removeAction(
     recomputeBeatBall(beat);
   }
 
-  // Deleting the movement that carried a player there also undoes the travel,
-  // otherwise they keep a destination with nothing to explain it.
-  if (
-    removed &&
-    (removed.type === "cut" ||
-      removed.type === "dribble" ||
-      removed.type === "screen") &&
-    !beat.actions.some(
-      (a) =>
-        a.by === removed.by &&
-        (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
-    )
-  ) {
-    beat.pos[removed.by] = { ...beat.startPos[removed.by] };
+  // Deleting a movement undoes the travel it explained. With others left, the rest
+  // re-chain from startPos; with none, the player goes back where they started.
+  if (removed && isMovementType(removed.type)) {
+    chainPlayerMovements(beat, removed.by);
   }
 
   return linkBeatBall(next);

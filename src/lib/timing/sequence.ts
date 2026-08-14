@@ -146,6 +146,49 @@ function applyDependencies(timed: TimedAction[], actions: Action[]): void {
       }
     }
   }
+
+  serialisePerPlayer(timed);
+}
+
+/**
+ * Nobody is in two places at once.
+ *
+ * A player's own movements run one after another. Screen-then-roll already came out
+ * ordered because their lanes differ and the rules above stagger them, but two cuts
+ * shared the identical default lane and animated on top of each other — the player
+ * travelled one route and snapped to the other's endpoint at the end of the beat.
+ *
+ * Each movement keeps its duration and is pushed to start no earlier than the previous
+ * one ends. `normalizeEndAtOne` rescales afterwards, so the beat still finishes at 1.
+ */
+function serialisePerPlayer(timed: TimedAction[]): void {
+  const byPlayer = new Map<string, TimedAction[]>();
+  for (const a of timed) {
+    if (!isMovement(a)) continue;
+    const list = byPlayer.get(a.by) ?? [];
+    list.push(a);
+    byPlayer.set(a.by, list);
+  }
+
+  for (const movements of byPlayer.values()) {
+    if (movements.length < 2) continue;
+    // Drawn order breaks ties, which is what makes a second stroke read as "then".
+    movements.sort(
+      (a, b) =>
+        a.startAt - b.startAt ||
+        a.endAt - b.endAt ||
+        timed.indexOf(a) - timed.indexOf(b),
+    );
+
+    for (let i = 1; i < movements.length; i++) {
+      const prev = movements[i - 1];
+      const cur = movements[i];
+      if (cur.startAt >= prev.endAt) continue;
+      const duration = Math.max(0.05, cur.endAt - cur.startAt);
+      cur.startAt = prev.endAt;
+      cur.endAt = cur.startAt + duration;
+    }
+  }
 }
 
 function normalizeEndAtOne(timed: TimedAction[]): void {

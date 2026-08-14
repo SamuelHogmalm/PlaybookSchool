@@ -85,9 +85,25 @@ export function EditableCourt({
     [beat, tool],
   );
 
+  /**
+   * Where a new stroke begins: the end of this player's existing movements, or their
+   * start position if they have none. A second stroke continues from where the first
+   * left them, which is what `chainPlayerMovements` stores anyway — anchoring here too
+   * just means the preview matches what gets committed.
+   */
+  const drawAnchorFor = (playerId: PlayerId): Vec | undefined => {
+    const movements = beat.actions.filter(
+      (a) =>
+        a.by === playerId &&
+        (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+    );
+    if (!movements.length) return beat.startPos[playerId];
+    return beat.pos[playerId] ?? beat.startPos[playerId];
+  };
+
   const startDraw = (playerId: PlayerId, pt: Vec) => {
     if (tool === "move") return;
-    const start = beat.startPos[playerId];
+    const start = drawAnchorFor(playerId);
     if (!start) return;
     const state: DrawState = { type: tool, by: playerId, path: [start, pt] };
     drawingRef.current = state;

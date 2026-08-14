@@ -388,3 +388,46 @@ and never goes through `pathToSvgD`.
 
 Rules out: emitting computed geometry at full float precision anywhere it is server
 rendered. If a future court feature computes coordinates, round them the same way.
+
+## 2026-08-14 — A player's movements are serialised and chained
+
+`serialisePerPlayer()` in `src/lib/timing/sequence.ts`, `chainPlayerMovements()` in
+`src/lib/play/actionOps.ts`.
+
+Found by Samuel drawing two cuts for one player. Two things were wrong at once:
+
+- Both cuts took the identical default lane (0.10–0.70) and **animated on top of each
+  other**. Screen-then-roll only came out ordered because those two lanes differ and the
+  dependency rules stagger them; nothing generalised that to a player's own movements.
+- Every stroke was stored starting from `startPos`, so the player ran the first route
+  and then snapped back to their original spot to begin the second. The end of the beat
+  was whichever action was drawn last, orphaning the other endpoint.
+
+Now: a player's movements never overlap in time — each is pushed to start no earlier
+than the previous one ends, keeping its duration, with `normalizeEndAtOne` rescaling
+afterwards. And each movement's first point is anchored to where the previous one left
+the player, with `beat.pos` taken from the last.
+
+Chaining lives in the ops layer, not the builder, so it holds for the importer and for
+deletions too — removing the first of two movements re-anchors the second to `startPos`
+rather than leaving it starting in mid-air. The builder anchors new strokes as well, but
+only so the live preview matches what will be stored.
+
+Only the first point of a route is ever moved. The shape the coach drew and the
+destination they chose are theirs.
+
+Safe for existing data: the seed has zero beats where one player has two movements —
+verified before the change, and `npm run test:seed` still passes 12/12.
+
+Rules out: treating draw order as playback order without saying so. Two strokes mean
+"this, then that".
+
+## 2026-08-14 — Saving says so loudly
+
+A successful save rendered a small green span beside the button, with no live region.
+Samuel saved a play and reported seeing nothing; the server had returned 201.
+
+It is now a full panel with `role="status"`, matching the weight of the error panel, and
+it distinguishes a first save from a new version — a version bump means players who
+already learned the play will be asked to re-learn it, which is a consequence worth
+stating rather than implying with a number.

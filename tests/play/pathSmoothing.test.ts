@@ -185,7 +185,9 @@ describe("builder and animator render the same route", () => {
     const stored = beats[0].actions[0].path!;
 
     assert.ok(stored.length <= MAX_PATH_POINTS);
-    assert.deepEqual(stored[0], stroke[0]);
+    // The first point is anchored to where the player actually stands, not to wherever
+    // the stroke happened to begin — this fixture starts 1.2 units off the token.
+    assert.deepEqual(stored[0], start);
     assert.deepEqual(stored[stored.length - 1], stroke[stroke.length - 1]);
     // The player's destination is the stroke's real end, not a simplified approximation.
     assert.deepEqual(beats[0].pos["3"], stroke[stroke.length - 1]);
