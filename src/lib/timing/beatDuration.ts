@@ -5,7 +5,7 @@ import {
   BEAT_PER_ACTION_MS,
 } from "./constants";
 
-/** 1800ms base + 400ms per action beyond the first, capped at 3500ms. */
+/** 2250ms base + 500ms per action beyond the first, capped at 4400ms. */
 export function beatDurationMs(beat: Beat): number {
   const n = beat.actions?.length ?? 0;
   const extra = Math.max(0, n - 1) * BEAT_PER_ACTION_MS;

@@ -147,21 +147,16 @@ describe("easing curves", () => {
     assert.ok(easeInRoll(0.5) < 0.5, "a roll should build speed toward the rim");
   });
 
-  // KNOWN DISCREPANCY, pinned deliberately rather than asserted as correct.
-  //
-  // easeInOutDribble is documented as "~70% of cut speed (stretched time)", but it
-  // runs *ahead* of the cut curve at every point — 2x its progress at t=0.1. The
-  // cause is `Math.pow(t, 0.85)`: an exponent below 1 raises t, compressing early
-  // time instead of stretching it. Both lanes are 0.60 wide (cut 0.10–0.70, dribble
-  // 0.25–0.85), so the lane cannot be supplying the slowdown either.
-  //
-  // Left as-is because changing it changes how every existing play animates. This
-  // test records the current behaviour so a fix is a visible diff, not a surprise.
-  it("dribble currently leads the cut curve (see comment — intent says otherwise)", () => {
-    for (const t of [0.1, 0.25, 0.5, 0.75]) {
-      assert.ok(
-        easeInOutDribble(t) > easeInOutCut(t),
-        `dribble should currently lead at t=${t}`,
+  // A player moves at one speed whether or not they have the ball. The dribble curve
+  // used to differ, and did so backwards — documented as ~70% of cut speed, it actually
+  // ran ahead of a cutter who left at the same moment. Pace is set by beat duration now.
+  it("a dribble is paced exactly like a cut", () => {
+    for (let t = 0; t <= 1.0001; t += 0.05) {
+      const u = Math.min(1, t);
+      assert.equal(
+        easeInOutDribble(u),
+        easeInOutCut(u),
+        `dribble and cut diverged at t=${u}`,
       );
     }
   });

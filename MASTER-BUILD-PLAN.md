@@ -220,7 +220,12 @@ Independent actions on opposite sides of the floor run **concurrently**. Weaksid
 action happening at the same time as ball-side action is normal basketball — do not
 serialize everything.
 
-**Beat duration:** 1800ms base, +400ms per action beyond the first, capped at 3500ms.
+**Beat duration:** 2250ms base, +500ms per action beyond the first, capped at 4400ms.
+(Raised 25% from 1800 / 400 / 3500 on 2026-08-14 — plays read as hurried, and the eye
+has to be able to follow each player. The 1200ms hold is unchanged.)
+
+A dribble is paced exactly like a cut. A player moves at one speed whether or not they
+have the ball; overall pace is set by beat duration.
 
 ## Playback
 
