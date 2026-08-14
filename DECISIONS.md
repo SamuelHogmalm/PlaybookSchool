@@ -450,6 +450,38 @@ The rule "the coach never sets timing" survives — grouping is order, not milli
 Rules out: inferring simultaneity from geometry in coach-authored plays. If two things
 happen together it is because someone said so.
 
+## 2026-08-14 — Phase 8 starts with two question types, not six
+
+`src/lib/quiz/`, `src/components/quiz/`, `/player/quiz`.
+
+The spec lists six question types. Built two — `pass-target` and `spot` — because both
+read straight off data that already exists (`beat.ball`, `beat.startPos`) and neither
+needs drawing input or heading comparison. That is the whole loop end to end at roughly
+a fifth of Phase 8's surface, and the loop is what was worth proving first.
+
+`draw`, `sequence`, `identify` and `next-action` are still to come.
+
+Decisions inside it worth keeping:
+
+- **Generation is seeded and deterministic.** A session can be regenerated exactly, so a
+  test can assert which distractors were picked and a coach reporting "question 4 was
+  wrong" can be shown that question.
+- **Distractors are never random.** Pass options prefer players who receive a pass
+  somewhere else in the play; an option that never catches anything can be ruled out
+  without knowing the play, which teaches nothing.
+- **A spot is skipped when another player stands inside the grading tolerance.** A tap
+  landing on the wrong player but still grading correct teaches nothing either.
+- **Session types are balanced before ordering, not after.** The seed is spot-heavy —
+  five players per beat against a handful of passes — and once one type dominates, no
+  ordering can satisfy "never three of a type in a row". The session is trimmed until
+  the constraint is achievable rather than quietly broken.
+- **The lead-in stops one beat short of the asked beat.** Running through it would play
+  the answer before the question.
+
+Not built yet: persistence. Attempts and mastery tables exist and are unused; the runner
+scores in memory and says so on screen. Wiring that up needs a real player profile, so
+it waits for teams rather than inventing one.
+
 ## 2026-08-14 — Saving says so loudly
 
 A successful save rendered a small green span beside the button, with no live region.
