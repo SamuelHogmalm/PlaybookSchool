@@ -422,6 +422,34 @@ verified before the change, and `npm run test:seed` still passes 12/12.
 Rules out: treating draw order as playback order without saying so. Two strokes mean
 "this, then that".
 
+## 2026-08-14 — A beat is a sequence of steps, and the coach groups them
+
+`beatSteps` / `sequenceBySteps` in `src/lib/timing/sequence.ts`, `setActionStep` in
+`src/lib/play/actionOps.ts`. Supersedes the concurrency rule in `MASTER-BUILD-PLAN.md`.
+
+Samuel's call, and it overturns a spec rule that said the opposite: *"Independent
+actions on opposite sides of the floor run concurrently … do not serialize everything."*
+
+That rule optimised for realistic basketball. The product is for **memorising** a play,
+and a player watching four things move at once cannot tell which one is theirs. Actions
+now play one at a time by default, and the coach says when two happen together.
+
+- `Action.step` — 1-based. Same step runs together; steps run in order, equal slices.
+- Every drawn action gets its own step, so drawing is serial by default.
+- The selected-action panel offers "same time as step N" and "give it its own step".
+- Beat duration counts *steps*, not actions: two players cutting together is one thing
+  to watch and should not cost the same as two things in turn.
+- Deleting an action compacts the numbering, because a gap is a pause with nothing in it.
+
+Actions with no step keep the old lane-and-dependency behaviour. That is what makes this
+safe: the twelve seed plays carry no steps, so none of them re-time, and there is a test
+asserting exactly that. Imported plays get steps when a human reviews them, not before.
+
+The rule "the coach never sets timing" survives — grouping is order, not milliseconds.
+
+Rules out: inferring simultaneity from geometry in coach-authored plays. If two things
+happen together it is because someone said so.
+
 ## 2026-08-14 — Saving says so loudly
 
 A successful save rendered a small green span beside the button, with no live region.

@@ -55,6 +55,9 @@ function normalizeBeat(raw: SeedPlay["beats"][number], next?: SeedPlay["beats"][
     };
     if (a.for != null) action.for = asPlayerId(String(a.for), "action.for");
     if (a.path?.length) action.path = a.path.map((p) => ({ x: p.x, y: p.y }));
+    if (typeof a.step === "number" && Number.isFinite(a.step)) {
+      action.step = a.step;
+    }
     if (a.derived) action.derived = true;
     if (a.needsReview) action.needsReview = true;
     if (a.reason) action.reason = a.reason;

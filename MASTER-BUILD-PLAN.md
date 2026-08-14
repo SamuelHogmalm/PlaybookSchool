@@ -216,9 +216,24 @@ catches). Give-and-go (catch, then cut) cannot be distinguished from coordinates
 alone — 21 seed beats have a receiver cut timed before the pass under the default
 lanes. Do not guess; fixing this requires frame-splitting or coach review.
 
-Independent actions on opposite sides of the floor run **concurrently**. Weakside
-action happening at the same time as ball-side action is normal basketball — do not
-serialize everything.
+## Steps (supersedes the concurrency rule, 2026-08-14)
+
+A beat is made of **steps**. Actions in the same step run together; steps run strictly
+one after another, each taking an equal slice of the beat.
+
+A coach-drawn action gets its own step, so a play plays back one thing at a time. The
+coach can put actions in the same step — "these two cut together" — and that is the
+only timing decision they make. They still never set milliseconds.
+
+This replaces the earlier rule that independent actions run concurrently by default.
+That was the right model for *realistic basketball* and the wrong one for **memorising**
+a play, which is what the product is for. A player who cannot tell which of four
+simultaneous movements is theirs has not learned anything. Realism is available when
+the coach asks for it, by grouping.
+
+Actions with no step fall back to the derived lanes and dependency rules below. Imported
+plays arrive that way and stay that way until someone reviews them, so the twelve seed
+plays are unaffected.
 
 **Beat duration:** 2250ms base, +500ms per action beyond the first, capped at 4400ms.
 (Raised 25% from 1800 / 400 / 3500 on 2026-08-14 — plays read as hurried, and the eye

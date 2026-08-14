@@ -10,6 +10,17 @@ export type Action = {
   by: PlayerId;
   for?: PlayerId;
   path?: Vec[];
+  /**
+   * Which step of the beat this action belongs to. 1-based.
+   *
+   * Actions sharing a step run together; steps run one after another. This is the
+   * coach saying "these two cut at the same time" — it is grouping, not timing, and
+   * the engine still decides the actual milliseconds.
+   *
+   * Absent on every action means the beat has no steps and falls back to the derived
+   * lanes. Imported plays arrive that way until someone reviews them.
+   */
+  step?: number;
   startAt?: number;
   endAt?: number;
   derived?: boolean;
@@ -68,6 +79,7 @@ export type SeedPlay = {
       by: string;
       for?: string;
       path?: Vec[];
+      step?: number;
       derived?: boolean;
       needsReview?: boolean;
       reason?: string;

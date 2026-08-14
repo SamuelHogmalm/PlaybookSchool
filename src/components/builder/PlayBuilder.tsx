@@ -10,8 +10,10 @@ import {
   isValidDraw,
   nextActionId,
   removeAction,
+  setActionStep,
   upsertDrawnAction,
 } from "@/lib/play/actionOps";
+import { beatSteps } from "@/lib/timing";
 import {
   addBeat,
   applyPresetToBeat,
@@ -586,6 +588,61 @@ export function PlayBuilder() {
               ? " (needs review)"
               : ""}
           </p>
+
+          {(() => {
+            const steps = beatSteps(beat);
+            const step = selectedAction.step ?? steps[0];
+            const position = steps.indexOf(step) + 1;
+            const withThem = beat.actions.filter(
+              (a) => a.id !== selectedAction.id && (a.step ?? steps[0]) === step,
+            );
+            const canJoinPrevious = position > 1;
+
+            return (
+              <div className="mt-2 space-y-2">
+                <p className="text-stone-400">
+                  Step {position} of {steps.length}
+                  {withThem.length
+                    ? ` — at the same time as ${withThem
+                        .map((a) => `${a.type} by ${a.by}`)
+                        .join(", ")}`
+                    : " — on its own"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateBeats(
+                        setActionStep(
+                          play.beats,
+                          beatIndex,
+                          selectedAction.id,
+                          steps[position - 2],
+                        ),
+                      )
+                    }
+                    disabled={!canJoinPrevious}
+                    className="rounded border border-stone-600 px-3 py-1 text-stone-200 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ← Same time as step {Math.max(1, position - 1)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateBeats(
+                        setActionStep(play.beats, beatIndex, selectedAction.id, null),
+                      )
+                    }
+                    disabled={withThem.length === 0 && position === steps.length}
+                    className="rounded border border-stone-600 px-3 py-1 text-stone-200 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Give it its own step
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"

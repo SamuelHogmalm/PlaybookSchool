@@ -201,17 +201,59 @@ function normalizeEndAtOne(timed: TimedAction[]): void {
   }
 }
 
-/** Derive startAt/endAt for every action on a beat. Coach never sets timing. */
+/** Distinct step numbers on a beat, ascending. Empty when the beat has no steps. */
+export function beatSteps(beat: Beat): number[] {
+  const steps = new Set<number>();
+  for (const a of beat.actions ?? []) {
+    if (typeof a.step === "number" && Number.isFinite(a.step)) steps.add(a.step);
+  }
+  return [...steps].sort((x, y) => x - y);
+}
+
+/**
+ * Step mode: each step owns an equal slice of the beat, in order.
+ *
+ * Everything in a step starts and ends together; nothing spans two steps. That is the
+ * whole point — a player learning the play sees one thing happen, then the next, and
+ * "these two cut together" is something the coach states rather than something the
+ * engine infers from geometry.
+ *
+ * Equal slices rather than duration-weighted ones: a step is a beat the viewer counts,
+ * and steps that varied in length by route length would be harder to follow, not easier.
+ */
+function sequenceBySteps(beat: Beat, steps: number[]): TimedAction[] {
+  const actions = beat.actions ?? [];
+  const slice = 1 / steps.length;
+
+  return actions.map((action) => {
+    // An action with no step of its own belongs to the first — it predates stepping.
+    const index = Math.max(0, steps.indexOf(action.step ?? steps[0]));
+    return cloneTimed(action, index * slice, (index + 1) * slice);
+  });
+}
+
+/**
+ * Derive startAt/endAt for every action on a beat.
+ *
+ * The coach never sets milliseconds. They may set *order* — see `beatSteps` — and when
+ * they have, that wins over the derived lanes, because a stated intent beats a guess.
+ */
 export function sequenceBeat(beat: Beat): TimedAction[] {
   const actions = beat.actions ?? [];
-  const timed: TimedAction[] = actions.map((action) => {
-    const kind = classifyAction(action, actions);
-    const [startAt, endAt] = defaultLane(kind);
-    return cloneTimed(action, startAt, endAt);
-  });
+  const steps = beatSteps(beat);
 
-  applyDependencies(timed, actions);
-  normalizeEndAtOne(timed);
+  const timed: TimedAction[] = steps.length
+    ? sequenceBySteps(beat, steps)
+    : actions.map((action) => {
+        const kind = classifyAction(action, actions);
+        const [startAt, endAt] = defaultLane(kind);
+        return cloneTimed(action, startAt, endAt);
+      });
+
+  if (!steps.length) {
+    applyDependencies(timed, actions);
+    normalizeEndAtOne(timed);
+  }
 
   return timed.sort((a, b) => a.startAt - b.startAt || a.endAt - b.endAt);
 }
