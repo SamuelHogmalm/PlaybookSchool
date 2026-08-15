@@ -58,7 +58,12 @@ class InterpretRequest(BaseModel):
 def health():
     return {
         "status": "ok",
+        "vision_configured": bool(
+            os.environ.get("GEMINI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+        ),
+        "gemini_configured": bool(os.environ.get("GEMINI_API_KEY")),
         "anthropic_configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "provider": os.environ.get("IMPORT_VISION_PROVIDER") or "auto",
     }
 
 
@@ -142,12 +147,14 @@ async def parse_pdf(file: UploadFile = File(...)):
 
 @app.post("/interpret")
 async def interpret(body: InterpretRequest):
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")):
         raise HTTPException(
             503,
             detail={
                 "error": "ai_not_configured",
-                "message": "Set ANTHROPIC_API_KEY on the importer service.",
+                "message": (
+                    "Set GEMINI_API_KEY or ANTHROPIC_API_KEY on the importer service."
+                ),
             },
         )
 

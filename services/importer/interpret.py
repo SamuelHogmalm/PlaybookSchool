@@ -11,11 +11,10 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from anthropic import AsyncAnthropic
+from vision import VisionClient, make_vision_client
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
 MAX_CONCURRENT = int(os.environ.get("INTERPRET_MAX_CONCURRENT", "5"))
 SKILL_PATH = Path(__file__).resolve().parents[2] / "docs" / "skills" / "play-interpretation.md"
 
@@ -125,7 +124,7 @@ def normalize_actions(raw_actions: list[dict[str, Any]] | None) -> list[dict[str
 
 
 async def interpret_one_frame(
-    client: AsyncAnthropic,
+    client: VisionClient,
     *,
     image_b64: str,
     beat: dict[str, Any],
@@ -135,7 +134,6 @@ async def interpret_one_frame(
     category: str,
     beat_index: int,
     beat_total: int,
-    model: str,
     skill: str,
 ) -> tuple[dict[str, Any], dict[str, int]]:
     prev_pos = prev_beat.get("startPos") or prev_beat.get("pos", {}) if prev_beat else {}
@@ -152,30 +150,13 @@ async def interpret_one_frame(
         start_ball=beat.get("startBall", "1"),
         next_start_ball=next_start,
     )
-    message = await client.messages.create(
-        model=model,
-        max_tokens=2048,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/png",
-                            "data": image_b64,
-                        },
-                    },
-                    {"type": "text", "text": prompt},
-                ],
-            }
-        ],
+    result = await client.describe(
+        image_b64=image_b64, prompt=prompt, json_only=True
     )
-    text = "".join(block.text for block in message.content if block.type == "text")
+    text = result.text
     usage = {
-        "input_tokens": message.usage.input_tokens,
-        "output_tokens": message.usage.output_tokens,
+        "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
     }
     try:
         parsed = parse_model_json(text)
@@ -222,13 +203,10 @@ async def interpret_plays(
     *,
     api_key: str | None = None,
     model: str | None = None,
+    provider: str | None = None,
 ) -> dict[str, Any]:
-    key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-    if not key:
-        raise RuntimeError("ANTHROPIC_API_KEY is not set")
-
-    client = AsyncAnthropic(api_key=key)
-    model = model or DEFAULT_MODEL
+    client = make_vision_client(provider=provider, api_key=api_key, model=model)
+    model = client.model
     skill = load_skill()
     sem = asyncio.Semaphore(MAX_CONCURRENT)
     total_in = 0
@@ -261,7 +239,6 @@ async def interpret_plays(
                 category=play.get("category", "Set"),
                 beat_index=beat_idx,
                 beat_total=len(beats),
-                model=model,
                 skill=skill,
             )
         total_in += usage["input_tokens"]
@@ -291,8 +268,11 @@ async def interpret_plays(
     await asyncio.gather(*tasks)
 
     logger.info(
-        "interpret complete import_id=%s input_tokens=%s output_tokens=%s review=%s",
+        "interpret complete import_id=%s provider=%s model=%s "
+        "input_tokens=%s output_tokens=%s review=%s",
         str(uuid.uuid4())[:8],
+        client.provider,
+        model,
         total_in,
         total_out,
         len(review_beats),
@@ -302,5 +282,6 @@ async def interpret_plays(
         "plays": plays,
         "usage": {"input_tokens": total_in, "output_tokens": total_out},
         "needs_review": review_beats,
+        "provider": client.provider,
         "model": model,
     }
