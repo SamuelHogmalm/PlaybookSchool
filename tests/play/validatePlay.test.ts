@@ -223,6 +223,65 @@ describe("validatePlay — hand-written fixtures", () => {
   });
 });
 
+describe("validatePlay — ball plausibility warnings", () => {
+  /** One pass from 1 to 2, with both placed where the caller wants them. */
+  function playWithPass(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+  ): Play {
+    const spots = { "1": from, "2": to };
+    return minimalPlay([
+      beat("b1", "2", spots, [{ id: "a1", type: "pass", by: "1", for: "2" }], "1"),
+      beat("b2", "2", spots, [], "2"),
+    ]);
+  }
+
+  it("warns about a pass spanning most of the floor", () => {
+    const result = validatePlay(
+      playWithPass({ x: 30, y: 100 }, { x: 470, y: 120 }),
+    );
+    assert.ok(
+      result.warnings.some((w) => /spans \d+ units/.test(w)),
+      result.warnings.join("\n") || "no warnings at all",
+    );
+  });
+
+  it("does not warn about an ordinary pass", () => {
+    const result = validatePlay(
+      playWithPass({ x: 200, y: 200 }, { x: 300, y: 220 }),
+    );
+    assert.ok(!result.warnings.some((w) => /spans/.test(w)));
+  });
+
+  it("a long pass is a warning, not an error — the play still saves", () => {
+    const result = validatePlay(
+      playWithPass({ x: 30, y: 100 }, { x: 470, y: 120 }),
+    );
+    assert.equal(result.valid, true, result.errors.join("; "));
+  });
+
+  it("warns when the ball goes straight back where it came from", () => {
+    const play = minimalPlay([
+      beat("b1", "2", {}, [{ id: "a1", type: "pass", by: "1", for: "2" }], "1"),
+      beat("b2", "1", {}, [{ id: "a2", type: "pass", by: "2", for: "1" }], "2"),
+    ]);
+    const result = validatePlay(play);
+    assert.ok(
+      result.warnings.some((w) => /pass straight back/.test(w)),
+      result.warnings.join("\n") || "no warnings at all",
+    );
+  });
+
+  it("does not warn about a one-way chain", () => {
+    const play = minimalPlay([
+      beat("b1", "2", {}, [{ id: "a1", type: "pass", by: "1", for: "2" }], "1"),
+      beat("b2", "3", {}, [{ id: "a2", type: "pass", by: "2", for: "3" }], "2"),
+    ]);
+    const result = validatePlay(play);
+    assert.ok(!result.warnings.some((w) => /straight back/.test(w)));
+  });
+});
+
 describe("validatePlay — seed data (plays-interpreted.json)", () => {
   const raw = JSON.parse(
     readFileSync(join(root, "src/data/plays-interpreted.json"), "utf8"),
@@ -248,12 +307,17 @@ describe("validatePlay — seed data (plays-interpreted.json)", () => {
       0,
       `Expected 12/12 valid:\n${failures.join("\n")}`,
     );
-    // Rule 12 (pass+cut on the same beat) is a non-blocking review queue, not a
-    // failure — the count moves whenever the interpret prompt improves. Ceiling, so
-    // a legitimate change doesn't look like a regression. 10 at last check.
+    // Warnings are a non-blocking review queue, not a failure, and the count moves
+    // whenever the interpret prompt improves. A ceiling, so a legitimate change does
+    // not read as a regression.
+    //
+    // 27 at last check, up from 10: ball-plausibility warnings were added on
+    // 2026-08-14 and immediately flagged real import defects — cross-court passes and
+    // possession bouncing between two players. The number should fall as those get
+    // reviewed, not rise.
     assert.ok(
-      warningBeats <= 15,
-      `rule-12 warnings ${warningBeats} exceeds ceiling 15 — review queue is growing`,
+      warningBeats <= 35,
+      `warnings ${warningBeats} exceeds ceiling 35 — review queue is growing`,
     );
   });
 

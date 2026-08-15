@@ -233,6 +233,66 @@ function validateActionConflicts(
   }
 }
 
+/**
+ * A pass this long is almost certainly a misread, not a play.
+ *
+ * The court is 500 × 470. A pass spanning more than this is crossing nearly the whole
+ * floor, which coaches do not draw and the parser does produce when it misreads the
+ * circled possession number on a frame.
+ */
+export const IMPLAUSIBLE_PASS_UNITS = 320;
+
+type Transfer = { beatIdx: number; from: PlayerId; to: PlayerId };
+
+function transfersInOrder(play: Play): Transfer[] {
+  const out: Transfer[] = [];
+  play.beats.forEach((beat, beatIdx) => {
+    for (const a of beat.actions) {
+      if ((a.type === "pass" || a.type === "handoff") && a.for) {
+        out.push({ beatIdx, from: a.by, to: a.for });
+      }
+    }
+  });
+  return out;
+}
+
+/**
+ * Ball-movement smells. Warnings, never errors.
+ *
+ * Both patterns below are legal by rules 3–6: a pass explains a possession change
+ * whether or not it is the pass that really happened. They are flagged rather than
+ * rejected because only a human looking at the source page can tell a genuine
+ * give-and-go from a parser that misread the circle on one frame.
+ */
+function validateBallPlausibility(play: Play, warnings: string[]): void {
+  play.beats.forEach((beat, beatIdx) => {
+    for (const a of beat.actions) {
+      if (a.type !== "pass" && a.type !== "handoff") continue;
+      if (!a.for) continue;
+      const from = beat.startPos[a.by];
+      const to = beat.startPos[a.for];
+      if (!from || !to) continue;
+      const length = Math.round(dist(from, to));
+      if (length > IMPLAUSIBLE_PASS_UNITS) {
+        warnings.push(
+          `Beat ${beatIdx + 1} (${beat.id}): ${a.type} ${a.by} → ${a.for} spans ${length} units, nearly the width of the floor — check the source frame.`,
+        );
+      }
+    }
+  });
+
+  const transfers = transfersInOrder(play);
+  for (let i = 1; i < transfers.length; i++) {
+    const prev = transfers[i - 1];
+    const cur = transfers[i];
+    if (cur.from === prev.to && cur.to === prev.from) {
+      warnings.push(
+        `Beats ${prev.beatIdx + 1}–${cur.beatIdx + 1}: ball goes ${prev.from} → ${prev.to} → ${prev.from}. A pass straight back is usually a misread possession number.`,
+      );
+    }
+  }
+}
+
 function validateFirstBeatActions(beat: Beat, errors: string[]): void {
   const label = `Beat 1 (${beat.id})`;
   let holder = beat.startBall;
@@ -293,6 +353,7 @@ export function validatePlay(play: Play): ValidationResult {
   }
 
   validateFirstBeatActions(play.beats[0], errors);
+  validateBallPlausibility(play, warnings);
 
   for (let i = 1; i < play.beats.length; i++) {
     validateBeatTransition(play.beats[i - 1], play.beats[i], i, errors);

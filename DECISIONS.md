@@ -450,6 +450,36 @@ The rule "the coach never sets timing" survives — grouping is order, not milli
 Rules out: inferring simultaneity from geometry in coach-authored plays. If two things
 happen together it is because someone said so.
 
+## 2026-08-15 — Implausible ball movement is warned about, not rejected
+
+`validateBallPlausibility()` in `src/lib/play/validation.ts`.
+
+Samuel watched the seed plays animate in the quiz and said they looked glitchy —
+cross-court passes, and the ball going back and forth between two players. Both were
+real and both were in the imported data:
+
+- `gswhat` has a pass spanning 482 units on a 500-wide court; `Openkickbacks` 477.
+- `Kansas`, `Kickup` and `Relax` each bounce possession between the same two players
+  three times.
+
+Validation passed all twelve because rule 3 only asks that a possession change be
+*explained* by a pass, and a wrong pass explains it exactly as well as a right one.
+The likely cause is `derive.py` inventing a pass whenever the circled possession number
+appears to change, so one misread frame produces a phantom pass and a flicker produces
+a phantom pass back.
+
+Two warnings added: a pass longer than 320 units, and a transfer that returns the ball
+straight to whoever just gave it up. Warnings, not errors, because only someone looking
+at the source page can tell a genuine give-and-go from a misread circle — and blocking
+a play the coach cannot yet fix would be worse than flagging it.
+
+27 warnings across 8 plays; Alabama, Arkansas-Rip, Horns and Idaho are clean.
+`npm run test:seed` now prints them, which turns "the plays look glitchy" into the
+review worklist Phase 5 needs.
+
+Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
+not that it is the play on the page.
+
 ## 2026-08-14 — Phase 8 starts with two question types, not six
 
 `src/lib/quiz/`, `src/components/quiz/`, `/player/quiz`.
