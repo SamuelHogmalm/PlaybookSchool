@@ -17,6 +17,8 @@ import { QuizCourt } from "./QuizCourt";
 type Props = {
   questions: Question[];
   playsById: Map<string, Play>;
+  /** Playback rate for lead-in and reveal. Below 1 is slower. */
+  speed?: number;
   onFinished?: (results: Array<{ question: Question; grade: Grade }>) => void;
 };
 
@@ -26,18 +28,26 @@ type Props = {
  * REVEAL always runs, right or wrong. Repetition is the product — a correct answer
  * earns the rep too, and a wrong one has to see what it should have been.
  */
-export function QuizRunner({ questions, playsById, onFinished }: Props) {
+export function QuizRunner({
+  questions,
+  playsById,
+  speed = 1,
+  onFinished,
+}: Props) {
   const [index, setIndex] = useState(0);
   const question = questions[index];
 
-  // A question at beat 0 has nothing to lead in with.
-  const openingPhase = useCallback(
+  /** Nothing moves until the viewer knows the play and the question. */
+  const openingPhase = useCallback((): QuizPhase => "ready", []);
+
+  /** What READY leads into: a question at beat 0 has nothing to lead in with. */
+  const afterReady = useCallback(
     (q: Question): QuizPhase => (q.askAtBeat > 0 ? "lead-in" : "ask"),
     [],
   );
 
   const [phase, setPhase] = useState<QuizPhase>(() =>
-    questions.length ? openingPhase(questions[0]) : "result",
+    questions.length ? openingPhase() : "result",
   );
   const [guess, setGuess] = useState<Vec | null>(null);
   const [grade, setGrade] = useState<Grade | null>(null);
@@ -75,7 +85,7 @@ export function QuizRunner({ questions, playsById, onFinished }: Props) {
     setGuess(null);
     setGrade(null);
     setReplay(0);
-    setPhase(openingPhase(questions[following]));
+    setPhase(openingPhase());
   }, [index, questions, results, onFinished, openingPhase]);
 
   const finished = index >= questions.length;
@@ -134,8 +144,9 @@ export function QuizRunner({ questions, playsById, onFinished }: Props) {
 
   // Lead-in stops before the asked beat, or the answer plays out before the question.
   const leadIn = phase === "lead-in";
-  const from = leadIn ? 0 : question.askAtBeat;
-  const to = leadIn
+  const ready = phase === "ready";
+  const from = leadIn || ready ? 0 : question.askAtBeat;
+  const to = leadIn || ready
     ? Math.max(0, question.askAtBeat - 1)
     : showAnswer
       ? question.revealToBeat
@@ -169,6 +180,7 @@ export function QuizRunner({ questions, playsById, onFinished }: Props) {
         play={play}
         from={from}
         to={to}
+        speed={speed}
         playing={leadIn || phase === "reveal"}
         // The whole point of a spot question is that they cannot see the answer.
         hidePlayer={spot && !showAnswer ? question.subject : null}
@@ -183,8 +195,28 @@ export function QuizRunner({ questions, playsById, onFinished }: Props) {
       />
 
       <div aria-live="polite" className="space-y-3">
+        {ready && (
+          <div className="space-y-3 rounded-md border border-stone-700 bg-stone-900/60 px-4 py-3">
+            <p className="text-lg font-semibold">{question.playName}</p>
+            {/* The question is stated before the play runs. Knowing what is being
+                asked does not give the answer away, and it makes the lead-in
+                something to watch rather than something to sit through. */}
+            <p className="text-sm text-stone-300">{question.prompt}</p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setPhase(afterReady(question))}
+              className="rounded border border-amber-600 bg-amber-500/10 px-4 py-2 text-sm text-amber-100 hover:bg-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              {question.askAtBeat > 0 ? "Watch the play" : "Show me"}
+            </button>
+          </div>
+        )}
+
         {phase === "lead-in" && (
-          <p className="text-sm text-stone-400">Watch — {question.playName}</p>
+          <p className="text-sm text-stone-400">
+            {question.playName} — watch
+          </p>
         )}
 
         {phase === "ask" && (

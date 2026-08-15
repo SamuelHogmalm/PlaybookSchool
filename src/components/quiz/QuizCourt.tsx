@@ -12,6 +12,8 @@ type Props = {
   from: number;
   to: number | null;
   playing: boolean;
+  /** Playback rate. Below 1 is slower. */
+  speed?: number;
   hidePlayer?: PlayerId | null;
   onComplete?: () => void;
   /** Set to accept taps — the spot question's answer input. */
@@ -35,6 +37,7 @@ export function QuizCourt({
   from,
   to,
   playing,
+  speed = 1,
   hidePlayer = null,
   onComplete,
   onPick,
@@ -59,6 +62,7 @@ export function QuizCourt({
         from={from}
         to={to}
         playing={playing}
+        speed={speed}
         hidePlayer={hidePlayer}
         onComplete={onComplete}
       />

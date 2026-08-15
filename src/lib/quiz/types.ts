@@ -9,12 +9,17 @@ export type QuestionType =
   | "sequence";
 
 /**
- * The four phases every question runs through, in order.
+ * The phases every question runs through, in order.
+ *
+ * READY exists because a play that starts the instant the question loads gives the
+ * viewer nothing to hold on to — they do not yet know which play it is or what they
+ * are being asked. Naming both before anything moves costs one tap and makes the
+ * lead-in worth watching.
  *
  * REVEAL always runs, right or wrong — repetition is the product, and a correct answer
  * earns the rep too.
  */
-export type QuizPhase = "lead-in" | "ask" | "reveal" | "result";
+export type QuizPhase = "ready" | "lead-in" | "ask" | "reveal" | "result";
 
 type QuestionBase = {
   id: string;
