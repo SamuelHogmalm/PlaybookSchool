@@ -480,6 +480,35 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-15 — The quiz refuses to ask about anything nobody has confirmed
+
+`isTrustworthy` and the `suspectTransfers` filter in `src/lib/quiz/generate.ts`.
+
+Samuel's first question was "player 3 passes — who gets the ball?" on Relax beat 2,
+where the ball goes **3 → 1 → 3 inside one beat**. The answer, 1, was correct and
+invisible: by the end of the beat the ball is back with 3, so nothing a viewer could see
+supported it.
+
+Three filters now, and they share one principle — *only ask about things that are both
+true and observable*:
+
+1. **Never quiz on a `derived` or `needsReview` action.** `derived` means the pipeline
+   invented it; `needsReview` means the AI was unsure. Nobody has checked either against
+   the source page, and a player who memorises a guess has been taught something wrong.
+2. **Never quiz on a transfer `suspectTransfers()` flags** — cross-court passes and
+   possession bouncing straight back. The plausibility checks added earlier were turned
+   from warning strings into structured data precisely so the generator could reuse
+   them; one source of truth, two consumers.
+3. **The receiver must still hold the ball at the end of the beat.** This is what caught
+   Relax: an answer that is undone before the beat finishes is not answerable.
+
+Cost: pass-target questions fall from roughly thirty to thirteen. That is the right
+trade. A smaller set of questions that are all fair beats a larger set where some teach
+the wrong thing, and the number climbs on its own as plays get reviewed.
+
+Rules out: generating questions from play data without asking whether a human ever
+confirmed it.
+
 ## 2026-08-14 — Phase 8 starts with two question types, not six
 
 `src/lib/quiz/`, `src/components/quiz/`, `/player/quiz`.

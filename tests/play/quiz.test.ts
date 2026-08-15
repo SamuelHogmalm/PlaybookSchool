@@ -13,7 +13,7 @@ import { buildSession, SESSION_MAX } from "../../src/lib/quiz/session.js";
 import { makeRng } from "../../src/lib/quiz/random.js";
 import { isChoice, isSpot, type Question } from "../../src/lib/quiz/types.js";
 import { normalizeSeedPlay } from "../../src/lib/play/normalize.js";
-import { validatePlay } from "../../src/lib/play/validation.js";
+import { suspectTransfers, validatePlay } from "../../src/lib/play/validation.js";
 import type { Play, SeedPlay } from "../../src/lib/play/types.js";
 import seedPlays from "../../src/data/plays-interpreted.json" with { type: "json" };
 
@@ -26,7 +26,7 @@ const PLAYS: Play[] = (seedPlays as SeedPlay[]).map((raw) => {
 const rng = () => makeRng(42);
 
 describe("question generation — pass targets", () => {
-  it("produces a question for every pass in the seed", () => {
+  it("produces questions, but fewer than there are passes", () => {
     let passes = 0;
     for (const play of PLAYS) {
       for (const beat of play.beats) {
@@ -36,8 +36,53 @@ describe("question generation — pass targets", () => {
       }
     }
     const generated = PLAYS.flatMap((p) => generatePassTargets(p, rng()));
-    assert.ok(passes > 0, "the seed should contain passes");
-    assert.equal(generated.length, passes);
+    assert.ok(generated.length > 0, "no pass questions at all");
+    assert.ok(
+      generated.length < passes,
+      "every pass became a question — the trust filters are not running",
+    );
+  });
+
+  it("never asks about a guessed or unreviewed pass", () => {
+    for (const play of PLAYS) {
+      for (const q of generatePassTargets(play, rng())) {
+        const beat = play.beats[q.askAtBeat];
+        const action = beat.actions.find(
+          (a) => a.by === q.subject && a.for === q.answerId,
+        )!;
+        assert.ok(
+          !action.derived && !action.needsReview,
+          `${q.id} asks about an action the pipeline was unsure of`,
+        );
+      }
+    }
+  });
+
+  it("never asks about a transfer validation calls implausible", () => {
+    for (const play of PLAYS) {
+      const suspect = new Set(suspectTransfers(play).map((s) => s.actionId));
+      for (const q of generatePassTargets(play, rng())) {
+        const beat = play.beats[q.askAtBeat];
+        const action = beat.actions.find(
+          (a) => a.by === q.subject && a.for === q.answerId,
+        )!;
+        assert.ok(!suspect.has(action.id), `${q.id} asks about a flagged transfer`);
+      }
+    }
+  });
+
+  it("only asks about a pass the receiver still holds at the end of the beat", () => {
+    // Relax beat 2 sends the ball 3 → 1 → 3. Asking about the first leg gives an
+    // answer nobody watching can see, because the ball is back before the beat ends.
+    for (const play of PLAYS) {
+      for (const q of generatePassTargets(play, rng())) {
+        assert.equal(
+          play.beats[q.askAtBeat].ball,
+          q.answerId,
+          `${q.id}: the ball does not rest with the answer`,
+        );
+      }
+    }
   });
 
   it("the answer is always among the choices, and named once", () => {

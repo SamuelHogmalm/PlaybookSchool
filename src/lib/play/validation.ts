@@ -242,29 +242,45 @@ function validateActionConflicts(
  */
 export const IMPLAUSIBLE_PASS_UNITS = 320;
 
-type Transfer = { beatIdx: number; from: PlayerId; to: PlayerId };
+type Transfer = {
+  beatIdx: number;
+  actionId: string;
+  from: PlayerId;
+  to: PlayerId;
+};
 
 function transfersInOrder(play: Play): Transfer[] {
   const out: Transfer[] = [];
   play.beats.forEach((beat, beatIdx) => {
     for (const a of beat.actions) {
       if ((a.type === "pass" || a.type === "handoff") && a.for) {
-        out.push({ beatIdx, from: a.by, to: a.for });
+        out.push({ beatIdx, actionId: a.id, from: a.by, to: a.for });
       }
     }
   });
   return out;
 }
 
+export type SuspectTransfer = {
+  beatIdx: number;
+  actionId: string;
+  message: string;
+};
+
 /**
- * Ball-movement smells. Warnings, never errors.
+ * Ball movement that does not look like basketball. Structured, so it has two users.
  *
- * Both patterns below are legal by rules 3–6: a pass explains a possession change
- * whether or not it is the pass that really happened. They are flagged rather than
- * rejected because only a human looking at the source page can tell a genuine
- * give-and-go from a parser that misread the circle on one frame.
+ * Both patterns are legal by rules 3–6: a pass explains a possession change whether or
+ * not it is the pass that really happened. They are flagged rather than rejected because
+ * only a human reading the source page can tell a genuine give-and-go from a parser that
+ * misread the circled number on one frame.
+ *
+ * `validatePlay` turns these into warnings; the quiz generator uses them to refuse to
+ * ask questions about a transfer nobody trusts.
  */
-function validateBallPlausibility(play: Play, warnings: string[]): void {
+export function suspectTransfers(play: Play): SuspectTransfer[] {
+  const out: SuspectTransfer[] = [];
+
   play.beats.forEach((beat, beatIdx) => {
     for (const a of beat.actions) {
       if (a.type !== "pass" && a.type !== "handoff") continue;
@@ -274,9 +290,11 @@ function validateBallPlausibility(play: Play, warnings: string[]): void {
       if (!from || !to) continue;
       const length = Math.round(dist(from, to));
       if (length > IMPLAUSIBLE_PASS_UNITS) {
-        warnings.push(
-          `Beat ${beatIdx + 1} (${beat.id}): ${a.type} ${a.by} → ${a.for} spans ${length} units, nearly the width of the floor — check the source frame.`,
-        );
+        out.push({
+          beatIdx,
+          actionId: a.id,
+          message: `Beat ${beatIdx + 1} (${beat.id}): ${a.type} ${a.by} → ${a.for} spans ${length} units, nearly the width of the floor — check the source frame.`,
+        });
       }
     }
   });
@@ -286,10 +304,19 @@ function validateBallPlausibility(play: Play, warnings: string[]): void {
     const prev = transfers[i - 1];
     const cur = transfers[i];
     if (cur.from === prev.to && cur.to === prev.from) {
-      warnings.push(
-        `Beats ${prev.beatIdx + 1}–${cur.beatIdx + 1}: ball goes ${prev.from} → ${prev.to} → ${prev.from}. A pass straight back is usually a misread possession number.`,
-      );
+      const message = `Beats ${prev.beatIdx + 1}–${cur.beatIdx + 1}: ball goes ${prev.from} → ${prev.to} → ${prev.from}. A pass straight back is usually a misread possession number.`;
+      // Both legs are suspect: neither can be trusted as the pass that really happened.
+      out.push({ beatIdx: prev.beatIdx, actionId: prev.actionId, message });
+      out.push({ beatIdx: cur.beatIdx, actionId: cur.actionId, message: "" });
     }
+  }
+
+  return out;
+}
+
+function validateBallPlausibility(play: Play, warnings: string[]): void {
+  for (const suspect of suspectTransfers(play)) {
+    if (suspect.message) warnings.push(suspect.message);
   }
 }
 

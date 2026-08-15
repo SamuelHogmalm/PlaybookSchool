@@ -1,6 +1,7 @@
 import type { Play, PlayerId } from "@/lib/play/types";
 import { PLAYER_IDS } from "@/lib/play/types";
 import { dist } from "@/lib/play/geometry";
+import { suspectTransfers } from "@/lib/play/validation";
 
 import { makeRng, pick, seedFrom, shuffle, type Rng } from "./random";
 import type { ChoiceQuestion, Question, SpotQuestion } from "./types";
@@ -48,6 +49,17 @@ function passDistractors(
 }
 
 /**
+ * An action the pipeline guessed is not something to quiz a player on.
+ *
+ * `derived` means `derive.py` invented it because the AI missed one; `needsReview`
+ * means the AI was unsure. Either way nobody has confirmed it against the source page,
+ * and a player who memorises a guess has been taught something wrong.
+ */
+function isTrustworthy(action: { derived?: boolean; needsReview?: boolean }): boolean {
+  return !action.derived && !action.needsReview;
+}
+
+/**
  * "Who gets the ball?" — one per pass in the play.
  *
  * The reveal runs through the end of the beat so the player sees the ball actually
@@ -56,10 +68,21 @@ function passDistractors(
 export function generatePassTargets(play: Play, rng: Rng): ChoiceQuestion[] {
   const out: ChoiceQuestion[] = [];
 
+  // Anything validation calls implausible — a cross-court pass, a ball bouncing
+  // straight back — is not a fact to test someone on.
+  const suspect = new Set(suspectTransfers(play).map((s) => s.actionId));
+
   play.beats.forEach((beat, beatIndex) => {
     for (const action of beat.actions) {
       if (action.type !== "pass" && action.type !== "handoff") continue;
       if (!action.for) continue;
+      if (!isTrustworthy(action)) continue;
+      if (suspect.has(action.id)) continue;
+
+      // The answer has to be something the player can see happen. Where the ball moves
+      // on again inside the same beat — Relax beat 2 sends it 3 → 1 → 3 — the receiver
+      // never visibly holds it, and the "correct" answer looks wrong to anyone watching.
+      if (beat.ball !== action.for) continue;
 
       const distractors = passDistractors(play, beatIndex, action.by, action.for);
       if (distractors.length < 2) continue;
