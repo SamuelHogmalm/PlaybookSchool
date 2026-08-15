@@ -480,6 +480,40 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-15 — Phase 5 review: confidence ordering, and confirming means saving
+
+`src/lib/review/`, `src/components/review/ReviewFlow.tsx`, `/coach/review`.
+
+The import's real state, measured for the first time: **50 of 123 actions across the
+twelve plays are either invented (21 `derived`) or unsure (29 `needsReview`)** — 41% —
+and **no play is clean**. The best, Idaho, still has one thing to check; the worst,
+Kickup, has seven of eleven actions unconfirmed and eight warnings.
+
+That number is why review is a phase rather than a screen.
+
+Decisions:
+
+- **Confidence is an ordering heuristic, never a measurement.** It exists to put the
+  worst play first and is deliberately not shown as a percentage; a coach told a play is
+  "73% confident" would reasonably ask what the 27% is, and there is no honest answer.
+  An invalid play scores 0 regardless of anything else.
+- **The queue is stable.** Ties break on name, so it cannot reshuffle while a coach
+  works through it.
+- **Confirming saves.** "Looks right" clears the review flags via `confirmPlayActions`
+  and POSTs to `/api/plays`. Confirmation that only lived in component state would be a
+  button that lies. It also means review output lands in the same table the builder
+  writes to — one playbook, not a reviewed copy.
+- **Flags are shown on the court, not buried in a list.** Hovering a flag highlights the
+  action it refers to, because "pass 4 → 2 spans 482 units" means nothing until you see
+  which arrow that is.
+- **Save-failure copy moved to `src/lib/play/saveErrors.ts`** and is now shared with the
+  builder. A coach who learns what "create your team first" means on one screen should
+  not meet different wording for the same problem on another.
+
+Bug found while testing: action ids are only unique *within* a beat — `a1` exists on
+most of them — so deduplicating flags by id alone silently dropped some. Flags are keyed
+by beat and id together.
+
 ## 2026-08-15 — The quiz refuses to ask about anything nobody has confirmed
 
 `isTrustworthy` and the `suspectTransfers` filter in `src/lib/quiz/generate.ts`.

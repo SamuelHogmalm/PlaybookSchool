@@ -25,6 +25,7 @@ import {
   updateBeatPlayerPos,
 } from "@/lib/play/beatOps";
 import { PRESET_NAMES, type AlignmentPresetName } from "@/lib/play/editor";
+import { describeSaveFailure, OFFLINE_FAILURE } from "@/lib/play/saveErrors";
 import { validatePlay } from "@/lib/play/validation";
 
 import {
@@ -67,70 +68,12 @@ type SaveState =
       tone: "warn" | "error";
     };
 
-/**
- * Save failures a coach can actually act on. Each status means something different
- * about what to do next, so none of them share copy.
- */
-function describeSaveFailure(
+/** Wraps the shared copy in this component's state shape. */
+function saveError(
   status: number,
   body: { error?: string; validationErrors?: string[] },
 ): Extract<SaveState, { status: "error" }> {
-  if (status === 401) {
-    return {
-      status: "error",
-      tone: "warn",
-      title: "Not signed in — this play is local only",
-      detail:
-        "Your work is safe in this tab, but nothing has been sent to the cloud. Sign in and press Save again to keep it.",
-      errors: [],
-    };
-  }
-  if (status === 409) {
-    return {
-      status: "error",
-      tone: "warn",
-      title: "Create your team before saving plays",
-      detail:
-        "Plays belong to a team, and your account isn't on one yet. Create a team, then press Save again — nothing here is lost.",
-      errors: [],
-    };
-  }
-  if (status === 403) {
-    return {
-      status: "error",
-      tone: "warn",
-      title: "Coach account required",
-      detail: "Only coaches can add plays to a team's playbook.",
-      errors: [],
-    };
-  }
-  if (status === 422) {
-    return {
-      status: "error",
-      tone: "error",
-      title: "This play isn't ready to save",
-      detail:
-        "Every play has to hold together as basketball before players can drill it. Fix these, then save:",
-      errors: body.validationErrors ?? [],
-    };
-  }
-  if (status === 503) {
-    return {
-      status: "error",
-      tone: "warn",
-      title: "Cloud saving isn't set up",
-      detail:
-        "The app has no database configured, so plays can't be stored yet. Keep this tab open — your play is still here.",
-      errors: [],
-    };
-  }
-  return {
-    status: "error",
-    tone: "error",
-    title: `Save failed (${status})`,
-    detail: body.error ?? "Something went wrong on the way to the server. Try again.",
-    errors: [],
-  };
+  return { status: "error", ...describeSaveFailure(status, body) };
 }
 
 export function PlayBuilder() {
@@ -262,7 +205,7 @@ export function PlayBuilder() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSaveState(describeSaveFailure(res.status, body));
+        setSaveState(saveError(res.status, body));
         return;
       }
       // Save echo is not an edit — it must not become an undo step.
@@ -271,14 +214,7 @@ export function PlayBuilder() {
       );
       setSaveState({ status: "saved", version: body.play.version });
     } catch {
-      setSaveState({
-        status: "error",
-        tone: "warn",
-        title: "Couldn't reach the server",
-        detail:
-          "Your play is still here in this tab. Check your connection and press Save again.",
-        errors: [],
-      });
+      setSaveState({ status: "error", ...OFFLINE_FAILURE });
     }
   };
 
