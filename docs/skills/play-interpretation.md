@@ -35,8 +35,35 @@ player ends up.
 owner is the player token nearest its origin, and you can determine that
 geometrically rather than by eye.
 
-Your only job is the semantic layer — which actions occur, who performs them, on
-whom.
+Your job is the semantic layer — which actions occur, who performs them, on whom — plus
+one geometric thing nothing else can supply: **where an arrow turns.**
+
+## Arrows that change direction
+
+The start and end of every movement are already known. What is not known is whether the
+player went there in a straight line or took a corner on the way.
+
+A player who steps toward the ball and then cuts backdoor has drawn **one arrow with a
+bend in it**, not two arrows. If you report only that they moved, the pipeline draws a
+straight line from start to finish and the play reads as something the coach never drew.
+
+So when a movement arrow bends, list its turning points in `via` — the corners only, in
+travel order, in the 500x470 system. Do not include the start or the end; those are
+known and adding them can only introduce error.
+
+- A straight arrow: omit `via` entirely.
+- One corner: one point. An S-shape or a loop: two or three.
+- Never more than four. You are describing the shape, not tracing the ink.
+
+**A bend is only real if you can see it.** A gently bowed line is a straight move drawn
+by hand — do not invent corners to explain a curve. If you are unsure whether a mark is
+one bent arrow or two separate ones, report the bent arrow and mark it `uncertain`: a
+route with an extra corner is far cheaper to fix than an action attributed to the wrong
+player.
+
+This matters most for the first leg. A player moving *toward* a teammate before cutting
+away is the single most common shape in a playbook, and read as two things it becomes a
+phantom pass to that teammate — an error that then has to be undone twice.
 
 ## The governing principle
 
@@ -178,6 +205,7 @@ Strict JSON. No prose, no markdown fences.
       "type": "cut|dribble|pass|screen|handoff",
       "by": "1-5",
       "for": "1-5 or null",
+      "via": [[x, y]],
       "uncertain": false,
       "reason": "present only when uncertain"
     }
@@ -187,6 +215,10 @@ Strict JSON. No prose, no markdown fences.
   "logicErrors": []
 }
 ```
+
+`via` holds the turning points of a movement arrow that bends — corners only, in travel
+order, omitting the start and end. Omit the field entirely for a straight arrow, and for
+passes and handoffs, which travel in a line.
 
 `logicErrors` lists any hard constraint you could not satisfy, in plain language.
 **Never return an empty `logicErrors` array to make the output look clean.** A frame

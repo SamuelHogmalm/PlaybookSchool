@@ -113,18 +113,32 @@ describe("sequencing", () => {
     assert.equal(total, move + HOLD_MS);
   });
 
-  it("pass releases after passer movement completes (Horns b1)", () => {
-    const horns = normalizeSeedPlay(
-      (seedPlays as SeedPlay[]).find((p) => p.name === "Horns")!,
-    );
-    const beat = horns.beats[0];
-    const timed = sequenceBeat(beat);
-    const pass = timed.find((a) => a.id === "a1");
-    const dribble = timed.find((a) => a.id === "a4");
-    assert.ok(pass && dribble);
-    assert.ok(
-      pass!.startAt >= dribble!.endAt - 0.001,
-      `pass start ${pass!.startAt} before dribble end ${dribble!.endAt}`,
-    );
+  it("a pass releases only after the passer's own movement completes", () => {
+    // You throw from where you stand. Checked across the whole book rather than
+    // against one play's action ids, which move whenever the import is re-run.
+    let checked = 0;
+
+    for (const raw of seedPlays as SeedPlay[]) {
+      for (const beat of normalizeSeedPlay(raw).beats) {
+        const timed = sequenceBeat(beat);
+        for (const pass of timed) {
+          if (pass.type !== "pass" && pass.type !== "handoff") continue;
+          const move = timed.find(
+            (a) =>
+              a.by === pass.by &&
+              (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+          );
+          if (!move) continue;
+          checked++;
+          assert.ok(
+            pass.startAt >= move.endAt - 0.001,
+            `${raw.name} ${beat.id}: ${pass.type} starts at ${pass.startAt.toFixed(2)} ` +
+              `but the passer is still moving until ${move.endAt.toFixed(2)}`,
+          );
+        }
+      }
+    }
+
+    assert.ok(checked > 0, "no passer-also-moves case in the seed to check");
   });
 });

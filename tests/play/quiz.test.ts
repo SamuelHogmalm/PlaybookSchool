@@ -208,7 +208,10 @@ describe("grading", () => {
   });
 
   it("grades a choice question", () => {
-    const q = generatePassTargets(PLAYS.find((p) => p.beats.some((b) => b.actions.some((a) => a.type === "pass")))!, rng())[0];
+    // Take the first question the book actually yields — which play that comes from
+    // changes every time the import is re-run.
+    const q = PLAYS.flatMap((p) => generatePassTargets(p, rng()))[0];
+    assert.ok(q, "the seed produced no pass-target questions at all");
     assert.equal(gradeAnswer(q, { kind: "choice", choiceId: q.answerId }).correct, true);
     const wrong = q.choices.find((c) => c.id !== q.answerId)!;
     assert.equal(gradeAnswer(q, { kind: "choice", choiceId: wrong.id }).correct, false);

@@ -16,6 +16,8 @@ from vision import VisionClient, make_vision_client
 logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT = int(os.environ.get("INTERPRET_MAX_CONCURRENT", "5"))
+MAX_ATTEMPTS = int(os.environ.get("INTERPRET_MAX_ATTEMPTS", "3"))
+RETRY_BASE_SECONDS = float(os.environ.get("INTERPRET_RETRY_BASE", "2"))
 SKILL_PATH = Path(__file__).resolve().parents[2] / "docs" / "skills" / "play-interpretation.md"
 
 
@@ -83,6 +85,38 @@ def sanitize_pass_reads(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 TYPE_ORDER = {"dribble": 1, "pass": 2, "handoff": 2, "screen": 3, "cut": 4}
 
+MAX_VIA_POINTS = 4
+COURT_W = 500
+COURT_H = 470
+
+
+def normalize_via(raw: Any) -> list[dict[str, float]]:
+    """Turning points of a bent arrow, as [[x, y], ...] or [{"x":…,"y":…}, ...].
+
+    Anything off the court or unparseable is dropped rather than trusted — a stray
+    coordinate would bend a route through the stands, and a straight line is a much
+    better wrong answer than that.
+    """
+    if not isinstance(raw, (list, tuple)):
+        return []
+
+    out: list[dict[str, float]] = []
+    for point in raw[:MAX_VIA_POINTS]:
+        if isinstance(point, dict):
+            x, y = point.get("x"), point.get("y")
+        elif isinstance(point, (list, tuple)) and len(point) >= 2:
+            x, y = point[0], point[1]
+        else:
+            continue
+        try:
+            fx, fy = float(x), float(y)
+        except (TypeError, ValueError):
+            continue
+        if not (0 <= fx <= COURT_W and 0 <= fy <= COURT_H):
+            continue
+        out.append({"x": round(fx, 1), "y": round(fy, 1)})
+    return out
+
 
 def normalize_actions(raw_actions: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     out = []
@@ -103,6 +137,9 @@ def normalize_actions(raw_actions: list[dict[str, Any]] | None) -> list[dict[str
         for_val = action.get("for")
         if for_val is not None and str(for_val) in {"1", "2", "3", "4", "5"}:
             entry["for"] = str(for_val)
+        via = normalize_via(action.get("via"))
+        if via:
+            entry["via"] = via
         order = action.get("order")
         if order is not None:
             try:
@@ -150,9 +187,36 @@ async def interpret_one_frame(
         start_ball=beat.get("startBall", "1"),
         next_start_ball=next_start,
     )
-    result = await client.describe(
-        image_b64=image_b64, prompt=prompt, json_only=True
-    )
+    # A dropped connection on frame 30 of 36 used to lose the whole run. Retry the
+    # transient ones, then let the caller flag just this frame.
+    last_error: Exception | None = None
+    result = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            result = await client.describe(
+                image_b64=image_b64, prompt=prompt, json_only=True
+            )
+            break
+        except Exception as exc:  # noqa: BLE001 - provider SDKs raise their own types
+            last_error = exc
+            if attempt == MAX_ATTEMPTS:
+                break
+            delay = RETRY_BASE_SECONDS * (2 ** (attempt - 1))
+            logger.warning(
+                "vision call failed for beat %s (attempt %s/%s): %s — retrying in %.0fs",
+                beat.get("id"),
+                attempt,
+                MAX_ATTEMPTS,
+                type(last_error).__name__,
+                delay,
+            )
+            await asyncio.sleep(delay)
+
+    if result is None:
+        raise RuntimeError(
+            f"vision call failed after {MAX_ATTEMPTS} attempts: {last_error}"
+        ) from last_error
+
     text = result.text
     usage = {
         "input_tokens": result.input_tokens,
@@ -228,19 +292,36 @@ async def interpret_plays(
             )
             return
 
-        async with sem:
-            result, usage = await interpret_one_frame(
-                client,
-                image_b64=image_b64,
-                beat=beat,
-                prev_beat=prev,
-                next_beat=next_b,
-                play_name=play["name"],
-                category=play.get("category", "Set"),
-                beat_index=beat_idx,
-                beat_total=len(beats),
-                skill=skill,
+        try:
+            async with sem:
+                result, usage = await interpret_one_frame(
+                    client,
+                    image_b64=image_b64,
+                    beat=beat,
+                    prev_beat=prev,
+                    next_beat=next_b,
+                    play_name=play["name"],
+                    category=play.get("category", "Set"),
+                    beat_index=beat_idx,
+                    beat_total=len(beats),
+                    skill=skill,
+                )
+        except Exception as exc:  # noqa: BLE001
+            # One unreachable frame is a frame to review, not a failed import.
+            logger.error(
+                "beat %s of %s failed: %s", beat.get("id"), play["name"], exc
             )
+            beat["actions"] = []
+            beat["needs_review"] = True
+            beat["review_reason"] = "interpret_failed"
+            review_beats.append(
+                {
+                    "play": play["name"],
+                    "beat_id": beat.get("id"),
+                    "reason": "interpret_failed",
+                }
+            )
+            return
         total_in += usage["input_tokens"]
         total_out += usage["output_tokens"]
         beat["actions"] = result["actions"]

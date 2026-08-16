@@ -480,6 +480,66 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-16 — The importer can draw a bend, and the seed is re-interpreted on Gemini
+
+`via` in `docs/skills/play-interpretation.md`, `_path_via()` in `derive.py`,
+`services/importer/vision.py`. Supersedes "Keep the v1 interpretation seed".
+
+Samuel spotted it from the review screen: a player who steps toward a teammate and then
+cuts away was coming out as two things. Measuring it found something starker — **every
+one of the 82 movement actions in the book was a straight line, and not one was bent.**
+
+The cause was a missing field. The interpret skill's output schema had `type`, `by`,
+`for`, `uncertain`, `reason` — and no way to say *where an arrow turns*. So `derive.py`
+drew the only thing it could, `_simple_path(start, end)`, and the shape was gone.
+
+Worse, the first leg had to become *something*. A player moving toward a teammate was
+read as a pass to them, which is where the phantom pass-backs came from. The flattened
+cuts and the impossible ping-pong passes were one defect, not two.
+
+**The fix:** the model now reports `via` — the corners of a bent arrow, in travel order,
+excluding the endpoints. Endpoints stay the parser's, which are trusted; only the shape
+comes from the model, and a corner sitting within 12 units of the straight line is
+discarded as a hand-drawn wobble rather than a real turn.
+
+**Measured, as the earlier decision requires** (`scripts/compare-interpret.ts`):
+
+| | v1 (Claude) | Gemini + `via` |
+|---|---|---|
+| Plays valid | 12 | 12 |
+| Total actions | 123 | 110 |
+| Derived (invented) | 21 | **6** |
+| Unsure (`needsReview`) | 29 | 35 |
+| Validation warnings | 27 | **20** |
+| Review flags | 58 | **46** |
+| Bent routes | 0 | **14** |
+| Avg confidence | 0.71 | **0.79** |
+
+The one regression is `needsReview`, and it is the right direction: invention fell from
+21 to 6 while admitted uncertainty rose by 6. The skill's own governing principle is
+that a wrong action costs more than a missing one, and a flag the coach can see beats a
+guess they cannot.
+
+Kickup, the worst play in the book, went from 0.33 to 0.79; Kansas 0.54 to 0.88. The
+specific beat Samuel complained about — Relax beat 2 sending the ball 3 → 1 → 3 — is
+simply gone.
+
+Two supporting changes came out of this:
+
+- **A provider seam.** `vision.py` reduces a model to "image and prompt in, text and
+  tokens out". Everything else was already provider-agnostic. Gemini is preferred when
+  both keys are set. The narrow seam is what made the A/B possible at all.
+- **Per-frame failure isolation.** A dropped connection on frame 30 of 36 killed the
+  entire run. Frames now retry with backoff, and one that still fails is flagged for
+  review instead of taking the import down with it.
+
+The candidate file was deleted after adoption rather than kept alongside, for the reason
+recorded on 2026-08-12: unused play JSON in `src/data/` invites someone to import the
+wrong file.
+
+Rules out: reading a diagram as a set of straight lines between known points. Shape is
+part of the play.
+
 ## 2026-08-15 — Phase 5 review: confidence ordering, and confirming means saving
 
 `src/lib/review/`, `src/components/review/ReviewFlow.tsx`, `/coach/review`.

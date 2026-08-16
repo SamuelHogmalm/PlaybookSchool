@@ -102,6 +102,7 @@ def run_derive_pipeline(plays: list[dict]) -> tuple[list[dict], dict]:
         "zero_travel_screens": 0,
         "pass_cut_flags": 0,
         "holder_cut_flags": 0,
+        "bent_paths": 0,
         "per_play": [],
     }
 
@@ -123,6 +124,7 @@ def run_derive_pipeline(plays: list[dict]) -> tuple[list[dict], dict]:
         totals["zero_travel_screens"] += len(summary["zero_travel_flagged"])
         totals["pass_cut_flags"] += len(summary["pass_cut_flagged"])
         totals["holder_cut_flags"] += len(summary["holder_cuts_flagged"])
+        totals["bent_paths"] += summary.get("bent_paths", 0)
         totals["per_play"].append(
             {
                 "play": p["name"],
@@ -160,9 +162,14 @@ async def main() -> None:
 
     parser = argparse.ArgumentParser(description="Re-run interpret with current skill file")
     parser.add_argument(
+        "--provider",
+        default=None,
+        help="gemini | anthropic (default: auto-detect from the keys in .env)",
+    )
+    parser.add_argument(
         "--model",
-        default=INTERPRET_MODEL,
-        help=f"Anthropic model (default: {INTERPRET_MODEL})",
+        default=None,
+        help="Model id. Defaults to the provider's own default.",
     )
     parser.add_argument(
         "--out",
@@ -170,13 +177,21 @@ async def main() -> None:
         default=DEFAULT_OUT,
         help=f"Output JSON path (default: {DEFAULT_OUT.name})",
     )
+    parser.add_argument(
+        "--plays",
+        default=None,
+        help="Comma-separated play names — run a couple before spending the whole book.",
+    )
     args = parser.parse_args()
     out_json: Path = args.out
     meta_json = out_json.with_name(out_json.stem + "-meta.json")
 
     load_dotenv(ENV_PATH)
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("ERROR: ANTHROPIC_API_KEY not set in services/importer/.env", file=sys.stderr)
+    if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")):
+        print(
+            "ERROR: set GEMINI_API_KEY or ANTHROPIC_API_KEY in services/importer/.env",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     if not PDF_PATH.is_file():
@@ -186,6 +201,13 @@ async def main() -> None:
     print("=== Stage 1: Parse PDF ===")
     parser_plays = parse(str(PDF_PATH))
     seed_names = {p["name"] for p in json.loads(V1_JSON.read_text(encoding="utf-8"))}
+    if args.plays:
+        wanted = {n.strip() for n in args.plays.split(",") if n.strip()}
+        unknown = wanted - seed_names
+        if unknown:
+            print(f"ERROR: unknown play(s): {', '.join(sorted(unknown))}", file=sys.stderr)
+            sys.exit(1)
+        seed_names = wanted
     plays = [p for p in parser_plays if p["name"] in seed_names]
     frame_count = sum(len(p["beats"]) for p in plays)
     print(f"  {len(plays)} plays, {frame_count} frames (matching seed book)")
@@ -207,19 +229,30 @@ async def main() -> None:
             print(f"    {m}", file=sys.stderr)
 
     print(f"\n=== Stage 3: AI interpretation ({frame_count} frames) ===")
-    print(f"  Model: {args.model}")
     plays_copy = copy.deepcopy(plays)
-    result = await interpret_plays(plays_copy, crops, model=args.model)
+    result = await interpret_plays(
+        plays_copy, crops, model=args.model, provider=args.provider
+    )
     usage = result["usage"]
-    model = result.get("model", os.environ.get("ANTHROPIC_MODEL", "unknown"))
+    provider = result.get("provider", "unknown")
+    model = result.get("model", "unknown")
     in_tok = usage["input_tokens"]
     out_tok = usage["output_tokens"]
-    cost = (in_tok / 1_000_000) * INPUT_COST_PER_M + (out_tok / 1_000_000) * OUTPUT_COST_PER_M
-    print(f"  Model: {model}")
+    print(f"  Provider: {provider}")
+    print(f"  Model:    {model}")
     print(f"  Input tokens:  {in_tok:,}")
     print(f"  Output tokens: {out_tok:,}")
     print(f"  Total tokens:  {in_tok + out_tok:,}")
-    print(f"  Est. cost:     ${cost:.4f}  (@ ${INPUT_COST_PER_M}/M in, ${OUTPUT_COST_PER_M}/M out)")
+    cost: float | None = None
+    if provider == "anthropic":
+        cost = (
+            (in_tok / 1_000_000) * INPUT_COST_PER_M
+            + (out_tok / 1_000_000) * OUTPUT_COST_PER_M
+        )
+        print(
+            f"  Est. cost:     ${cost:.4f}  "
+            f"(@ ${INPUT_COST_PER_M}/M in, ${OUTPUT_COST_PER_M}/M out)"
+        )
     if result.get("needs_review"):
         print(f"  Beats flagged needs_review: {len(result['needs_review'])}")
 
@@ -234,7 +267,13 @@ async def main() -> None:
     print(f"  Wrote {out_json}")
 
     print("\n=== V1 baseline (re-derive stripped seed) ===")
-    v1_raw = json.loads(V1_JSON.read_text(encoding="utf-8"))
+    # Same plays only, or a two-play trial would be compared against all twelve.
+    v1_raw = [
+        p
+        for p in json.loads(V1_JSON.read_text(encoding="utf-8"))
+        if p["name"] in seed_names
+    ]
+    print(f"  {len(v1_raw)} plays")
     _, v1_stats = run_derive_pipeline(v1_raw)
 
     label = out_json.stem.replace("plays-interpreted-", "") or "new"
@@ -246,6 +285,7 @@ async def main() -> None:
         ("Short-movement drops", v1_stats["short_dropped"], new_stats["short_dropped"]),
         ("Inserted passes", v1_stats["inserted_passes"], new_stats["inserted_passes"]),
         ("Zero-travel screens flagged", v1_stats["zero_travel_screens"], new_stats["zero_travel_screens"]),
+        ("Bent routes (3+ points)", v1_stats["bent_paths"], new_stats["bent_paths"]),
         ("Pass+cut flags (derive)", v1_stats["pass_cut_flags"], new_stats["pass_cut_flags"]),
         ("Pass+cut conflicts (validate)", count_pass_cut_conflicts(v1_raw), count_pass_cut_conflicts(new_exported)),
         ("Ball-handler cut flags", v1_stats["holder_cut_flags"], new_stats["holder_cut_flags"]),
@@ -266,9 +306,12 @@ async def main() -> None:
         )
 
     sidecar = {
+        "provider": provider,
         "model": model,
         "usage": usage,
-        "cost_usd": round(cost, 4),
+        # Only priced for Anthropic; Gemini billing is not modelled here.
+        "cost_usd": round(cost, 4) if cost is not None else None,
+        "plays": sorted(seed_names),
         "v1": v1_stats,
         "new": new_stats,
         "pass_cut_conflicts_v1": count_pass_cut_conflicts(v1_raw),

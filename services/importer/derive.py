@@ -38,6 +38,48 @@ def _simple_path(start: dict[str, float], end: dict[str, float]) -> list[dict[st
     return [{"x": start["x"], "y": start["y"]}, {"x": end["x"], "y": end["y"]}]
 
 
+# A turning point this close to the line it is supposed to bend is not a corner, it is
+# a hand-drawn wobble. Bending the route through it would add noise, not shape.
+VIA_MIN_DEVIATION = 12
+
+
+def _perp_distance(
+    p: dict[str, float], a: dict[str, float], b: dict[str, float]
+) -> float:
+    dx, dy = b["x"] - a["x"], b["y"] - a["y"]
+    len_sq = dx * dx + dy * dy
+    if len_sq == 0:
+        return _dist(p, a)
+    cross = abs(dy * p["x"] - dx * p["y"] + b["x"] * a["y"] - b["y"] * a["x"])
+    return cross / math.sqrt(len_sq)
+
+
+def _path_via(
+    start: dict[str, float],
+    end: dict[str, float],
+    via: list[dict[str, float]] | None,
+) -> list[dict[str, float]]:
+    """Route from start to end through the model's turning points.
+
+    The endpoints come from the parser and are trusted; only the corners come from the
+    model, and any that sit on the straight line are discarded. This is the one place a
+    bent arrow survives into the data — everything downstream just samples the polyline.
+    """
+    corners = [
+        {"x": float(p["x"]), "y": float(p["y"])}
+        for p in (via or [])
+        if isinstance(p, dict) and "x" in p and "y" in p
+    ]
+    kept = [c for c in corners if _perp_distance(c, start, end) >= VIA_MIN_DEVIATION]
+    if not kept:
+        return _simple_path(start, end)
+    return [
+        {"x": start["x"], "y": start["y"]},
+        *kept,
+        {"x": end["x"], "y": end["y"]},
+    ]
+
+
 def _beat_positions(beat: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     """Start and end positions for one beat (startPos -> pos within beat)."""
     start_pos = beat.get("startPos") or beat.get("pos") or {}
@@ -581,7 +623,7 @@ def enrich_action_paths(beats: list[dict[str, Any]]) -> int:
             b = end_pos.get(pid)
             if not a or not b:
                 continue
-            action["path"] = _simple_path(a, b)
+            action["path"] = _path_via(a, b, action.pop("via", None))
             enriched += 1
     return enriched
 
@@ -610,6 +652,16 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
     sanitize_removed += sanitize_actions(beats)
     ball_repairs += derive_ball(beats)
 
+    # `via` is an input to path building, not part of the saved Action. Anything the
+    # model attached to an action that never got a path (a pass, a dropped movement)
+    # would otherwise ride along into the seed file.
+    bent_paths = 0
+    for beat in beats:
+        for action in beat.get("actions") or []:
+            action.pop("via", None)
+            if len(action.get("path") or []) >= 3:
+                bent_paths += 1
+
     actions_after = count_actions(beats)
     derived_remaining = sum(
         1
@@ -629,6 +681,7 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
         "zero_travel_flagged": zero_travel_flagged,
         "screen_changes": screen_changes,
         "paths_enriched": paths_enriched,
+        "bent_paths": bent_paths,
         "holder_cuts_flagged": holder_cuts_flagged,
         "pass_cut_flagged": pass_cut_flagged,
         "sanitize_removed": sanitize_removed,
