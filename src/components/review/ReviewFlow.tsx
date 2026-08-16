@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { CourtRenderer } from "@/components/court";
+import { PlayEditorSurface, usePlayEditor } from "@/components/builder";
 import { confirmPlayActions } from "@/lib/play/actionOps";
 import {
   describeSaveFailure,
@@ -17,17 +18,26 @@ type Props = { plays: Play[] };
 type Status = "pending" | "saving" | "confirmed";
 
 export function ReviewFlow({ plays }: Props) {
+  // The queue is scored from the plays as imported, so it does not reshuffle underneath
+  // the coach as they fix things. Re-scoring on every keystroke would move the play
+  // they are working on.
   const queue = useMemo(() => reviewPlaybook(plays), [plays]);
   const byId = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
 
   const [index, setIndex] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const [failure, setFailure] = useState<SaveFailure | null>(null);
-  const [beatIndex, setBeatIndex] = useState(0);
   const [selectedFlag, setSelectedFlag] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const review: PlayReview | undefined = queue[index];
-  const play = review ? byId.get(review.playId) : undefined;
+  const source = review ? byId.get(review.playId) : undefined;
+
+  // The same editor the builder uses — not a copy of it. Resets when the play changes.
+  const editor = usePlayEditor(source ?? plays[0]);
+  const play = editor.play;
+  const beatIndex = editor.beatIndex;
+  const setBeatIndex = editor.setBeatIndex;
   const status = review ? (statuses[review.playId] ?? "pending") : "pending";
   const confirmedCount = Object.values(statuses).filter(
     (s) => s === "confirmed",
@@ -38,6 +48,7 @@ export function ReviewFlow({ plays }: Props) {
     setBeatIndex(0);
     setSelectedFlag(null);
     setFailure(null);
+    setEditing(false);
   };
 
   const confirm = async () => {
@@ -46,7 +57,7 @@ export function ReviewFlow({ plays }: Props) {
     setStatuses((s) => ({ ...s, [review.playId]: "saving" }));
 
     // Confirming clears the review flags — that is what makes it a coach's play
-    // rather than the importer's guess.
+    // rather than the importer's guess. Whatever they edited goes with it.
     const cleared = confirmPlayActions(play);
 
     try {
@@ -69,12 +80,13 @@ export function ReviewFlow({ plays }: Props) {
     }
   };
 
-  if (!review || !play) {
+  if (!review || !source || !play) {
     return <p className="text-sm text-stone-400">No plays to review.</p>;
   }
 
   const beat = play.beats[Math.min(beatIndex, play.beats.length - 1)];
   const flagsThisBeat = review.flagged.filter((f) => f.beatIndex === beatIndex);
+  const edited = play !== source;
 
   return (
     <div className="space-y-6">
@@ -164,17 +176,38 @@ export function ReviewFlow({ plays }: Props) {
         </figure>
 
         <figure className="space-y-1">
-          <figcaption className="text-xs uppercase tracking-wide text-stone-500">
-            What we read
+          <figcaption className="flex items-center justify-between text-xs uppercase tracking-wide text-stone-500">
+            <span>{editing ? "Fixing it" : "What we read"}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setEditing((e) => !e);
+                setSelectedFlag(null);
+              }}
+              className="rounded border border-stone-600 px-2 py-0.5 text-[11px] normal-case tracking-normal text-stone-300 hover:bg-stone-800"
+            >
+              {editing ? "Done editing" : "Fix this"}
+            </button>
           </figcaption>
-          <CourtRenderer
-            beat={beat}
-            showDestinations
-            highlightActionId={selectedFlag ?? undefined}
-            markerSuffix={`review-${play.id}-${beat.id}`}
-          />
+
+          {editing ? (
+            <PlayEditorSurface editor={editor} />
+          ) : (
+            <CourtRenderer
+              beat={beat}
+              showDestinations
+              highlightActionId={selectedFlag ?? undefined}
+              markerSuffix={`review-${play.id}-${beat.id}`}
+            />
+          )}
         </figure>
       </div>
+
+      {edited && (
+        <p role="status" className="text-sm text-amber-300">
+          You&rsquo;ve changed this play. Confirming saves your version, not the import&rsquo;s.
+        </p>
+      )}
 
       {flagsThisBeat.length > 0 && (
         <ul className="space-y-2">
