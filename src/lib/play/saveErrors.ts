@@ -39,7 +39,9 @@ export function describeSaveFailure(
     return {
       tone: "warn",
       title: "Coach account required",
-      detail: "Only coaches can add plays to a team's playbook.",
+      detail:
+        body.error ??
+        "Only coaches can add plays to a team's playbook. Check the role on the account you are signed in as — it must be exactly \"coach\".",
       errors: [],
     };
   }

@@ -117,7 +117,15 @@ export async function POST(request: Request) {
   if (!ctx.ok) return ctx.response;
 
   if (ctx.role !== "coach") {
-    return Response.json({ error: "Coach account required" }, { status: 403 });
+    // Naming the role that was found turns "why won't it save" into a one-line fix.
+    // The commonest causes are a capitalised value and being signed in as a second
+    // test account, and neither is guessable from "coach account required".
+    return Response.json(
+      {
+        error: `Coach account required — this account's role is "${ctx.role}".`,
+      },
+      { status: 403 },
+    );
   }
 
   let incoming: Play;

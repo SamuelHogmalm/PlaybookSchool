@@ -30,6 +30,9 @@ export async function GET(request) {
     return NextResponse.redirect(new URL(next, request.url));
   }
 
-  // Coach/player apps quarantined in _legacy/ during rebuild — land on home after login.
-  return NextResponse.redirect(new URL("/", request.url));
+  // Land somewhere you can actually do your job. This used to send everyone to "/"
+  // because the coach and player routes were quarantined in _legacy/ — which made a
+  // successful login look exactly like a failed one.
+  const home = role === "coach" ? "/coach/review" : "/player/quiz";
+  return NextResponse.redirect(new URL(home, request.url));
 }
