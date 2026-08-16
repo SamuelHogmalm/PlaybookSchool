@@ -100,7 +100,11 @@ assign, or quiz on an invalid play.** Show the coach exactly what's wrong.
     not read from the page. They should stay well under a third of total actions
     across a playbook. Above that ratio, the import is guessing more than reading —
     tighten the interpret prompt or review derivation rules.
-12. **Pass and cut on same beat (warning).** A player may not have both a
+12. ~~**Pass and cut on same beat (warning).**~~ **Withdrawn 2026-08-16.** Pass-then-cut
+    is legal and unambiguous — see dependency rule 3. Asking the coach whether the cut
+    "should have been a dribble" was the largest single source of review flags in the
+    imported book, and the notation already answers it. Historical text: A player may
+    not have both a
     pass/handoff and a cut on the same beat. Flag for review — the cut may be a
     misread dribble or belong to the next beat. Does not block save while seed
     data is being re-imported.
@@ -207,7 +211,12 @@ last action ends at 1.0:
 
 1. A screener arrives and is set before the player they screen for starts moving.
 2. A screener's roll or pop begins after the cutter has cleared.
-3. A pass releases only after the **passer's own** movement (cut, dribble, or screen travel) is complete — you throw from where you stand.
+3. A pass releases only after the passer's own **dribble** is complete — you throw from
+   where you stand, and it is the dribble that decides where that is. Their **cut or
+   screen happens after the release**: a player travelling with the ball is drawn as a
+   dribble, so a cut attributed to the passer can only be the move they make once their
+   hands are empty. (Corrected 2026-08-16; this rule previously made the pass wait for
+   the cut, which had the ball arrive after the passer had already left.)
 4. A pass releases only after the receiver's movement is at least 60% complete.
 5. A receiver must catch before they can pass, dribble, or hand off.
 

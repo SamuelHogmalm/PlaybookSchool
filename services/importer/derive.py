@@ -575,37 +575,20 @@ def flag_holder_cuts(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def flag_pass_and_cut(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Same player cannot pass/handoff and cut on one beat."""
-    flagged: list[dict[str, Any]] = []
+    """Pass-then-cut is legal and unambiguous — nothing to flag.
 
-    for beat in beats:
-        by_player: dict[str, list[dict[str, Any]]] = {}
-        for action in beat.get("actions") or []:
-            pid = str(action.get("by") or "")
-            if not pid:
-                continue
-            by_player.setdefault(pid, []).append(action)
+    This used to mark every pass and cut by the same player on one beat as needing
+    review, asking whether the cut was really a dribble. The notation already answers
+    that: a player travelling *with* the ball is drawn as a dribble, so a cut by the
+    passer is necessarily the move they make after releasing it, and `sequenceBeat`
+    orders it that way.
 
-        for pid, actions in by_player.items():
-            has_transfer = any(a.get("type") in TRANSFERS for a in actions)
-            has_cut = any(a.get("type") == "cut" for a in actions)
-            if not has_transfer or not has_cut:
-                continue
-            for action in actions:
-                if action.get("type") not in {"pass", "handoff", "cut"}:
-                    continue
-                action["needsReview"] = True
-                action["reason"] = PASS_AND_CUT_REASON
-                flagged.append(
-                    {
-                        "beat": beat.get("id"),
-                        "action": action.get("id"),
-                        "player": pid,
-                        "type": action.get("type"),
-                    }
-                )
-
-    return flagged
+    It was the single largest source of review flags in the book and not one of them
+    was a real question. The function stays so the pipeline's summary keeps its shape;
+    it simply has nothing to report.
+    """
+    del beats
+    return []
 
 
 def enrich_action_paths(beats: list[dict[str, Any]]) -> int:

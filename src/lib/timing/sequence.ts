@@ -94,15 +94,28 @@ function applyDependencies(timed: TimedAction[], actions: Action[]): void {
     }
   }
 
+  /*
+   * A passer's dribble comes *before* the pass; their cut or screen comes *after*.
+   *
+   * The notation settles this. A player travelling with the ball is drawn as a dribble
+   * — squiggle, not a solid arrow. So a *cut* attributed to the passer can only be the
+   * move they make once their hands are empty, and forcing the pass to wait for it (as
+   * this rule used to) had the ball arrive after the passer had already left.
+   *
+   * You still throw from where you stand: it is the dribble that decides where that is.
+   */
   for (const pass of timed.filter(
     (a) => a.type === "pass" || a.type === "handoff",
   )) {
-    const passerMove = timed.find((a) => a.by === pass.by && isMovement(a));
-    if (passerMove) {
-      pass.startAt = Math.max(pass.startAt, passerMove.endAt);
+    const dribble = timed.find(
+      (a) => a.by === pass.by && a.type === "dribble",
+    );
+    if (dribble) {
+      pass.startAt = Math.max(pass.startAt, dribble.endAt);
       if (pass.endAt <= pass.startAt) pass.endAt = pass.startAt + 0.15;
     }
   }
+
 
   for (const pass of timed.filter(
     (a) => a.type === "pass" || a.type === "handoff",
@@ -144,6 +157,20 @@ function applyDependencies(timed: TimedAction[], actions: Action[]): void {
         a.startAt = Math.max(a.startAt, screen.endAt);
         a.endAt = Math.max(a.endAt, a.startAt + 0.45);
       }
+    }
+  }
+
+  // Last, because the rules above move passes later — a receiver has to be open before
+  // the ball is thrown. Placing the passer's cut against a pass time that then shifts
+  // would put them moving before they had released it.
+  for (const pass of timed.filter(
+    (a) => a.type === "pass" || a.type === "handoff",
+  )) {
+    for (const move of timed) {
+      if (move.by !== pass.by) continue;
+      if (move.type !== "cut" && move.type !== "screen") continue;
+      move.startAt = Math.max(move.startAt, pass.endAt);
+      if (move.endAt <= move.startAt) move.endAt = move.startAt + 0.45;
     }
   }
 

@@ -113,9 +113,7 @@ describe("sequencing", () => {
     assert.equal(total, move + HOLD_MS);
   });
 
-  it("a pass releases only after the passer's own movement completes", () => {
-    // You throw from where you stand. Checked across the whole book rather than
-    // against one play's action ids, which move whenever the import is re-run.
+  it("a pass releases after the passer's dribble — you throw from where you stand", () => {
     let checked = 0;
 
     for (const raw of seedPlays as SeedPlay[]) {
@@ -123,22 +121,48 @@ describe("sequencing", () => {
         const timed = sequenceBeat(beat);
         for (const pass of timed) {
           if (pass.type !== "pass" && pass.type !== "handoff") continue;
-          const move = timed.find(
-            (a) =>
-              a.by === pass.by &&
-              (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+          const dribble = timed.find(
+            (a) => a.by === pass.by && a.type === "dribble",
           );
-          if (!move) continue;
+          if (!dribble) continue;
           checked++;
           assert.ok(
-            pass.startAt >= move.endAt - 0.001,
+            pass.startAt >= dribble.endAt - 0.001,
             `${raw.name} ${beat.id}: ${pass.type} starts at ${pass.startAt.toFixed(2)} ` +
-              `but the passer is still moving until ${move.endAt.toFixed(2)}`,
+              `but the passer is still dribbling until ${dribble.endAt.toFixed(2)}`,
           );
         }
       }
     }
 
-    assert.ok(checked > 0, "no passer-also-moves case in the seed to check");
+    assert.ok(checked > 0, "no passer-also-dribbles case in the seed to check");
+  });
+
+  it("a passer's cut happens after the release, never before", () => {
+    // A player moving with the ball is drawn as a dribble, so a cut attributed to the
+    // passer can only be the move they make once their hands are empty.
+    let checked = 0;
+
+    for (const raw of seedPlays as SeedPlay[]) {
+      for (const beat of normalizeSeedPlay(raw).beats) {
+        const timed = sequenceBeat(beat);
+        for (const pass of timed) {
+          if (pass.type !== "pass" && pass.type !== "handoff") continue;
+          for (const move of timed) {
+            if (move.by !== pass.by) continue;
+            if (move.type !== "cut" && move.type !== "screen") continue;
+            checked++;
+            assert.ok(
+              move.startAt >= pass.endAt - 0.001,
+              `${raw.name} ${beat.id}: player ${pass.by} starts a ${move.type} at ` +
+                `${move.startAt.toFixed(2)} but has not released the ball until ` +
+                `${pass.endAt.toFixed(2)}`,
+            );
+          }
+        }
+      }
+    }
+
+    assert.ok(checked > 0, "no passer-also-cuts case in the seed to check");
   });
 });

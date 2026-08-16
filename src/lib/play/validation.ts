@@ -213,25 +213,15 @@ function validateBeatTransition(
   }
 }
 
-function validateActionConflicts(
-  beat: Beat,
-  beatIdx: number,
-  warnings: string[],
-): void {
-  const label = `Beat ${beatIdx + 1} (${beat.id})`;
-
-  // Rule 12 — pass/handoff and cut by same player on one beat (warning only)
-  for (const id of PLAYER_IDS) {
-    const acts = beat.actions.filter((a) => a.by === id);
-    const hasTransfer = acts.some((a) => isTransfer(a.type));
-    const hasCut = acts.some((a) => a.type === "cut");
-    if (hasTransfer && hasCut) {
-      warnings.push(
-        `${label}: player ${id} has both pass/handoff and cut — should the cut be a dribble, or belong to the next beat?`,
-      );
-    }
-  }
-}
+/*
+ * Rule 12 used to warn when a player both passed and cut on one beat, asking whether
+ * the cut should have been a dribble or belonged to the next beat.
+ *
+ * It is not ambiguous. A player travelling with the ball is drawn as a dribble, so a
+ * cut by the passer is necessarily the move they make after releasing it — which is
+ * now what `sequenceBeat` does. Asking the coach to resolve a question the notation
+ * already answers was 25 of the seed's warnings and none of them were real.
+ */
 
 /**
  * A pass this long is almost certainly a misread, not a play.
@@ -376,7 +366,6 @@ export function validatePlay(play: Play): ValidationResult {
   for (let i = 0; i < play.beats.length; i++) {
     validateBeatStructure(play.beats[i], i, errors);
     validateWithinBeatMovement(play.beats[i], i, errors);
-    validateActionConflicts(play.beats[i], i, warnings);
   }
 
   validateFirstBeatActions(play.beats[0], errors);

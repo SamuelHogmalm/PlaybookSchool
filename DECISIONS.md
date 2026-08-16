@@ -480,6 +480,42 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-16 — A passer cuts *after* the release, and rule 12 is withdrawn
+
+`applyDependencies` in `src/lib/timing/sequence.ts`. Corrects dependency rule 3 and
+withdraws rule 12 in `MASTER-BUILD-PLAN.md`.
+
+Samuel's call, and the argument is from the notation rather than from taste: **a player
+travelling with the ball is drawn as a dribble, not a cut.** So a cut attributed to a
+passer can only be the move they make once their hands are empty.
+
+The engine had it backwards. Rule 3 made a pass wait for *any* movement by the passer,
+so a pass-then-cut animated as cut-then-pass — the ball arriving after the passer had
+already left the spot they threw from.
+
+Now:
+
+- The passer's **dribble** still comes first. You throw from where you stand, and the
+  dribble is what decides where that is.
+- The passer's **cut or screen** is pushed after the release.
+
+Ordering within `applyDependencies` matters and cost a test to discover: the pass→cut
+rule has to run **last**, because the receiver-open rule pushes passes later. Placing
+the cut against a pass time that then shifts put the player moving before they had let
+go of the ball.
+
+**Rule 12 is withdrawn.** It warned "player passes and cuts on the same beat — should
+the cut be a dribble, or belong to the next beat?" That question has an answer, and
+asking the coach to resolve it was the largest single source of review noise: seed
+warnings fell from 20 to 8. `flag_pass_and_cut` in `derive.py` is now a no-op, so future
+imports stop generating it too.
+
+Existing `needsReview` flags carrying that reason are baked into the current seed and
+will only clear on a re-import.
+
+Rules out: treating a legal, notation-determined ordering as something for the coach to
+adjudicate. Flags are for genuine ambiguity; anything else trains people to ignore them.
+
 ## 2026-08-16 — The importer can draw a bend, and the seed is re-interpreted on Gemini
 
 `via` in `docs/skills/play-interpretation.md`, `_path_via()` in `derive.py`,
