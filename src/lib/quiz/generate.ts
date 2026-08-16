@@ -162,20 +162,156 @@ export function generateSpots(play: Play, rng: Rng): SpotQuestion[] {
   return shuffle(out, rng);
 }
 
+/** Short phrase for an action, for multiple-choice options. */
+function describeAction(action: {
+  type: string;
+  by: PlayerId;
+  for?: PlayerId;
+}): string {
+  switch (action.type) {
+    case "screen":
+      return `Player ${action.by} screens for ${action.for}`;
+    case "pass":
+      return `Player ${action.by} passes to ${action.for}`;
+    case "handoff":
+      return `Player ${action.by} hands off to ${action.for}`;
+    case "dribble":
+      return `Player ${action.by} dribbles`;
+    default:
+      return `Player ${action.by} cuts`;
+  }
+}
+
+/**
+ * "What does player X do next?"
+ *
+ * Only asked about a player with exactly one action on the beat, so the answer cannot
+ * be argued with. Distractors are never invented: another player's real action on the
+ * same beat, or the same player's real action from a different one.
+ */
+export function generateNextActions(play: Play, rng: Rng): ChoiceQuestion[] {
+  const out: ChoiceQuestion[] = [];
+  const suspect = new Set(suspectTransfers(play).map((s) => s.actionId));
+
+  play.beats.forEach((beat, beatIndex) => {
+    // Needs a lead-in: "what happens next" is meaningless from a standing start.
+    if (beatIndex === 0) return;
+
+    for (const id of PLAYER_IDS) {
+      const mine = beat.actions.filter((a) => a.by === id);
+      if (mine.length !== 1) continue;
+      const answer = mine[0];
+      if (!isTrustworthy(answer) || suspect.has(answer.id)) continue;
+
+      const elsewhere = play.beats
+        .flatMap((b, i) => (i === beatIndex ? [] : b.actions))
+        .filter((a) => a.by === id && isTrustworthy(a));
+      const others = beat.actions.filter(
+        (a) => a.by !== id && isTrustworthy(a),
+      );
+
+      const answerLabel = describeAction(answer);
+      const seen = new Set([answerLabel]);
+      const distractors: string[] = [];
+      for (const candidate of [...elsewhere, ...others]) {
+        const label = describeAction(candidate);
+        if (seen.has(label)) continue;
+        seen.add(label);
+        distractors.push(label);
+        if (distractors.length === 3) break;
+      }
+      if (distractors.length < 2) continue;
+
+      const choices = shuffle(
+        [answerLabel, ...distractors].map((label, i) => ({
+          id: `c${i}`,
+          label,
+        })),
+        rng,
+      );
+
+      out.push({
+        id: `${play.id}-${beat.id}-${id}-next`,
+        playId: play.id,
+        playName: play.name,
+        type: "next-action",
+        askAtBeat: beatIndex,
+        revealToBeat: beatIndex,
+        subject: id,
+        prompt: `What does player ${id} do next?`,
+        choices,
+        answerId: choices.find((c) => c.label === answerLabel)!.id,
+      });
+    }
+  });
+
+  return out;
+}
+
+/**
+ * "Which play is this?" — the whole thing animates with the name hidden.
+ *
+ * One per play, and only where there are enough other plays to choose from; three
+ * options drawn from the same playbook is the minimum that tests recognition rather
+ * than elimination.
+ */
+export function generateIdentify(
+  play: Play,
+  playbook: Play[],
+  rng: Rng,
+): ChoiceQuestion[] {
+  const others = playbook.filter((p) => p.valid && p.id !== play.id);
+  if (others.length < 3) return [];
+
+  const picked = shuffle(others, rng).slice(0, 3);
+  const choices = shuffle(
+    [play, ...picked].map((p) => ({ id: p.id, label: p.name })),
+    rng,
+  );
+
+  return [
+    {
+      id: `${play.id}-identify`,
+      playId: play.id,
+      playName: play.name,
+      type: "identify",
+      askAtBeat: play.beats.length - 1,
+      revealToBeat: play.beats.length - 1,
+      prompt: "Which play is this?",
+      choices,
+      answerId: play.id,
+    },
+  ];
+}
+
 /**
  * Every question a play can currently produce.
  *
  * Invalid plays are skipped outright — never quiz on a play that does not validate.
+ * `playbook` is only needed for questions that draw options from other plays.
  */
-export function generateForPlay(play: Play, seed = seedFrom(play.id)): Question[] {
+export function generateForPlay(
+  play: Play,
+  seed = seedFrom(play.id),
+  playbook: Play[] = [],
+): Question[] {
   if (!play.valid) return [];
   const rng = makeRng(seed);
-  return [...generatePassTargets(play, rng), ...generateSpots(play, rng)];
+  return [
+    ...generatePassTargets(play, rng),
+    ...generateNextActions(play, rng),
+    ...generateIdentify(play, playbook, rng),
+    ...generateSpots(play, rng),
+  ];
 }
 
 export function generateForPlays(plays: Play[], seed?: number): Question[] {
   return plays.flatMap((play) =>
-    generateForPlay(play, seed === undefined ? undefined : seed + seedFrom(play.id)),
+    generateForPlay(
+      play,
+      seed === undefined ? undefined : seed + seedFrom(play.id),
+      plays,
+    ),
   );
 }
 

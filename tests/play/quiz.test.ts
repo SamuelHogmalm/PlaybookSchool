@@ -4,6 +4,8 @@ import { describe, it } from "node:test";
 import {
   generateForPlay,
   generateForPlays,
+  generateIdentify,
+  generateNextActions,
   generatePassTargets,
   generateSpots,
   SPOT_TOLERANCE,
@@ -152,6 +154,88 @@ describe("question generation — spots", () => {
         assert.ok(q.revealToBeat < play.beats.length);
       }
     }
+  });
+});
+
+describe("question generation — next action", () => {
+  it("only asks about a player with exactly one action on the beat", () => {
+    for (const play of PLAYS) {
+      for (const q of generateNextActions(play, rng())) {
+        const mine = play.beats[q.askAtBeat].actions.filter(
+          (a) => a.by === q.subject,
+        );
+        assert.equal(
+          mine.length,
+          1,
+          `${q.id}: player ${q.subject} has ${mine.length} actions — the answer is arguable`,
+        );
+      }
+    }
+  });
+
+  it("never asks from beat 1 — there is nothing to have watched yet", () => {
+    for (const play of PLAYS) {
+      for (const q of generateNextActions(play, rng())) {
+        assert.ok(q.askAtBeat > 0, `${q.id} asks before anything has happened`);
+      }
+    }
+  });
+
+  it("offers distinct options with exactly one correct", () => {
+    for (const play of PLAYS) {
+      for (const q of generateNextActions(play, rng())) {
+        const labels = q.choices.map((c) => c.label);
+        assert.equal(new Set(labels).size, labels.length, `${q.id} repeats an option`);
+        assert.equal(q.choices.filter((c) => c.id === q.answerId).length, 1);
+        assert.ok(q.choices.length >= 3);
+      }
+    }
+  });
+
+  it("describes the answer as the action that really happens", () => {
+    for (const play of PLAYS) {
+      for (const q of generateNextActions(play, rng())) {
+        const answer = q.choices.find((c) => c.id === q.answerId)!;
+        assert.ok(
+          answer.label.includes(`Player ${q.subject}`),
+          `${q.id}: answer "${answer.label}" is not about the subject`,
+        );
+      }
+    }
+  });
+});
+
+describe("question generation — identify", () => {
+  it("gives one question per play, answered by that play", () => {
+    for (const play of PLAYS) {
+      const [q] = generateIdentify(play, PLAYS, rng());
+      assert.ok(q, `${play.name} produced no identify question`);
+      assert.equal(q.answerId, play.id);
+      assert.equal(q.prompt, "Which play is this?");
+    }
+  });
+
+  it("offers four real plays from the same book", () => {
+    const names = new Set(PLAYS.map((p) => p.name));
+    for (const play of PLAYS) {
+      const [q] = generateIdentify(play, PLAYS, rng());
+      assert.equal(q.choices.length, 4);
+      for (const choice of q.choices) {
+        assert.ok(names.has(choice.label), `${choice.label} is not a play in the book`);
+      }
+      assert.equal(new Set(q.choices.map((c) => c.id)).size, 4);
+    }
+  });
+
+  it("runs the whole play — you cannot name it from the opening alignment", () => {
+    for (const play of PLAYS) {
+      const [q] = generateIdentify(play, PLAYS, rng());
+      assert.equal(q.askAtBeat, play.beats.length - 1);
+    }
+  });
+
+  it("produces nothing when there are too few plays to choose between", () => {
+    assert.deepEqual(generateIdentify(PLAYS[0], PLAYS.slice(0, 3), rng()), []);
   });
 });
 

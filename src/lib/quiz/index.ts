@@ -13,6 +13,8 @@ export { isChoice, isSpot } from "./types";
 export {
   generateForPlay,
   generateForPlays,
+  generateIdentify,
+  generateNextActions,
   generatePassTargets,
   generateSpots,
   SPOT_TOLERANCE,

@@ -176,32 +176,55 @@ export function ReviewFlow({ plays }: Props) {
         </figure>
 
         <figure className="space-y-1">
-          <figcaption className="flex items-center justify-between text-xs uppercase tracking-wide text-stone-500">
-            <span>{editing ? "Fixing it" : "What we read"}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setEditing((e) => !e);
-                setSelectedFlag(null);
-              }}
-              className="rounded border border-stone-600 px-2 py-0.5 text-[11px] normal-case tracking-normal text-stone-300 hover:bg-stone-800"
-            >
-              {editing ? "Done editing" : "Fix this"}
-            </button>
+          <figcaption className="text-xs uppercase tracking-wide text-stone-500">
+            What we read
           </figcaption>
-
-          {editing ? (
-            <PlayEditorSurface editor={editor} />
-          ) : (
-            <CourtRenderer
-              beat={beat}
-              showDestinations
-              highlightActionId={selectedFlag ?? undefined}
-              markerSuffix={`review-${play.id}-${beat.id}`}
-            />
-          )}
+          <CourtRenderer
+            beat={beat}
+            showDestinations
+            highlightActionId={selectedFlag ?? undefined}
+            markerSuffix={`review-${play.id}-${beat.id}`}
+          />
         </figure>
       </div>
+
+      {/*
+        Full width and below the comparison, not tucked beside it. Editing needs the
+        palette, the court and the selected-action panel all visible at once, and the
+        coach has just decided what is wrong by looking at the two images above.
+      */}
+      <section className="space-y-3 rounded-md border border-stone-700 bg-stone-900/40 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-medium">
+            {editing
+              ? `Editing beat ${beatIndex + 1}`
+              : "Doesn't match the diagram?"}
+          </h3>
+          <button
+            type="button"
+            onClick={() => {
+              setEditing((e) => !e);
+              setSelectedFlag(null);
+            }}
+            className={`rounded border px-4 py-2 text-sm ${
+              editing
+                ? "border-stone-500 hover:bg-stone-800"
+                : "border-amber-600 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20"
+            }`}
+          >
+            {editing ? "Done editing" : "Fix this play"}
+          </button>
+        </div>
+
+        {editing ? (
+          <PlayEditorSurface editor={editor} />
+        ) : (
+          <p className="text-sm text-stone-400">
+            Redraw a route, delete an action the importer invented, or change the order
+            things happen in — the same tools as the builder.
+          </p>
+        )}
+      </section>
 
       {edited && (
         <p role="status" className="text-sm text-amber-300">
