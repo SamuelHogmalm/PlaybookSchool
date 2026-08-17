@@ -480,6 +480,43 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-17 — A re-import was rejected; the withdrawn flags were cleared directly
+
+`scripts/clear-withdrawn-flags.ts`.
+
+With rule 12 withdrawn and `derive.py` no longer emitting it, the obvious move was to
+re-import so the stale flags cleared. The comparison said no:
+
+| | seed | candidate |
+|---|---|---|
+| **Plays valid** | **12** | **11** |
+| Unsure (`needsReview`) | 35 | 21 |
+| Review flags | 46 | 38 |
+| Derived (invented) | 6 | 8 |
+| Avg confidence | 0.85 | 0.79 |
+
+`Horns` beat 3 came back with a screen and no player to screen for. "Never save, animate,
+assign, or quiz on a play where `valid` is false" is not a metric to trade against, so
+the candidate was rejected and deleted.
+
+The lesson is about the method rather than the model: **re-interpretation re-rolls every
+read in the book.** Running it to fix a bookkeeping problem risks twelve plays to correct
+a flag, and this time it cost one. Gemini being effectively free makes a re-run cheap,
+not safe.
+
+So the flags were cleared where they lived. 25 of 36 `needsReview` flags carried the
+withdrawn rule-12 reason; removing exactly those left the reads untouched:
+
+- Review flags 46 → 24, unsure 35 → 11, average confidence 0.85 → 0.90.
+- The quiz pool grew 186 → 236, because the trust filter had been refusing to ask about
+  actions flagged by a rule that should never have flagged them.
+
+The script is kept and takes a dry run by default, because withdrawing a rule and
+leaving its flags behind is a mistake that will recur.
+
+Rules out: re-importing as a way to change bookkeeping. Re-import when the *reading*
+should change; edit the data when the *rules* changed.
+
 ## 2026-08-16 — A passer cuts *after* the release, and rule 12 is withdrawn
 
 `applyDependencies` in `src/lib/timing/sequence.ts`. Corrects dependency rule 3 and
