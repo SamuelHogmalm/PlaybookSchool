@@ -39,6 +39,8 @@ Importer service (separate Python process, not on Vercel):
 
 ```bash
 cd services/importer && .venv/Scripts/activate && uvicorn main:app --reload --port 8000
+.venv/Scripts/python.exe -m unittest -v   # derive stage tests (stdlib, no deps)
+.venv/Scripts/python.exe smoke_vision.py  # one real vision call: key, model, JSON mode
 ```
 
 Data-pipeline scripts under `scripts/` are run directly (`python scripts/re-derive-seed.py`,

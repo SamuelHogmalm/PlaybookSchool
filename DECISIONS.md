@@ -480,6 +480,34 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-17 — A malformed screen is repaired, never emitted
+
+`repair_targetless_screens()` in `services/importer/derive.py`.
+
+The rejected candidate run failed on one action: a screen in `Horns` beat 3 with nobody
+to screen for. `validatePlay` rejects that outright, so a single malformed action took
+the whole book from 12/12 to 11/12 and cost the entire re-import.
+
+The importer now repairs it rather than emitting it. A screen is set in the path of a
+teammate who cuts off it, so the screener finishes near whoever uses it:
+
+1. **Infer** the nearest teammate who actually moves during the beat, within 120 units.
+   Flagged for review, because it is a guess.
+2. If nobody plausible moved, the mark was more likely a **cut** — a screen nobody uses
+   is not a screen.
+3. If the player did not travel either, **drop** it. Better a missing action than an
+   invented one.
+
+Only teammates who move are candidates. A stationary player standing next to the screen
+did not cut off it, and picking them by proximity alone would look right and be wrong.
+
+Tested with stdlib `unittest` in `services/importer/test_derive.py` — the importer had no
+test setup and did not need a dependency to get one. Nine cases, including that a
+well-formed screen is left untouched.
+
+Rules out: discovering a malformed action by spending a whole re-import. Anything the
+pipeline can emit that `validatePlay` rejects is a pipeline bug, not a data problem.
+
 ## 2026-08-17 — A re-import was rejected; the withdrawn flags were cleared directly
 
 `scripts/clear-withdrawn-flags.ts`.

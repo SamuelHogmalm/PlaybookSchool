@@ -10,22 +10,7 @@ Last reviewed 2026-08-17.
 
 ---
 
-## 1. Stop the importer emitting a screen with nobody to screen for
-
-**Small, and it cost a re-import.**
-
-The 2026-08-17 candidate run was rejected because `Horns` beat 3 came back with a screen
-and no `for` player — which `validatePlay` rejects outright, taking the whole book from
-12/12 to 11/12.
-
-`derive.py` already reclassifies a screen that travels too far into a cut. It should also
-handle a screen with no target: either infer the nearest plausible cutter, or downgrade
-it to a cut, rather than emitting something that cannot validate. One malformed action
-should not disqualify a play.
-
-Until this exists, every re-import is a coin flip on twelve plays.
-
-## 2. Persist a builder draft
+## 1. Persist a builder draft
 
 **Medium change, removes a real way to lose work.**
 
@@ -37,7 +22,7 @@ checkpoint, would cover crash and refresh. Note this sits against the rule that
 localStorage is only for the logged-out demo, so it needs an explicit exception: a draft
 is not progress data, and it is not the record of the play — Postgres still is.
 
-## 3. Quiz persistence
+## 2. Quiz persistence
 
 **Blocked on nothing but a decision about scope.**
 
@@ -49,7 +34,7 @@ it counted.
 Worth doing soon: without it there is no weakness weighting, and without weakness
 weighting the quiz is a shuffle rather than a teacher.
 
-## 4. The remaining two question types
+## 3. The remaining two question types
 
 `draw` and `sequence`. Four of six exist now — `spot`, `pass-target`, `next-action`,
 `identify` — and the pool is 236 questions across twelve plays.
@@ -60,7 +45,7 @@ beats in order) is cheap and would add variety.
 
 Neither is urgent now the type mix is healthy.
 
-## 5. Make motion follow the smoothed curve
+## 4. Make motion follow the smoothed curve
 
 **Touches the timing singleton. Do it only if the gap is ever visible.**
 
@@ -72,7 +57,7 @@ Closing it means `positionsAt` sampling the spline. That is the function every c
 depends on, and its purity is why the animator and builder agree. Not worth the risk for
 an invisible improvement.
 
-## 6. Enforce rule 11 where it can actually be enforced
+## 5. Enforce rule 11 where it can actually be enforced
 
 Spec rule 11 caps derived actions at "well under a third" across a playbook.
 `validatePlay()` does not implement it, because it validates one play and the ratio is a
@@ -84,7 +69,7 @@ and there will be more set-level rules later (duplicate names, per-category cove
 
 Currently 6 derived actions of 104 — well inside the cap either way.
 
-## 7. Keyboard drawing
+## 6. Keyboard drawing
 
 **Genuine feature. Not a defect.**
 
@@ -96,7 +81,7 @@ a patch.
 Worth doing eventually: coaches use laptops on buses, and a trackpad drag on a moving
 vehicle is genuinely hard.
 
-## 8. "Previous beat as faded ghosts"
+## 7. "Previous beat as faded ghosts"
 
 **Specified, never built.**
 
@@ -106,7 +91,7 @@ destination ghosts that were replaced by routes.
 A real orientation aid when editing beat 4 of 6. Now that `DestinationRoutes` exists, the
 natural implementation is the same treatment applied to `beats[n-1]` at low opacity.
 
-## 9. Unify action id formats
+## 8. Unify action id formats
 
 **Cosmetic, but it makes ids untrustworthy.**
 
@@ -117,7 +102,7 @@ Verified not to collide: uid-form ids never match `^a\d+$`. Confusing rather tha
 Note that action ids are only unique *within a beat* — that has already caused one bug,
 in review flag deduplication.
 
-## 10. Component-level tests
+## 9. Component-level tests
 
 **The largest remaining coverage gap.**
 
@@ -137,3 +122,7 @@ and `tsx`.
   cut; overall pace is set by beat duration, raised 25%.
 - **Inline editing in review** (was §5-adjacent) — built 2026-08-16. Review uses the
   builder's own editor via `usePlayEditor`, not a second one.
+- **Screens with no target** (was §1) — fixed 2026-08-17. `repair_targetless_screens`
+  infers the nearest moving teammate, downgrades to a cut when nobody uses it, and drops
+  the action when the player did not travel either. Covered by
+  `services/importer/test_derive.py`.

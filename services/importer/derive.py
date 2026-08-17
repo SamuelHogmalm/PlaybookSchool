@@ -489,6 +489,108 @@ def merge_split_screens(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return merged
 
 
+# A screen is set in a teammate's path, so the screener finishes near whoever uses it.
+SCREEN_TARGET_MAX = 120
+TARGETLESS_SCREEN_REASON = "Screen had no target — inferred the nearest moving teammate"
+UNUSED_SCREEN_REASON = "Read as a screen but nobody uses it — treated as a cut"
+
+
+def repair_targetless_screens(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Never emit a screen with nobody to screen for.
+
+    `validatePlay` rejects one outright, so a single malformed action disqualifies the
+    whole play — which is what happened to Horns on the 2026-08-17 candidate run and cost
+    the entire re-import.
+
+    A screen is set in the path of a teammate who cuts off it, so the screener ends up
+    near that teammate. Where a plausible one exists it is inferred and flagged for the
+    coach. Where none does, the mark was more likely a cut than a screen, so it becomes
+    one — and if the player did not travel either, the action is dropped rather than
+    invented.
+    """
+    repairs: list[dict[str, Any]] = []
+
+    for beat in beats:
+        start_pos, end_pos = _beat_positions(beat)
+        drop: list[dict[str, Any]] = []
+
+        for action in beat.get("actions") or []:
+            if action.get("type") != "screen":
+                continue
+            target = action.get("for")
+            if target is not None and str(target) in PLAYER_IDS:
+                continue
+
+            pid = str(action.get("by") or "")
+            screener_end = end_pos.get(pid) or start_pos.get(pid)
+            if not screener_end:
+                continue
+
+            # Whoever uses a screen has to move; a stationary teammate did not cut off it.
+            best: str | None = None
+            best_dist = float(SCREEN_TARGET_MAX)
+            for other in PLAYER_IDS:
+                if other == pid:
+                    continue
+                a = start_pos.get(other)
+                b = end_pos.get(other)
+                if not a or not b or _dist(a, b) < REAL_MOVE_MIN:
+                    continue
+                d = _dist(screener_end, b)
+                if d < best_dist:
+                    best_dist = d
+                    best = other
+
+            if best:
+                action["for"] = best
+                action["needsReview"] = True
+                action["reason"] = TARGETLESS_SCREEN_REASON
+                repairs.append(
+                    {
+                        "beat": beat.get("id"),
+                        "action": action.get("id"),
+                        "player": pid,
+                        "inferred_for": best,
+                        "distance": round(best_dist),
+                        "outcome": "inferred",
+                    }
+                )
+                continue
+
+            a = start_pos.get(pid)
+            b = end_pos.get(pid)
+            travel = _dist(a, b) if a and b else 0.0
+
+            if travel >= REAL_MOVE_MIN:
+                action["type"] = "cut"
+                action.pop("for", None)
+                action["needsReview"] = True
+                action["reason"] = UNUSED_SCREEN_REASON
+                repairs.append(
+                    {
+                        "beat": beat.get("id"),
+                        "action": action.get("id"),
+                        "player": pid,
+                        "outcome": "cut",
+                    }
+                )
+            else:
+                drop.append(action)
+                repairs.append(
+                    {
+                        "beat": beat.get("id"),
+                        "action": action.get("id"),
+                        "player": pid,
+                        "outcome": "dropped",
+                    }
+                )
+
+        if drop:
+            beat["actions"] = [a for a in beat["actions"] if a not in drop]
+
+    return repairs
+
+
 def flag_zero_travel_screens(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Flag idle screens with no N-1 cut to merge — coach must verify."""
     flagged: list[dict[str, Any]] = []
@@ -627,6 +729,8 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
     holder_dribbles = derive_holder_dribbles(beats)
     movement_derived = derive_movement_actions(beats)
     split_merged = merge_split_screens(beats)
+    # Before the flaggers: a screen with no target is malformed, not merely suspicious.
+    screens_repaired = repair_targetless_screens(beats)
     zero_travel_flagged = flag_zero_travel_screens(beats)
     screen_changes = reclassify_traveling_screens(beats)
     paths_enriched = enrich_action_paths(beats)
@@ -662,6 +766,7 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
         "movement_derived": movement_derived,
         "split_merged": split_merged,
         "zero_travel_flagged": zero_travel_flagged,
+        "screens_repaired": screens_repaired,
         "screen_changes": screen_changes,
         "paths_enriched": paths_enriched,
         "bent_paths": bent_paths,
