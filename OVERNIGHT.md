@@ -1,176 +1,112 @@
-# Overnight run — 13 August 2026
+# Session log — 13–17 August 2026
 
-Eleven commits, `9f3fbd9..ede4b02`, 34 files, +2310 / −201. All pushed to `origin/main`.
+30 commits, `9f3fbd9..HEAD`, 87 files, +8754 / −1932. All pushed to `origin/main`.
 
-Everything in the brief was completed. Nothing was blocked, so there is no `BLOCKED.md`.
+**Verified at the end:**
 
-**Verified at the end of the run:**
-
-| Check | Before | After |
+| Check | Start | Now |
 |---|---|---|
-| `npm test` | 70 pass | **161 pass**, 0 fail |
+| `npm test` | 70 pass | **244 pass**, 0 fail |
 | `npm run build` | clean | clean |
-| `npm run lint` | **3 errors**, 17 warnings | **0 errors**, 8 warnings |
-| `npm run test:seed` | not run | 12/12 valid |
+| `npm run lint` | **3 errors**, 17 warnings | **0 errors**, 7 warnings |
+| `npm run test:seed` | not run | 12/12 valid, 8 warnings |
 
-The 8 remaining lint warnings are all outside the play engine (scripts, auth `.js`, the
-landing page). None are new.
-
----
-
-## The five items
-
-### 1. `CLAUDE.md` — audited whole, three things were wrong
-
-- Documented `plays-interpreted-v2/v3.json` as "kept for comparison". They were deleted
-  in `3aee652`, the same night they were created.
-- Said rule 11 (derived-action ratio) was enforced by `validatePlay()`, **in two
-  places**. It is not, and cannot be — it is a property of a whole playbook and
-  validation runs on one play. It is a canary test over the seed.
-- Put the hoop and lane constants in `src/lib/play/geometry.ts`. They are in
-  `src/lib/court/courtLines.ts`.
-
-Added: the builder history invariant, the save endpoint and its migration, the
-`middleware.js → proxy.js` rename, a `DECISIONS.md` pointer, and a state section saying
-active work is Phase 2 rather than Phase 4.
-
-### 2. Arrow smoothing — done, in one place rather than two
-
-Ramer–Douglas–Peucker reduces a stroke to ≤12 points when the action is committed;
-`pathToSvgD` renders those points as a Catmull-Rom spline emitted as cubic Béziers.
-
-The brief asked for it "in BOTH `pathToSvgD` and the animator's route rendering". It
-turned out one change covers three surfaces: `ActionLayer` (builder), `RouteLayer`
-(animator) and `DrawPreview` (the live stroke) all call `pathToSvgD`. Making them
-identical was a matter of not adding a second path renderer.
-
-Both halves preserve endpoints exactly — RDP can only drop points, Catmull-Rom
-interpolates its control points. 16 tests, including that the endpoints survive.
-
-**Known limit, documented:** motion samples the chords between retained points, so a
-token cuts fractionally inside its own drawn curve. Bounded by the RDP epsilon and not
-visible at playback size. Closing it means changing `positionsAt` — the singleton — so I
-left it and wrote it into `PROPOSALS.md`.
-
-### 3. Live drawing — done, plus a bug the brief did not mention
-
-Every pointer move now writes the action through `upsertDrawnAction`, which rewrites one
-action by id instead of appending per frame. Frames go through `replacePresent` (no undo
-step) with a `checkpoint` on a 400 ms debounce — the debounce you sanctioned, and it was
-needed.
-
-Token dragging turned out to be worse than drawing: it called `mutate` on every pointer
-move, so dragging a player across the court pushed **dozens** of undo steps. Same fix.
-
-**Two action types are held back, for data reasons rather than effort.** A screen needs
-the player it is set for, which the coach picks *after* the stroke. A pass needs a
-receiver, unknown until the cursor finds one. Writing either early puts an action into
-the play that `validatePlay` rejects and flashes errors mid-stroke. Passes start writing
-the moment a receiver is under the cursor.
-
-**Bug found and fixed:** `removeAction` reset a player's position when their movement was
-deleted but never touched `beat.ball`. Deleting a pass left the beat holding a ball that
-arrived by no visible means, failing rules 3 and 4 on a play the coach thought they had
-just cleaned up. Rollback of an abandoned stroke depends on removal being complete, which
-is how it surfaced.
-
-### 4. Ghosts → routes — done, and it made a validation problem visible
-
-`BeatGhostMarkers` is gone. `DestinationRoutes` draws travel toward `beat.pos` through
-the same `pathToSvgD` the animator uses.
-
-Players who already have a movement action are skipped, because `ActionLayer` draws their
-route and a second line along it is just heavier. What remains is travel with no action to
-explain it — which is exactly what validation rule 9 objects to. The old ghost looked the
-same whether the play was valid or not; the route makes the problem visible.
-
-Move mode keeps a grab ring at each destination. The instruction text now reads "drag the
-ring at the end of a player's route" instead of naming ghosts.
-
-Selection logic is `unexplainedTravel()` in `actionGeometry.ts` so it is testable — 6
-tests. Two of them failed first and were **my** error, not the code's: on beat 1
-`updateBeatPlayerPos` deliberately moves `startPos` too, because beat 1's `startPos` *is*
-the opening alignment.
-
-### 5. `movementActionForPlayer` — deleted
-
-The `/dev/animator` beat table now lists every movement per player ("screen → roll") with
-a timing window each, which is what the Phase 3 checkpoint asks you to confirm by eye.
+The 7 remaining lint warnings are all outside the play engine. `DECISIONS.md` has 31
+entries.
 
 ---
 
-## Fallback work
+## What exists now
 
-### Test coverage: 70 → 161
+**Coach:** `/plays/new` builds a play from scratch; `/coach/review` walks the imported
+book worst-first with the source diagram beside our render, edits inline with the
+builder's own tools, and saves to Postgres on confirm.
 
-New: `normalizeSeedPlay` (the untested seed producer — 14 tests pinning the rule that a
-beat's `pos` comes from the *next* beat's `startPos`), `samplePolyline` (arc-length not
-per-segment, which every animated position depends on), the easing curves, snap/clamp/
-`clientToCourt`, `nearestPlayerAt`, hit testing, and `playerBeatMove`.
+**Player:** `/player/quiz` runs a session of up to 12 questions across four types, with
+the four-phase lead-in → ask → reveal → result loop.
 
-### Bugs found
+**Dev:** `/dev/animator`, `/dev/court`, `/dev/repairs`.
 
-**Undo after "add beat" blanked the entire builder.** The most serious thing found all
-night. `beatIndex` was not clamped when undo shrank the play, so `play.beats[2]` was
-`undefined` and `if (!beat) return null` unmounted everything — *including the beat strip
-you would need to select a different beat*. Unrecoverable without a reload. The index is
-now clamped on read.
-
-**Strokes ended at the sideline.** `EditableCourt` treated `pointerleave` as
-`pointerup`, so drawing through the sideline and back finished the stroke at the edge.
-Both gestures set pointer capture, which guarantees `pointerup` is delivered off-court,
-so the leave handler was unnecessary. `pointerCancel` now handles a gesture actually
-being taken away. **Not verified in a browser — reasoned from the pointer-capture spec.**
-
-**Lint had been failing on `main`.** Three errors in `usePlayPlayback.ts`, all
-pre-existing. Two were refs written during render — a real defect, since React can
-discard and replay a render and the ref keeps the discarded value. Fixed properly rather
-than suppressed.
-
-**Dribble easing contradicts its own comment.** Documented as "~70% of cut speed", it
-leads the cut curve at every point. Both lanes are 0.60 wide, so the curve is the cause:
-`Math.pow(t, 0.85)` compresses early time instead of stretching it. **Left unchanged** —
-changing a motion curve changes how all twelve seed plays animate, and that is your call,
-not a cleanup. Pinned by a test that says so. → `PROPOSALS.md` item 1.
-
-**Checked, not a bug:** action-id collision after `duplicateBeat`. Uid-form ids never
-match `^a\d+$`, so `nextActionId` always returns a free id. Confusing, not broken.
-
-### Error states
-
-`/plays/new` had no error boundary — a throw anywhere in the play engine left a blank
-page. It has one now, and the copy is honest that resetting discards the play, because
-the builder holds it in component state and there is no draft persistence. I did not want
-it promising a recovery that does not exist. `/dev/animator` no longer assumes the seed
-file is non-empty.
-
-### Accessibility
-
-Scope call: labelling and announcements are a defect and were fixed; a keyboard-drawable
-court is a feature nobody asked for and went to `PROPOSALS.md`.
-
-`ValidationBanner` was three separate elements swapped between states, so the live region
-appeared at the same moment as its content — the case screen readers commonly do not
-announce. It is now one always-mounted region, `alert`/`assertive` for errors and
-`status`/`polite` otherwise. Palette tools became labelled toggle buttons using
-`aria-disabled` rather than `disabled`, so the tooltip explaining *why* a tool is off
-stays reachable — that explanation is the whole teaching mechanism behind the ball gate.
-Player tokens are focusable and selectable with Enter/Space. Undo/redo got real labels
-and `aria-keyshortcuts`.
+Phases 1–5 are in. Phase 8 is four question types of six, without persistence.
 
 ---
 
-## Things for you
+## The three things that mattered
 
-1. **The dribble easing question** (`PROPOSALS.md` §1) is the only one I could not decide
-   without you: is a dribble meant to lag a cut, or lead it?
-2. **Two changes want a real browser.** The pointer-capture change and the whole live-draw
-   flow were verified through their pure functions and then reasoned about. `npm run dev`
-   → `/plays/new`: draw a cut through the sideline and back; draw and abandon a stroke,
-   then check Ctrl+Z does not step through it; drag a token and check one Ctrl+Z returns
-   it.
-3. **`DECISIONS.md` now has 20 entries.** Ten reconstructed from git and your note, ten
-   written as the work happened. Worth a skim to check I recorded your reasoning about
-   v1/v2/v3 the way you actually meant it.
-4. **`PROPOSALS.md` §8** is the honest gap: 161 tests and not one drives a component. The
-   undo-blanks-the-builder bug is precisely the class that lives there.
+### The importer could not draw a bend
+
+Every one of the 82 movement actions in the book was a straight line. The interpret
+skill's output schema had no field for where an arrow *turns*, so `derive.py` drew
+start-to-end and the shape was lost — and the first leg of a bent cut got read as a pass
+to whoever the player was moving toward, which is where the phantom pass-backs came from.
+The flattened cuts and the impossible ping-pong passes were one defect.
+
+Fixed by adding `via` (the corners of a bent arrow) and re-interpreting on Gemini.
+Derived actions 21 → 6, warnings 27 → 20, bent routes 0 → 14, still 12/12 valid.
+
+### A passer was cutting before they let go of the ball
+
+Dependency rule 3 made a pass wait for *any* movement by the passer, so pass-then-cut
+animated backwards. The notation settles it: a player travelling with the ball is drawn
+as a dribble, so a cut by the passer can only be the move after the release.
+
+That also withdrew rule 12, which had been asking coaches to resolve a question the
+notation already answers — 25 of 36 review flags, none of them real.
+
+### Undo could destroy the builder
+
+Add a beat, press Ctrl+Z, and `beatIndex` pointed past the end of the play: the whole
+builder unmounted, including the beat strip needed to recover. Unrecoverable without a
+reload.
+
+---
+
+## Everything else, briefly
+
+**Builder.** Arrow smoothing (RDP + Catmull-Rom through one renderer, so drawn and played
+routes are the same curve). Live drawing — the play updates as you draw, with undo steps
+coalesced on a 400 ms debounce. Token drags were pushing dozens of undo steps each.
+Destination ghosts replaced by routes. Steps: a beat plays one thing at a time and the
+coach groups actions that happen together.
+
+**Timing.** Movement 25% slower; a dribble paced exactly like a cut. A player's own
+movements never overlap and chain end-to-start.
+
+**Quiz.** Engine, runner, and four question types. Questions are refused on anything
+derived, unreviewed, or flagged implausible — an answer has to be both true and
+observable.
+
+**Review.** Confidence ordering worst-first, crop against render, flags highlighted on
+the court, confirm-saves-to-Postgres, inline editing via the builder's own hook.
+
+**Import.** Provider seam; Gemini support; per-frame retry so one dropped connection
+stops losing a 36-frame run.
+
+**Bugs found and fixed.** Deleting a pass left possession with the receiver. Strokes
+ended at the sideline. Refs written during render in the playback hook. A three-point arc
+hydration mismatch from emitting raw floats. Login redirected everyone to `/`, making a
+successful login look like a failure.
+
+---
+
+## What's next
+
+`PROPOSALS.md` has the full list. The three that matter:
+
+1. **Stop the importer emitting a screen with no target.** It is why the 17 Aug re-import
+   was rejected — one malformed action took the book from 12/12 to 11/12. Until it is
+   fixed, every re-import is a coin flip on twelve plays.
+2. **Quiz persistence.** `attempts` and `mastery` are empty. Without them there is no
+   weakness weighting, and the quiz is a shuffle rather than a teacher.
+3. **Component tests.** 244 tests and not one drives a component. Every UI bug this week
+   was found by a human looking at the screen.
+
+## Open questions for Samuel
+
+- **Screens that end in a horizontal bar** — raised on 16 Aug and not acted on, because
+  I could not tell whether it meant the bar marks travel-then-set as one action, or
+  something about ordering against a pass.
+- **Are the review flags useful?** 24 across twelve plays now. If they are crying wolf
+  the thresholds should loosen.
+- **Confirmed plays belong to `coach@test.playbookschool.dev`** — the seeded test account.
+  Fine for now, worth knowing before real players see anything.

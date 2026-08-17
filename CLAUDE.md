@@ -17,7 +17,8 @@ undoing something that looks arbitrary. Add an entry when a choice closes off an
 alternative someone might reasonably try again later.
 
 `PROPOSALS.md` holds work deliberately *not* done, with the reasoning to decide against
-it quickly. `OVERNIGHT.md` is the log of the 13 Aug session.
+it quickly. `OVERNIGHT.md` logs the 13–17 Aug run: what shipped, what broke, and the
+questions still open.
 
 ## Commands
 
@@ -153,14 +154,17 @@ before replacing the seed rather than swapping it in. See `DECISIONS.md`.
 
 ## State of the build
 
-Phases 1–3 (foundation, builder, timing engine + animator) are in. Phase 4 (PDF import) runs
-end-to-end against the real playbook; the seed in `src/data/plays-interpreted.json` came from
-it and validates 12/12.
+Phases 1–5 are in. The seed in `src/data/plays-interpreted.json` came from the import
+pipeline and validates 12/12.
 
-Active work is Phase 2 polish — builder drawing, undo/redo, save error states — not Phase 4.
-Treat further import-pipeline work as out of scope unless asked for directly.
+- **Phase 2** builder at `/plays/new` — drawing, live updates, undo/redo, steps, save.
+- **Phase 5** review at `/coach/review` — worst-first queue, source crop against our
+  render, inline editing via the builder's own editor, confirm saves to Postgres.
+- **Phase 8** is partial: `src/lib/quiz/` generates four of six question types and
+  `/player/quiz` runs sessions, but nothing is persisted — `attempts` and `mastery` are
+  empty.
 
-Phases 5–9 (review UI, teams, assignments, quiz engine, progress) are not built.
-`src/lib/quiz/` is a one-line stub, and there are no `coach/` or `player/` routes: the app
-routes that exist are `/`, `/login`, `/signup`, `/auth/enter`, `/plays/new`, and the three
-`/dev/*` harnesses.
+Phases 6, 7 and 9 (teams, assignments, progress) are not built.
+
+The editor is shared: `usePlayEditor` + `PlayEditorSurface` back both the builder and
+review. There is no second editor, and adding one would be a mistake — see `DECISIONS.md`.
