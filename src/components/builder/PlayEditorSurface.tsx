@@ -18,8 +18,16 @@ import type { PlayEditor } from "./usePlayEditor";
 
 type Props = {
   editor: PlayEditor;
-  /** Thin the court down to the last few steps — for drawing a whole play in one pass. */
+  /**
+   * Thin the court down to the last few steps.
+   *
+   * Not tied to which mode the builder is in: a beat with six moves is cluttered
+   * whether it was just drawn or is being edited, and the coach is the one who knows
+   * whether they want context or the whole picture.
+   */
   recentOnly?: boolean;
+  /** Supplied to show a control for it. */
+  onToggleRecentOnly?: () => void;
   /** Undo/redo buttons sit next to the tools, where the editing happens. */
   showHistoryControls?: boolean;
 };
@@ -34,6 +42,7 @@ export function PlayEditorSurface({
   editor,
   showHistoryControls = true,
   recentOnly = false,
+  onToggleRecentOnly,
 }: Props) {
   const {
     play,
@@ -104,6 +113,19 @@ export function PlayEditorSurface({
           </div>
         )}
       </div>
+
+      {onToggleRecentOnly && (
+        <button
+          type="button"
+          onClick={onToggleRecentOnly}
+          aria-pressed={recentOnly}
+          className="self-start rounded border border-stone-600 px-3 py-1 text-xs text-stone-300 hover:bg-stone-800"
+        >
+          {recentOnly
+            ? "Showing the last 2 moves — show all"
+            : "Showing every move — show just the last 2"}
+        </button>
+      )}
 
       {selectedPlayerId && (
         <p className="text-xs text-stone-500">

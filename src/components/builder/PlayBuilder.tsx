@@ -69,6 +69,11 @@ export function PlayBuilder() {
    * cut afterwards, which is a question about quizzing rather than about basketball.
    */
   const [mode, setMode] = useState<"draw" | "beats">("draw");
+  /**
+   * Kept out of `mode` deliberately. Breaking a play into beats used to switch modes and
+   * silently put every arrow back on the court, with no way to thin it again.
+   */
+  const [recentOnly, setRecentOnly] = useState(true);
 
   const onSave = async () => {
     setSaveState({ status: "saving" });
@@ -175,7 +180,11 @@ export function PlayBuilder() {
       </section>
 
       {preview === null ? (
-        <PlayEditorSurface editor={editor} recentOnly={mode === "draw"} />
+        <PlayEditorSurface
+          editor={editor}
+          recentOnly={recentOnly}
+          onToggleRecentOnly={() => setRecentOnly((on) => !on)}
+        />
       ) : (
         <section className="space-y-3">
           <PlayAnimator key={`${play.id}-${preview}`} play={play} from={0} playing />
