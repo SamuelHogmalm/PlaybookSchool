@@ -16,6 +16,8 @@ type Props = {
   palette: CourtPalette;
   markerSuffix?: string;
   highlightActionId?: string;
+  /** Draw only these actions. Omit for all of them. */
+  onlyActionIds?: ReadonlySet<string>;
 };
 
 function renderAction(
@@ -155,12 +157,17 @@ export function ActionLayer({
   palette,
   markerSuffix = "",
   highlightActionId,
+  onlyActionIds,
 }: Props) {
   if (!beat.actions.length) return null;
 
+  const shown = onlyActionIds
+    ? beat.actions.filter((a) => onlyActionIds.has(a.id))
+    : beat.actions;
+
   return (
     <g style={{ pointerEvents: "none" }}>
-      {beat.actions.map((action) =>
+      {shown.map((action) =>
         renderAction(beat, action, palette, markerSuffix, highlightActionId),
       )}
     </g>

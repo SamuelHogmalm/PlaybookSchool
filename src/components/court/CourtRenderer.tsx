@@ -27,6 +27,8 @@ export type CourtRendererProps = {
    */
   tokensAt?: "start" | "end";
   highlightActionId?: string;
+  /** Draw only these actions — a long play drawn in one pass is unreadable otherwise. */
+  onlyActionIds?: ReadonlySet<string>;
   highlightPlayerId?: PlayerId;
   /** Unique suffix when multiple courts share one page (SVG marker ids). */
   markerSuffix?: string;
@@ -50,6 +52,7 @@ export function CourtRenderer({
   draggingPlayer = null,
   tokensAt = "start",
   highlightActionId,
+  onlyActionIds,
   highlightPlayerId,
   markerSuffix = "",
   theme = "paper",
@@ -89,6 +92,7 @@ export function CourtRenderer({
           palette={palette}
           markerSuffix={markerSuffix}
           highlightActionId={highlightActionId}
+          onlyActionIds={onlyActionIds}
         />
         {/* Where they came from, when the tokens have moved on to the end state. */}
         {tokensAt === "end" && <OriginMarkers beat={beat} palette={palette} />}

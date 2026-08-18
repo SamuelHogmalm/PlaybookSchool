@@ -173,3 +173,32 @@ export function suggestedSplits(beat: Beat): number[] {
   }
   return out;
 }
+
+/** How many steps of a drawn sequence stay on the court behind you. */
+export const VISIBLE_STEPS_WHILE_DRAWING = 2;
+
+/**
+ * The actions worth drawing while a coach is building a sequence.
+ *
+ * A whole play drawn into one beat puts every arrow on one court, and by the sixth move
+ * it is unreadable — which defeats the point of drawing continuously. Only the last
+ * couple of steps stay visible, plus whatever the coach has selected, so clicking a move
+ * in the list brings its arrow back however far up the sequence it is.
+ *
+ * The play is unaffected: this is about what is on screen, not what is stored.
+ */
+export function recentActionIds(
+  beat: Beat,
+  options: { steps?: number; keep?: string | null } = {},
+): Set<string> {
+  const window = options.steps ?? VISIBLE_STEPS_WHILE_DRAWING;
+  const steps = stepsOf(beat);
+  const recent = new Set(steps.slice(-window));
+
+  const out = new Set<string>();
+  for (const action of beat.actions) {
+    const step = action.step ?? steps[0];
+    if (recent.has(step) || action.id === options.keep) out.add(action.id);
+  }
+  return out;
+}

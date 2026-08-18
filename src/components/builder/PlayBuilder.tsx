@@ -178,7 +178,7 @@ export function PlayBuilder() {
       </section>
 
       {preview === null ? (
-        <PlayEditorSurface editor={editor} />
+        <PlayEditorSurface editor={editor} recentOnly={mode === "draw"} />
       ) : (
         <section className="space-y-3">
           <PlayAnimator key={`${play.id}-${preview}`} play={play} from={0} playing />

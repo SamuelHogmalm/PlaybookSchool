@@ -7,6 +7,7 @@ import {
   setActionStep,
 } from "@/lib/play/actionOps";
 import { handoffCandidates } from "@/lib/play/handoff";
+import { recentActionIds } from "@/lib/play/splitBeats";
 import { beatSteps } from "@/lib/timing";
 import { currentHolder } from "@/lib/play/possession";
 
@@ -17,6 +18,8 @@ import type { PlayEditor } from "./usePlayEditor";
 
 type Props = {
   editor: PlayEditor;
+  /** Thin the court down to the last few steps — for drawing a whole play in one pass. */
+  recentOnly?: boolean;
   /** Undo/redo buttons sit next to the tools, where the editing happens. */
   showHistoryControls?: boolean;
 };
@@ -27,7 +30,11 @@ type Props = {
  * One component for the builder and for review, so a coach who learns to fix a play in
  * one place already knows how in the other.
  */
-export function PlayEditorSurface({ editor, showHistoryControls = true }: Props) {
+export function PlayEditorSurface({
+  editor,
+  showHistoryControls = true,
+  recentOnly = false,
+}: Props) {
   const {
     play,
     beat,
@@ -121,6 +128,11 @@ export function PlayEditorSurface({ editor, showHistoryControls = true }: Props)
         selectedActionId={selectedActionId}
         onSelectPlayer={setSelectedPlayerId}
         onSelectAction={setSelectedActionId}
+        onlyActionIds={
+          recentOnly
+            ? recentActionIds(beat, { keep: selectedActionId })
+            : undefined
+        }
         {...courtHandlers}
       />
 

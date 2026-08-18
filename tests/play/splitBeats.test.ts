@@ -4,12 +4,14 @@ import { describe, it } from "node:test";
 import {
   mergeBeatWithPrevious,
   positionsAfter,
+  recentActionIds,
   splitBeatAtStep,
   suggestedSplits,
 } from "../../src/lib/play/splitBeats.js";
 import {
   addDrawnAction,
   moveActionInSequence,
+  setActionStep,
 } from "../../src/lib/play/actionOps.js";
 import { createEmptyPlay } from "../../src/lib/play/beatOps.js";
 import { validatePlay } from "../../src/lib/play/validation.js";
@@ -216,5 +218,52 @@ describe("reordering the sequence", () => {
     chainHolds(split);
     const result = validatePlay({ ...play, beats: split });
     assert.equal(result.valid, true, result.errors.join("; "));
+  });
+});
+
+describe("thinning the court while drawing", () => {
+  it("keeps only the last two steps", () => {
+    const { beats } = longSequence();
+    const shown = recentActionIds(beats[0]);
+    const types = beats[0].actions
+      .filter((a) => shown.has(a.id))
+      .map((a) => a.type);
+    assert.deepEqual(types, ["cut", "cut"]);
+  });
+
+  it("brings back a selected move however far up the sequence", () => {
+    const { beats } = longSequence();
+    const dribble = beats[0].actions[0];
+    const shown = recentActionIds(beats[0], { keep: dribble.id });
+    assert.ok(shown.has(dribble.id), "the selected move should still be drawn");
+    assert.equal(shown.size, 3);
+  });
+
+  it("shows everything when the sequence is short", () => {
+    const play = createEmptyPlay();
+    const beats = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "3",
+      path: [play.beats[0].startPos["3"], { x: 300, y: 320 }],
+    });
+    assert.equal(recentActionIds(beats[0]).size, 1);
+  });
+
+  it("keeps moves that happen together in the same step", () => {
+    const { beats } = longSequence();
+    // Group the two cuts, then only one step of drawing remains behind them.
+    const grouped = setActionStep(beats, 0, beats[0].actions[3].id, 3);
+    const shown = recentActionIds(grouped[0], { steps: 1 });
+    const types = grouped[0].actions
+      .filter((a) => shown.has(a.id))
+      .map((a) => a.type);
+    assert.deepEqual(types, ["cut", "cut"], "grouped moves show or hide together");
+  });
+
+  it("changes nothing about the play itself", () => {
+    const { beats } = longSequence();
+    const before = JSON.stringify(beats);
+    recentActionIds(beats[0], { keep: beats[0].actions[0].id });
+    assert.equal(JSON.stringify(beats), before);
   });
 });

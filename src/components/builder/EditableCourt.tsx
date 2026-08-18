@@ -38,6 +38,8 @@ type Props = {
   /** A draw that ended without producing an action — anything live must be rolled back. */
   onDrawCancel: () => void;
   onScreenNeedsFor: (draft: { by: PlayerId; path: Vec[] }) => void;
+  /** Draw only these actions, so a long sequence stays readable. */
+  onlyActionIds?: ReadonlySet<string>;
 };
 
 type DrawState = {
@@ -59,6 +61,7 @@ export function EditableCourt({
   onDrawComplete,
   onDrawCancel,
   onScreenNeedsFor,
+  onlyActionIds,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingPlayer, setDraggingPlayer] = useState<PlayerId | null>(null);
@@ -317,6 +320,7 @@ export function EditableCourt({
       <CourtRenderer
         beat={beat}
         tokensAt="end"
+        onlyActionIds={onlyActionIds}
         showDestinations
         showDestinationHandles={tool === "move"}
         draggingPlayer={draggingPlayer}
@@ -366,7 +370,9 @@ export function EditableCourt({
           />
 
           {!drawing &&
-            actionHitPaths(beat).map(({ id, points }) => (
+            actionHitPaths(beat)
+              .filter(({ id }) => !onlyActionIds || onlyActionIds.has(id))
+              .map(({ id, points }) => (
               <path
                 key={`hit-${id}`}
                 // Hit testing follows the stored polyline, not the rendered curve — the
