@@ -1,4 +1,5 @@
 import { dist } from "./geometry";
+import { currentHolder } from "./possession";
 import type { ActionType, Beat, PlayerId, Vec } from "./types";
 import { PLAYER_IDS } from "./types";
 
@@ -45,10 +46,17 @@ export function canDrawAction(
         tooltip: "Select a player first, then draw from their token.",
       };
     }
-    if (playerId !== beat.startBall) {
+    // Possession as it stands *now*, not at the start of the beat. Draw a pass to 4 and
+    // 4 has the ball — refusing to let them dribble next, while the arrow saying so is
+    // on screen, is the tool disagreeing with the drawing.
+    const holder = currentHolder(beat);
+    if (playerId !== holder) {
       return {
         allowed: false,
-        tooltip: `Only player ${beat.startBall} has the ball at the start of this beat.`,
+        tooltip:
+          holder === beat.startBall
+            ? `Only player ${holder} has the ball on this beat.`
+            : `Player ${holder} has the ball now — ${beat.startBall} passed it away.`,
       };
     }
   }

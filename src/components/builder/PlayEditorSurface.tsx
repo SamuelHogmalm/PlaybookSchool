@@ -2,6 +2,7 @@
 
 import { confirmAction, removeAction, setActionStep } from "@/lib/play/actionOps";
 import { beatSteps } from "@/lib/timing";
+import { currentHolder } from "@/lib/play/possession";
 
 import { ActionPalette } from "./ActionPalette";
 import { EditableCourt } from "./EditableCourt";
@@ -94,7 +95,8 @@ export function PlayEditorSurface({ editor, showHistoryControls = true }: Props)
       {selectedPlayerId && (
         <p className="text-xs text-stone-500">
           Selected player {selectedPlayerId}
-          {beat.startBall === selectedPlayerId ? " (has ball)" : ""}
+          {/* Who holds it now, after anything already drawn on this beat. */}
+          {currentHolder(beat) === selectedPlayerId ? " (has ball)" : ""}
         </p>
       )}
 

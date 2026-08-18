@@ -7,6 +7,7 @@ import {
   MAX_SCREENER_MOVE,
   playerMove,
 } from "./geometry";
+import { holderAfterActions } from "./possession";
 import type { Action, Beat, Play, PlayerId, ValidationResult } from "./types";
 import { ACTION_TYPES, PLAYER_IDS } from "./types";
 
@@ -26,18 +27,6 @@ function isTransfer(type: Action["type"]): boolean {
   return type === "pass" || type === "handoff";
 }
 
-/** Simulate possession through beat actions; returns final holder. */
-function holderAfterActions(start: PlayerId, actions: Action[]): PlayerId {
-  let holder = start;
-  for (const a of actions) {
-    if (a.type === "pass" || a.type === "handoff") {
-      if (a.for) holder = a.for;
-    } else if (a.type === "dribble") {
-      holder = a.by;
-    }
-  }
-  return holder;
-}
 
 function validateBeatStructure(beat: Beat, beatIdx: number, errors: string[]): void {
   const label = `Beat ${beatIdx + 1} (${beat.id})`;

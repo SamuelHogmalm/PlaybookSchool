@@ -480,6 +480,33 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — Possession is one function, and the draw gate reads it live
+
+`src/lib/play/possession.ts`.
+
+Samuel hit this editing Openkickbacks: he deleted a bogus pass, drew the correct one from
+1 to 4, and then **could not make 4 dribble.** The tool insisted 4 did not have the ball
+while an arrow saying otherwise was on the screen.
+
+`canDrawAction` gated on `beat.startBall` — possession at the *start* of the beat.
+Drawing a pass sets `beat.ball`, not `startBall`, so the gate never saw it.
+
+Fixed by gating on possession as it stands after the actions already drawn. The tooltip
+now distinguishes the two cases, because "only player 1 has the ball" is bewildering when
+you have just watched 1 pass it away.
+
+The same logic existed in **three** places — `validation.ts`, `actionOps.ts`, and now the
+gate would have been a fourth. They had drifted: validation also treated a dribble as
+claiming possession, which is harmless there but wrong for `removeAction`, where deleting
+a pass would have left the ball with a receiver who merely dribbled afterwards. All three
+now call `holderAfterActions`.
+
+This is the failure the architecture rules already name — "if positions or validity are
+computed in two places, one of them is wrong". Possession belongs on that list.
+
+Rules out: reading `beat.startBall` to decide what a coach may draw. The beat is being
+edited; the answer has to be current.
+
 ## 2026-08-17 — A malformed screen is repaired, never emitted
 
 `repair_targetless_screens()` in `services/importer/derive.py`.

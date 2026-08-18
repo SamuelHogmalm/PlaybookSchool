@@ -1,4 +1,5 @@
 import type { Action, ActionType, Beat, Play, PlayerId, Vec } from "./types";
+import { holderAfterActions } from "./possession";
 import { cloneBeats, linkBeatBall, linkBeatPositions } from "./beatOps";
 import { pathLength, simplifyPath } from "./drawing";
 
@@ -182,14 +183,6 @@ function chainPlayerMovements(beat: Beat, playerId: PlayerId): void {
   beat.pos[playerId] = { ...anchor };
 }
 
-/** Possession at beat end, from startBall and whatever transfers remain, in order. */
-function recomputeBeatBall(beat: Beat): void {
-  let holder = beat.startBall;
-  for (const a of beat.actions) {
-    if ((a.type === "pass" || a.type === "handoff") && a.for) holder = a.for;
-  }
-  beat.ball = holder;
-}
 
 export function removeAction(
   beats: Beat[],
@@ -205,7 +198,7 @@ export function removeAction(
   // that arrived by no visible means, and rules 3 and 4 fail on a play the coach
   // thinks they just cleaned up.
   if (removed && (removed.type === "pass" || removed.type === "handoff")) {
-    recomputeBeatBall(beat);
+    beat.ball = holderAfterActions(beat.startBall, beat.actions);
   }
 
   // Deleting a movement undoes the travel it explained. With others left, the rest
