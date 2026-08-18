@@ -29,6 +29,7 @@ export function ReviewFlow({ plays }: Props) {
   const [failure, setFailure] = useState<SaveFailure | null>(null);
   const [selectedFlag, setSelectedFlag] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [cropMissing, setCropMissing] = useState(false);
 
   const review: PlayReview | undefined = queue[index];
   const source = review ? byId.get(review.playId) : undefined;
@@ -49,6 +50,7 @@ export function ReviewFlow({ plays }: Props) {
     setSelectedFlag(null);
     setFailure(null);
     setEditing(false);
+    setCropMissing(false);
   };
 
   const confirm = async () => {
@@ -167,12 +169,24 @@ export function ReviewFlow({ plays }: Props) {
           <figcaption className="text-xs uppercase tracking-wide text-stone-500">
             From the playbook
           </figcaption>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cropUrl(play.name, beatIndex)}
-            alt={`Source diagram, ${play.name} beat ${beatIndex + 1}`}
-            className="w-full max-w-[400px] rounded border border-stone-700 bg-white"
-          />
+          {/*
+            A play drawn in the builder has no source diagram, and one that came from
+            the import may have lost its crop. A broken image icon would read as a bug;
+            saying there is nothing to compare against is the truth.
+          */}
+          {cropMissing ? (
+            <div className="flex h-[280px] w-full max-w-[400px] items-center justify-center rounded border border-dashed border-stone-700 px-6 text-center text-sm text-stone-500">
+              No source diagram — this play wasn&rsquo;t imported from a PDF.
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cropUrl(play.name, beatIndex)}
+              alt={`Source diagram, ${play.name} beat ${beatIndex + 1}`}
+              onError={() => setCropMissing(true)}
+              className="w-full max-w-[400px] rounded border border-stone-700 bg-white"
+            />
+          )}
         </figure>
 
         <figure className="space-y-1">

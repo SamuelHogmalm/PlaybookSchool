@@ -97,7 +97,27 @@ export function PlayBuilder() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 p-4 text-stone-100">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">{play.name}</h1>
+        {/*
+          Plays are unique per team by name, so a second "New Play" collides on save.
+          Naming it is part of drawing it, not a detail to chase afterwards.
+        */}
+        <label className="block">
+          <span className="sr-only">Play name</span>
+          <input
+            type="text"
+            value={play.name}
+            onChange={(e) => mutate((p) => ({ ...p, name: e.target.value }))}
+            onBlur={(e) => {
+              const trimmed = e.target.value.trim();
+              if (trimmed !== play.name) {
+                mutate((p) => ({ ...p, name: trimmed || "Untitled play" }));
+              }
+            }}
+            placeholder="Name this play"
+            aria-label="Play name"
+            className="w-full max-w-md rounded border border-transparent bg-transparent text-2xl font-semibold text-stone-100 placeholder:text-stone-600 hover:border-stone-700 focus:border-stone-600 focus:outline-none"
+          />
+        </label>
         <p className="text-sm text-stone-400">
           Select a tool, click a player to select them, drag from their token to draw —
           the play updates as you go. Move mode drags the ring at the end of a player&rsquo;s

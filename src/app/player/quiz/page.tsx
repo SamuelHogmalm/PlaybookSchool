@@ -1,22 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { QuizRunner } from "@/components/quiz";
-import { normalizeSeedPlay } from "@/lib/play/normalize";
-import { validatePlay } from "@/lib/play/validation";
-import type { Play, SeedPlay } from "@/lib/play/types";
+import { loadPlays, type LoadedPlays } from "@/lib/play/loadPlays";
 import { buildSession, generateForPlays } from "@/lib/quiz";
-import seedPlays from "@/data/plays-interpreted.json";
-
-/** Validate once at module load — never quiz on a play that does not validate. */
-const PLAYS: Play[] = (seedPlays as SeedPlay[]).map((raw) => {
-  const play = normalizeSeedPlay(raw);
-  const result = validatePlay(play);
-  return { ...play, valid: result.valid, validationErrors: result.errors };
-});
-
-const POOL = generateForPlays(PLAYS.filter((p) => p.valid));
 
 /** Quiz playback runs slower than the builder preview — this is for learning, not review. */
 const SPEEDS = [
@@ -26,30 +14,54 @@ const SPEEDS = [
 ];
 
 export default function PlayerQuizPage() {
+  const [loaded, setLoaded] = useState<LoadedPlays | null>(null);
   // Bumping the seed reshuffles into a different session.
   const [seed, setSeed] = useState(1);
   const [runId, setRunId] = useState(0);
   const [speed, setSpeed] = useState(0.5);
 
-  const playsById = useMemo(
-    () => new Map(PLAYS.map((p) => [p.id, p])),
-    [],
-  );
-  const questions = useMemo(() => buildSession(POOL, { seed }), [seed]);
+  useEffect(() => {
+    let cancelled = false;
+    loadPlays().then((result) => {
+      if (!cancelled) setLoaded(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Memoised: a fresh [] each render would regenerate the whole question pool below
+  // on every keystroke and speed change.
+  const plays = useMemo(() => loaded?.plays ?? [], [loaded]);
+  const valid = useMemo(() => plays.filter((p) => p.valid), [plays]);
+  const playsById = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
+  const pool = useMemo(() => generateForPlays(valid), [valid]);
+  const questions = useMemo(() => buildSession(pool, { seed }), [pool, seed]);
 
   return (
-    /*
-     * The app's default body background is light (`--paper`). Every dark surface has to
-     * set its own, or near-white text lands on near-white paper and disappears.
-     */
     <main className="min-h-screen bg-stone-950 text-stone-100">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-4">
         <header className="space-y-1">
           <h1 className="text-2xl font-semibold">Today&rsquo;s session</h1>
-          <p className="text-sm text-stone-400">
-            {PLAYS.filter((p) => p.valid).length} plays · {POOL.length} questions
-            available · {questions.length} in this session
-          </p>
+          {loaded ? (
+            <p className="text-sm text-stone-400">
+              {valid.length} play{valid.length === 1 ? "" : "s"} ·{" "}
+              {pool.length} questions available · {questions.length} in this session
+              {loaded.source === "team" ? " · your team's playbook" : ""}
+            </p>
+          ) : (
+            <p className="text-sm text-stone-400">Loading your playbook…</p>
+          )}
+          {loaded?.note && (
+            <p className="text-sm text-amber-300">{loaded.note}</p>
+          )}
+          {loaded && plays.length > valid.length && (
+            <p className="text-sm text-stone-500">
+              {plays.length - valid.length} play
+              {plays.length - valid.length === 1 ? "" : "s"} skipped — they don&rsquo;t
+              validate yet, so nobody is quizzed on them.
+            </p>
+          )}
         </header>
 
         <div
@@ -75,12 +87,14 @@ export default function PlayerQuizPage() {
           ))}
         </div>
 
-        <QuizRunner
-          key={`${seed}-${runId}`}
-          questions={questions}
-          playsById={playsById}
-          speed={speed}
-        />
+        {loaded && (
+          <QuizRunner
+            key={`${seed}-${runId}-${loaded.source}`}
+            questions={questions}
+            playsById={playsById}
+            speed={speed}
+          />
+        )}
 
         <footer className="flex gap-2 border-t border-stone-800 pt-4">
           <button

@@ -480,6 +480,34 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — The quiz and review read the team's playbook, not the seed file
+
+`src/lib/play/loadPlays.ts`.
+
+Both screens imported `plays-interpreted.json` at module scope. A coach could draw a
+play, save it, watch the 201 come back, and the quiz would still be asking about the
+import — with nothing on screen to explain why. Saving looked like it did nothing.
+
+They now fetch `/api/plays` and fall back to the seed when a team has nothing saved, is
+signed out, or the request fails. The fallback is a convenience, not a silent
+substitution: the source comes back with the plays and both screens say which they are
+showing.
+
+Two things this exposed, fixed at the same time:
+
+- **The builder had no name field.** Every play was "New Play", and `plays` has a unique
+  index on `(team_id, lower(name))`, so a second save would collide. Naming a play is
+  part of drawing it.
+- **Review assumed a source crop existed.** A hand-drawn play has none, and a broken
+  image icon reads as a bug. It now says there is nothing to compare against.
+
+Prompted by Samuel asking whether to draw a small clean playbook so quiz work stops
+being confounded by import defects. That is the right call, and this is its prerequisite
+— otherwise the drawing lands in Postgres and nothing reads it.
+
+Rules out: a screen reading the seed file directly. The seed is a fallback and a test
+corpus, not the app's source of truth.
+
 ## 2026-08-18 — Why plays jumped: a validation hole and an unchained import
 
 `actionMovers` in `src/lib/play/validation.ts`, `playerPosAtT` in `positionsAt.ts`.
