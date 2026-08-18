@@ -480,6 +480,30 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — The builder offers a handoff instead of waiting to be asked
+
+`handoffCandidates()` in `src/lib/play/handoff.ts`.
+
+Samuel's observation: a player dribbles somewhere and stops, a team-mate cuts past them,
+and that *is* a dribble handoff — but the coach has to remember to switch to the handoff
+tool and draw a third thing on top of two they have already drawn.
+
+So the builder watches for the shape. When the ball handler's finishing spot sits within
+42 units of another player's route, it offers "Player 3 runs past 1 — hand it off?" and
+one click writes the action.
+
+Why a suggestion rather than doing it automatically: a cutter brushing past the handler
+is not always an exchange, and inventing possession changes is exactly the failure that
+made the imported playbook untrustworthy. The coach confirms; the tool only notices.
+
+Nothing is offered once the ball has moved on — a handler who has already passed has
+nothing to hand over — nor to a player who is already receiving it this beat.
+
+The handoff action type, its notation and its timing lane all existed already. The only
+thing missing was noticing.
+
+Rules out: making the coach spot a pattern the data already describes.
+
 ## 2026-08-18 — No two tokens ever occupy the same spot
 
 `stopAtPerimeter()` in `src/lib/play/geometry.ts`.

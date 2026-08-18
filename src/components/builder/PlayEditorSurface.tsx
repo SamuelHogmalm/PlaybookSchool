@@ -1,6 +1,12 @@
 "use client";
 
-import { confirmAction, removeAction, setActionStep } from "@/lib/play/actionOps";
+import {
+  addDrawnAction,
+  confirmAction,
+  removeAction,
+  setActionStep,
+} from "@/lib/play/actionOps";
+import { handoffCandidates } from "@/lib/play/handoff";
 import { beatSteps } from "@/lib/timing";
 import { currentHolder } from "@/lib/play/possession";
 
@@ -117,6 +123,33 @@ export function PlayEditorSurface({ editor, showHistoryControls = true }: Props)
         onSelectAction={setSelectedActionId}
         {...courtHandlers}
       />
+
+      {/*
+        A dribble handoff is already drawn by the time there is anything to click: the
+        handler has stopped somewhere and a cutter runs past them. The exchange itself is
+        the part that gets forgotten, so the builder offers it rather than waiting to be
+        asked.
+      */}
+      {handoffCandidates(beat).map((candidate) => (
+        <button
+          key={`handoff-${candidate.to}`}
+          type="button"
+          onClick={() => {
+            const to = beat.pos[candidate.to] ?? beat.startPos[candidate.to];
+            updateBeats(
+              addDrawnAction(play.beats, beatIndex, {
+                type: "handoff",
+                by: candidate.from,
+                for: candidate.to,
+                path: [candidate.at, to],
+              }),
+            );
+          }}
+          className="w-full rounded border border-amber-700/60 bg-amber-500/10 px-4 py-2 text-left text-sm text-amber-100 hover:bg-amber-500/20"
+        >
+          Player {candidate.to} runs past {candidate.from} — hand it off?
+        </button>
+      ))}
 
       {selectedAction && (
         <section className="rounded-md border border-stone-700 bg-stone-900/50 px-4 py-3 text-sm">
