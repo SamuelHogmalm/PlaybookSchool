@@ -211,6 +211,21 @@ export function PlayBuilder() {
               ? "This play is now stored, not just open in this tab."
               : "Players who already learned an earlier version will be asked to re-learn this one."}
           </p>
+          {/* Drawing a playbook means drawing several. Don't make them find the way back. */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              href="/plays/new"
+              className="rounded border border-stone-500 px-3 py-1.5 hover:bg-stone-800"
+            >
+              Draw another
+            </a>
+            <a
+              href="/coach/playbook"
+              className="rounded border border-stone-500 px-3 py-1.5 hover:bg-stone-800"
+            >
+              See your playbook
+            </a>
+          </div>
         </section>
       )}
 
