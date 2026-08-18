@@ -73,6 +73,30 @@ export function canDrawAction(
   return { allowed: true, tooltip: "" };
 }
 
+/**
+ * Where each player is once the actions already drawn on this beat have happened.
+ *
+ * A player who has been given a cut is at the end of it, not back at the start — so a
+ * pass drawn to where they are going has to find them there. Aiming at a player's
+ * destination and having the pass silently dropped, because the only positions searched
+ * were start-of-beat ones, is the tool refusing to read its own diagram.
+ *
+ * Players with no movement have not gone anywhere, so their start position is current.
+ */
+export function targetPositions(beat: Beat): Record<PlayerId, Vec> {
+  const out = {} as Record<PlayerId, Vec>;
+  for (const id of PLAYER_IDS) {
+    const moved = beat.actions.some(
+      (a) =>
+        a.by === id &&
+        (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+    );
+    const spot = (moved ? beat.pos[id] : beat.startPos[id]) ?? beat.startPos[id];
+    if (spot) out[id] = { x: spot.x, y: spot.y };
+  }
+  return out;
+}
+
 export function nearestPlayerAt(
   positions: Record<PlayerId, Vec>,
   point: Vec,

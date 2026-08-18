@@ -2,9 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { currentHolder, holderAfterActions } from "../../src/lib/play/possession.js";
-import { canDrawAction } from "../../src/lib/play/drawing.js";
+import {
+  canDrawAction,
+  nearestPlayerAt,
+  targetPositions,
+} from "../../src/lib/play/drawing.js";
 import { addDrawnAction, removeAction } from "../../src/lib/play/actionOps.js";
 import { createEmptyPlay } from "../../src/lib/play/beatOps.js";
+import { validatePlay } from "../../src/lib/play/validation.js";
 import type { Beat } from "../../src/lib/play/types.js";
 
 describe("holderAfterActions", () => {
@@ -109,5 +114,65 @@ describe("the draw gate follows the ball within a beat", () => {
     for (const id of ["1", "2", "3", "4", "5"] as const) {
       assert.equal(canDrawAction(beat, id, "cut").allowed, true);
     }
+  });
+});
+
+describe("passing to a player who has already moved", () => {
+  it("finds the receiver at the end of their cut, not where they started", () => {
+    const play = createEmptyPlay();
+    const start = { ...play.beats[0].startPos["4"] };
+    const corner = { x: 60, y: 60 };
+
+    const beats = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "4",
+      path: [start, corner],
+    });
+
+    const targets = targetPositions(beats[0]);
+    assert.deepEqual(targets["4"], corner, "4 should be targetable at the cut's end");
+    assert.equal(nearestPlayerAt(targets, corner, 36, "1"), "4");
+  });
+
+  it("no longer finds them where they started", () => {
+    const play = createEmptyPlay();
+    const start = { ...play.beats[0].startPos["4"] };
+    const beats = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "4",
+      path: [start, { x: 60, y: 60 }],
+    });
+
+    // The player is not there any more, so aiming at their old spot must not pick them.
+    assert.notEqual(nearestPlayerAt(targetPositions(beats[0]), start, 36, "1"), "4");
+  });
+
+  it("leaves players who have not moved where they are", () => {
+    const play = createEmptyPlay();
+    const targets = targetPositions(play.beats[0]);
+    for (const id of ["1", "2", "3", "4", "5"] as const) {
+      assert.deepEqual(targets[id], play.beats[0].startPos[id]);
+    }
+  });
+
+  it("a pass drawn to the moved player validates", () => {
+    const play = createEmptyPlay();
+    const corner = { x: 60, y: 60 };
+    let beats = addDrawnAction(play.beats, 0, {
+      type: "cut",
+      by: "4",
+      path: [{ ...play.beats[0].startPos["4"] }, corner],
+    });
+    const targets = targetPositions(beats[0]);
+    beats = addDrawnAction(beats, 0, {
+      type: "pass",
+      by: "1",
+      for: "4",
+      path: [beats[0].startPos["1"], targets["4"]],
+    });
+
+    assert.equal(beats[0].ball, "4");
+    const result = validatePlay({ ...play, beats });
+    assert.equal(result.valid, true, result.errors.join("; "));
   });
 });

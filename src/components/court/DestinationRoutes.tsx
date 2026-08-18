@@ -1,11 +1,13 @@
 import type { Beat, PlayerId, Vec } from "@/lib/play/types";
 import { PLAYER_IDS } from "@/lib/play/types";
 import {
+  IDLE_EPSILON,
   pathToSvgD,
   shorten,
   unexplainedTravel,
   type CourtPalette,
 } from "@/lib/court";
+import { dist } from "@/lib/play/geometry";
 
 type Props = {
   beat: Beat;
@@ -42,7 +44,21 @@ export function DestinationRoutes({
       )
     : [];
 
-  if (!routes.length && !handles.length) return null;
+  /**
+   * Anyone who finishes somewhere other than where they started.
+   *
+   * Wider than `routes`, which deliberately skips players whose arrow `ActionLayer`
+   * already draws — but those are exactly the players a coach needs to aim a pass at,
+   * so they still need a marker saying who ends up here.
+   */
+  const moved: Array<{ id: PlayerId; to: Vec }> = PLAYER_IDS.flatMap((id) => {
+    const from = beat.startPos[id];
+    const to = beat.pos[id];
+    if (!from || !to || dist(from, to) < IDLE_EPSILON) return [];
+    return [{ id, to }];
+  });
+
+  if (!routes.length && !handles.length && !moved.length) return null;
 
   return (
     <g style={{ pointerEvents: "none" }}>
@@ -76,6 +92,36 @@ export function DestinationRoutes({
           />
         );
       })}
+
+      {/*
+        Numbered, because a bare ring is not a target. A coach passing to a player who
+        has already cut needs to see *which* player finishes there — otherwise they aim
+        at where the token still is and the pass finds nobody.
+      */}
+      {moved.map(({ id, to }) => (
+        <g key={`dest-label-${id}`} opacity={0.75}>
+          <circle
+            cx={to.x}
+            cy={to.y}
+            r="12"
+            fill={palette.wood}
+            stroke={palette.muted}
+            strokeWidth="1.5"
+            strokeDasharray="4 3"
+          />
+          <text
+            x={to.x}
+            y={to.y + 4}
+            textAnchor="middle"
+            fontSize="12"
+            fontWeight="700"
+            fill={palette.muted}
+            style={{ fontFamily: "ui-monospace, monospace", userSelect: "none" }}
+          >
+            {id}
+          </text>
+        </g>
+      ))}
     </g>
   );
 }

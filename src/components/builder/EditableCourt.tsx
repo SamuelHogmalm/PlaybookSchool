@@ -13,6 +13,7 @@ import {
   hitTestPath,
   MIN_DRAW_LENGTH,
   nearestPlayerAt,
+  targetPositions,
   pathLength,
 } from "@/lib/play/drawing";
 import { clientToCourt, snapClampPoint } from "@/lib/play/editor";
@@ -79,6 +80,9 @@ export function EditableCourt({
     );
   }, []);
 
+  /** Where a pass can land: players sit at the end of any movement already drawn. */
+  const targets = targetPositions(beat);
+
   const canDrawFrom = useCallback(
     (playerId: PlayerId): boolean =>
       canDrawAction(beat, playerId, tool).allowed,
@@ -137,7 +141,7 @@ export function EditableCourt({
 
     if (d.type === "pass" || d.type === "handoff") {
       const receiver = nearestPlayerAt(
-        beat.startPos,
+        targets,
         path[path.length - 1],
         36,
         d.by,
@@ -148,7 +152,7 @@ export function EditableCourt({
         type: d.type,
         by: d.by,
         for: receiver,
-        path: [...path.slice(0, -1), { ...beat.startPos[receiver] }],
+        path: [...path.slice(0, -1), { ...targets[receiver] }],
       });
       return;
     }
@@ -184,12 +188,12 @@ export function EditableCourt({
     }
 
     if (drawing.type === "pass" || drawing.type === "handoff") {
-      const receiver = nearestPlayerAt(beat.startPos, end, 36, drawing.by);
+      const receiver = nearestPlayerAt(targets, end, 36, drawing.by);
       if (!receiver) {
         abandonDraw();
         return;
       }
-      path[path.length - 1] = { ...beat.startPos[receiver] };
+      path[path.length - 1] = { ...targets[receiver] };
       onDrawComplete({
         type: drawing.type,
         by: drawing.by,
@@ -249,11 +253,11 @@ export function EditableCourt({
       if (path) emitProgress(path);
 
       if (active.type === "pass" || active.type === "handoff") {
-        const recv = nearestPlayerAt(beat.startPos, pt, 36, active.by);
-        setPreviewTarget(recv ? beat.startPos[recv] : pt);
+        const recv = nearestPlayerAt(targets, pt, 36, active.by);
+        setPreviewTarget(recv ? targets[recv] : pt);
       } else if (active.type === "screen") {
-        const cutter = nearestPlayerAt(beat.startPos, pt, 80, active.by);
-        setPreviewTarget(cutter ? beat.startPos[cutter] : pt);
+        const cutter = nearestPlayerAt(targets, pt, 80, active.by);
+        setPreviewTarget(cutter ? targets[cutter] : pt);
       } else {
         setPreviewTarget(null);
       }

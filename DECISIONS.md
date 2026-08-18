@@ -480,6 +480,35 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — A pass finds a player where they end up, not where they started
+
+`targetPositions()` in `src/lib/play/drawing.ts`.
+
+Samuel asked for this more than once before I understood it: give player 4 a cut, then
+try to pass to 4 at the new spot, and the pass is silently dropped.
+
+Every receiver lookup searched `beat.startPos`. Once 4 has a cut, 4 is no longer at the
+place being aimed at, so `nearestPlayerAt` found nobody and the stroke was abandoned with
+no explanation. The tool was refusing to read its own diagram.
+
+Receivers are now looked up at their position *after the movements already drawn on this
+beat* — which is what steps mean: the actions happen in order, so the court a later
+action targets is the court those earlier actions produced.
+
+The visual half mattered as much. The destination showed an unlabelled ring, so there was
+nothing identifying who finishes there; a coach aims at the token they can see, which is
+the player's *old* position. Destinations now carry the player's number, for every player
+who moves — wider than the dashed routes, which deliberately skip players whose arrow
+`ActionLayer` already draws, and those are exactly the ones you pass to.
+
+What was *not* done: moving the token itself to the destination as the cut is drawn. The
+token sits at the start of its own arrow, which is what a basketball diagram means, and
+moving it would put the builder's court out of step with the animator's first frame.
+Naming the destination solves the same problem without that.
+
+Rules out: reading `beat.startPos` to decide what a coach is pointing at. Within a beat
+the court moves, and the tool has to move with it.
+
 ## 2026-08-18 — The quiz and review read the team's playbook, not the seed file
 
 `src/lib/play/loadPlays.ts`.
