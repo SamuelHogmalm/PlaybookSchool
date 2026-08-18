@@ -19,6 +19,7 @@ export {
   classifyAction,
   isMovement,
   beatSteps,
+  stepDurationsMs,
   movementActionsForPlayer,
   sequenceBeat,
 } from "./sequence";

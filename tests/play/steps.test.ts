@@ -11,6 +11,7 @@ import {
   beatDurationMs,
   beatSteps,
   sequenceBeat,
+  stepDurationsMs,
 } from "../../src/lib/timing/index.js";
 import { normalizeSeedPlay } from "../../src/lib/play/normalize.js";
 import type { Beat, PlayerId, SeedPlay } from "../../src/lib/play/types.js";
@@ -60,11 +61,44 @@ describe("steps — drawn actions are serial by default", () => {
     assert.equal(timed[timed.length - 1].endAt, 1);
   });
 
-  it("each step gets an equal slice", () => {
-    const timed = sequenceBeat(threeCuts()[0]);
-    for (const a of timed) {
-      assert.ok(Math.abs(a.endAt - a.startAt - 1 / 3) < 1e-9);
-    }
+  it("a step's slice is proportional to how long the move really takes", () => {
+    // Equal slices made a long cut and a short one take the same time, so the long one
+    // had to be played several times faster. Distance decides now.
+    const beats = threeCuts();
+    const timed = sequenceBeat(beats[0]);
+    const durations = stepDurationsMs(beats[0]);
+    const total = durations.reduce((a, b) => a + b, 0);
+
+    timed.forEach((action, i) => {
+      const share = action.endAt - action.startAt;
+      assert.ok(
+        Math.abs(share - durations[i] / total) < 1e-6,
+        `step ${i + 1} took ${share.toFixed(3)} of the beat, expected ${(durations[i] / total).toFixed(3)}`,
+      );
+    });
+  });
+
+  it("everyone moves at about the same speed", () => {
+    const beats = threeCuts();
+    const timed = sequenceBeat(beats[0]);
+    const beatMs = beatDurationMs(beats[0]);
+
+    const speeds = timed.map((action) => {
+      const path = action.path!;
+      let length = 0;
+      for (let i = 1; i < path.length; i++) {
+        length += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+      }
+      const seconds = ((action.endAt - action.startAt) * beatMs) / 1000;
+      return length / seconds;
+    });
+
+    const fastest = Math.max(...speeds);
+    const slowest = Math.min(...speeds);
+    assert.ok(
+      fastest / slowest < 1.6,
+      `speeds ranged ${slowest.toFixed(0)}–${fastest.toFixed(0)} units/sec`,
+    );
   });
 });
 

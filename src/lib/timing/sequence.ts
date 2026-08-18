@@ -1,5 +1,13 @@
 import type { Action, Beat, Vec } from "@/lib/play/types";
 import type { TimedAction } from "./types";
+import {
+  BALL_ONLY_STEP_MS,
+  MAX_STEP_MS,
+  MIN_STEP_MS,
+  MOVE_UNITS_PER_SECOND,
+} from "./constants";
+import { polylineLength } from "./pathSample";
+
 
 type ActionKind =
   | "screen"
@@ -228,6 +236,38 @@ function normalizeEndAtOne(timed: TimedAction[]): void {
   }
 }
 
+function routeLength(beat: Beat, action: Beat["actions"][number]): number {
+  if (action.path && action.path.length >= 2) return polylineLength(action.path);
+  const from = beat.startPos[action.by];
+  const to = beat.pos[action.by];
+  if (!from || !to) return 0;
+  return Math.hypot(to.x - from.x, to.y - from.y);
+}
+
+/**
+ * How long each step of a beat should take, at the pace people actually move.
+ *
+ * A step lasts as long as its longest journey — players in the same step move at once,
+ * so the step is over when the last of them arrives. A step that only moves the ball is
+ * quick, because nobody is running.
+ */
+export function stepDurationsMs(beat: Beat): number[] {
+  const steps = beatSteps(beat);
+  if (!steps.length) return [];
+
+  return steps.map((step) => {
+    const inStep = beat.actions.filter((a) => (a.step ?? steps[0]) === step);
+    const movements = inStep.filter(
+      (a) => a.type === "cut" || a.type === "dribble" || a.type === "screen",
+    );
+    if (!movements.length) return BALL_ONLY_STEP_MS;
+
+    const furthest = Math.max(...movements.map((a) => routeLength(beat, a)));
+    const ms = (furthest / MOVE_UNITS_PER_SECOND) * 1000;
+    return Math.max(MIN_STEP_MS, Math.min(MAX_STEP_MS, ms));
+  });
+}
+
 /** Distinct step numbers on a beat, ascending. Empty when the beat has no steps. */
 export function beatSteps(beat: Beat): number[] {
   const steps = new Set<number>();
@@ -250,12 +290,31 @@ export function beatSteps(beat: Beat): number[] {
  */
 function sequenceBySteps(beat: Beat, steps: number[]): TimedAction[] {
   const actions = beat.actions ?? [];
-  const slice = 1 / steps.length;
+
+  /*
+   * Slices are proportional to how long each step really takes, not equal.
+   *
+   * Equal slices are what made playback look frantic: a step where somebody runs the
+   * length of the floor got the same time as one where they shuffle two feet, so the
+   * long move had to be played several times faster to fit. `beatDurationMs` then
+   * stretches the whole beat to match, and the result runs at the pace people move.
+   */
+  const durations = stepDurationsMs(beat);
+  const total = durations.reduce((sum, ms) => sum + ms, 0) || 1;
+
+  const startOf: number[] = [];
+  let running = 0;
+  for (const ms of durations) {
+    startOf.push(running / total);
+    running += ms;
+  }
 
   const timed = actions.map((action) => {
     // An action with no step of its own belongs to the first — it predates stepping.
     const index = Math.max(0, steps.indexOf(action.step ?? steps[0]));
-    return cloneTimed(action, index * slice, (index + 1) * slice);
+    const from = startOf[index] ?? 0;
+    const to = index + 1 < startOf.length ? startOf[index + 1] : 1;
+    return cloneTimed(action, from, to);
   });
 
   timeHandoffs(beat, timed);

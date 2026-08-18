@@ -480,6 +480,41 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — A step lasts as long as the move really takes
+
+`stepDurationsMs()` in `src/lib/timing/sequence.ts`.
+
+Samuel: "on that court pieces fly everywhere, it should have the same tempo as people
+running the play in real life."
+
+The cause was equal slices. Every step got the same share of the beat regardless of
+distance, so a 300-unit cut and a 30-unit shuffle took the same time — which means the
+long one had to be played several times faster to fit. No single speed setting could fix
+that, because the problem was the *spread*, not the average.
+
+A step now lasts its longest journey divided by a real speed: **85 units per second**,
+about 8–9 feet per second on a court where 10 units is a foot. That is a purposeful
+basketball move — not a jog, not a sprint. Players sharing a step move at once, so the
+step ends when the last of them arrives. A step that only moves the ball is quick,
+because nobody is running.
+
+Beat duration is the sum of its steps, and the slices are proportional rather than equal.
+Floors and ceilings keep it sane: 800ms minimum so a short move can still be read, 3.2s
+maximum so nothing drags.
+
+Measured on a four-move sequence: 8.4, 9.8, 8.1 and 8.5 feet per second, and 8.3 seconds
+of movement for the set. Tested by asserting the fastest and slowest moves in a beat stay
+within 1.6× of each other — the spread is what the eye notices.
+
+Imported plays are untouched. Lane-timed actions overlap, so their durations do not add
+up, and the count-based estimate stays until a coach breaks the play into steps.
+
+An import cycle came out of this and was broken rather than tolerated: `beatDuration`
+needed step durations and `sequence` needed them too, so they live in `sequence` and
+`beatDuration` reads from it.
+
+Rules out: one duration for every step. How long a move takes is a property of the move.
+
 ## 2026-08-18 — Coaches draw a play; the app decides where the beats go
 
 `splitBeatAtStep` / `mergeBeatWithPrevious` in `src/lib/play/splitBeats.ts`, `MoveList`,

@@ -1,21 +1,21 @@
 import type { Beat } from "@/lib/play/types";
-import {
-  BEAT_BASE_MS,
-  BEAT_MAX_MS,
-  BEAT_PER_ACTION_MS,
-} from "./constants";
-import { beatSteps } from "./sequence";
+import { BEAT_BASE_MS, BEAT_MAX_MS, BEAT_PER_ACTION_MS } from "./constants";
+import { stepDurationsMs } from "./sequence";
 
 /**
- * 2250ms base + 500ms per unit beyond the first, capped at 4400ms.
+ * How long a beat's move phase lasts.
  *
- * The unit is a *step* where the beat has steps, and an action otherwise. Two players
- * cutting together is one thing to watch and should not cost the same as two things
- * happening in turn.
+ * With steps, it is the sum of the real time each one takes. Without them — an imported
+ * play nobody has broken up yet — it falls back to a count-based estimate, because
+ * lane-timed actions overlap and their durations do not simply add up.
  */
 export function beatDurationMs(beat: Beat): number {
-  const steps = beatSteps(beat);
-  const n = steps.length || beat.actions?.length || 0;
+  const perStep = stepDurationsMs(beat);
+  if (perStep.length) {
+    return Math.round(perStep.reduce((total, ms) => total + ms, 0));
+  }
+
+  const n = beat.actions?.length ?? 0;
   const extra = Math.max(0, n - 1) * BEAT_PER_ACTION_MS;
   return Math.min(BEAT_MAX_MS, BEAT_BASE_MS + extra);
 }
