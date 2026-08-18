@@ -480,6 +480,25 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — A move can leave a group without taking the group with it
+
+`separateAction()` in `src/lib/play/actionOps.ts`.
+
+Samuel grouped three moves as simultaneous, meant two, and had no way back: the sequence
+arrows move a whole step at a time, so pressing "later" on the group swapped all three
+with the next move, and `setActionStep(..., null)` exiled the move to the end of the
+beat. Neither is "take that one out and put it just after".
+
+Each move in a group now has its own **split** control. The move leaves, gets a step
+immediately after the group, and everything later in the sequence shifts down one — so
+the rest of the play stays where it was.
+
+The arrows keep their meaning and now say so on hover: they move the step. Two operations
+for two different intentions, rather than one that guesses.
+
+Rules out: a control that acts on a group when the coach is pointing at one of its
+members.
+
 ## 2026-08-18 — The move list spans the whole play, and a beat boundary is a control
 
 `MoveList` now takes the play rather than one beat.

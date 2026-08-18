@@ -319,3 +319,45 @@ export function moveActionInSequence(
 
   return next;
 }
+
+/**
+ * Pull one action out of a group and give it a step of its own.
+ *
+ * `setActionStep(..., null)` sends an action to the end of the beat, and the sequence
+ * arrows move a whole step at a time — neither helps a coach who grouped three moves and
+ * meant to group two. This takes one move out and drops it immediately before or after
+ * the group it was in, leaving the rest of the sequence where it was.
+ *
+ * Does nothing to an action that is already alone: there is nothing to separate it from.
+ */
+export function separateAction(
+  beats: Beat[],
+  beatIndex: number,
+  actionId: string,
+  position: "before" | "after" = "after",
+): Beat[] {
+  const next = cloneBeats(beats);
+  const beat = next[beatIndex];
+  const action = beat.actions.find((a) => a.id === actionId);
+  if (!action || typeof action.step !== "number") return next;
+
+  const shared = beat.actions.filter((a) => a.step === action.step);
+  if (shared.length < 2) return next;
+
+  const from = action.step;
+
+  if (position === "after") {
+    for (const a of beat.actions) {
+      if (typeof a.step === "number" && a.step > from) a.step += 1;
+    }
+    action.step = from + 1;
+  } else {
+    for (const a of beat.actions) {
+      if (typeof a.step === "number" && a.step >= from) a.step += 1;
+    }
+    action.step = from;
+  }
+
+  compactSteps(beat);
+  return next;
+}

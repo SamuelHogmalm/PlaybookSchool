@@ -3,6 +3,7 @@
 import {
   moveActionInSequence,
   removeAction,
+  separateAction,
   setActionStep,
 } from "@/lib/play/actionOps";
 import {
@@ -134,34 +135,57 @@ export function MoveList({
 
                     <span className="flex-1">
                       {inStep.map((action, i) => (
-                        <button
-                          key={action.id}
-                          type="button"
-                          onClick={() => {
-                            onSelectBeat(bIndex);
-                            onSelectAction(
-                              selectedActionId === action.id ? null : action.id,
-                            );
-                          }}
-                          className={`rounded px-1.5 py-0.5 text-left ${
-                            selectedActionId === action.id
-                              ? "bg-amber-500/20 text-amber-100"
-                              : "hover:bg-stone-800"
-                          }`}
-                        >
+                        <span key={action.id}>
                           {i > 0 && <span className="text-stone-500"> + </span>}
-                          {describe(action)}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSelectBeat(bIndex);
+                              onSelectAction(
+                                selectedActionId === action.id ? null : action.id,
+                              );
+                            }}
+                            className={`rounded px-1.5 py-0.5 text-left ${
+                              selectedActionId === action.id
+                                ? "bg-amber-500/20 text-amber-100"
+                                : "hover:bg-stone-800"
+                            }`}
+                          >
+                            {describe(action)}
+                          </button>
+                          {/*
+                            Per move, because the arrows move a whole step. Grouping
+                            three when you meant two needs a way to take one back out.
+                          */}
+                          {together && (
+                            <button
+                              type="button"
+                              title={`Take "${describe(action)}" out of this group`}
+                              aria-label={`Separate ${describe(action)} from this group`}
+                              onClick={() =>
+                                updateBeats(
+                                  separateAction(play.beats, bIndex, action.id, "after"),
+                                )
+                              }
+                              className="ml-0.5 rounded border border-stone-700 px-1 py-0.5 text-[10px] text-stone-400 hover:bg-stone-800 hover:text-stone-100"
+                            >
+                              split
+                            </button>
+                          )}
+                        </span>
                       ))}
                       {together && (
-                        <span className="ml-1 text-xs text-stone-500">(together)</span>
+                        <span className="ml-1 text-xs text-stone-500">
+                          (at the same time)
+                        </span>
                       )}
                     </span>
 
                     <span className="flex shrink-0 items-center gap-1">
                       <button
                         type="button"
-                        aria-label={`Move ${describe(inStep[0])} earlier`}
+                        aria-label={`Move step ${number} earlier`}
+                        title="Moves everything in this step"
                         disabled={position === 0}
                         onClick={() =>
                           updateBeats(
@@ -174,7 +198,8 @@ export function MoveList({
                       </button>
                       <button
                         type="button"
-                        aria-label={`Move ${describe(inStep[0])} later`}
+                        aria-label={`Move step ${number} later`}
+                        title="Moves everything in this step"
                         disabled={position === steps.length - 1}
                         onClick={() =>
                           updateBeats(
