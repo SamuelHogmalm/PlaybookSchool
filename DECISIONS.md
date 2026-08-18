@@ -480,6 +480,31 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — The move list spans the whole play, and a beat boundary is a control
+
+`MoveList` now takes the play rather than one beat.
+
+Samuel drew three plays as one sequence and went to separate them: "it only lets me put
+a part into the next one, it should add its own and then I can choose to combine it."
+
+He was describing a real flaw. Draw mode pinned itself to beat 1, so after the first
+break the rest of the sequence disappeared from the list — every further break looked
+like it was shovelling moves into an existing beat rather than making a new one.
+`splitBeatAtStep` had been creating a new beat all along; the list simply could not show
+it.
+
+The list now runs the length of the play with the beat boundaries drawn in, and a
+boundary is a control: "combine with the one above" merges. Selecting any move switches
+the court to its beat, so the picture follows the list rather than the other way round.
+
+Which is what he asked for exactly — cut it wherever, then decide what to join back
+together — and it is a better division than a wizard that asks "how many beats?" up
+front, because a coach separating three plays does not know the answer until they see
+the moves listed.
+
+Rules out: an editing view scoped to one beat while the thing being edited is a whole
+play.
+
 ## 2026-08-18 — A step lasts as long as the move really takes
 
 `stepDurationsMs()` in `src/lib/timing/sequence.ts`.

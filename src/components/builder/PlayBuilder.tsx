@@ -144,10 +144,7 @@ export function PlayBuilder() {
             key={value}
             type="button"
             aria-pressed={mode === value}
-            onClick={() => {
-              setMode(value);
-              setBeatIndex(0);
-            }}
+            onClick={() => setMode(value)}
             className={`rounded border px-3 py-1.5 ${
               mode === value
                 ? "border-amber-500 bg-amber-500/20 text-amber-100"
@@ -318,8 +315,8 @@ export function PlayBuilder() {
           </div>
           <MoveList
             play={play}
-            beat={beat}
             beatIndex={beatIndex}
+            onSelectBeat={setBeatIndex}
             selectedActionId={editor.selectedActionId}
             onSelectAction={setSelectedActionId}
             updateBeats={updateBeats}
