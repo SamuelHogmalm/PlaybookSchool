@@ -17,6 +17,9 @@ import {
 } from "./sequence";
 import type { Phase, PositionsSnapshot, TimedAction } from "./types";
 
+/** Below this a route's start and the player's position are the same point. */
+const CONTINUITY_EPSILON = 1;
+
 function safeVec(v: Vec | undefined, fallback: Vec): Vec {
   if (!v || Number.isNaN(v.x) || Number.isNaN(v.y)) return { ...fallback };
   return { x: v.x, y: v.y };
@@ -69,12 +72,21 @@ function playerPosAtT(
   for (const movement of movements) {
     // Without a drawn path, travel runs from wherever they currently stand to the
     // beat's end position — never from startPos again, which would rewind them.
-    const route =
+    let route =
       movement.path && movement.path.length >= 2
         ? buildActionRoute(beat, movement)
         : [held, safeVec(beat.pos[playerId], held)];
 
     if (route.length < 2) continue;
+
+    // A movement begins where the player is, whatever its stored path claims. The
+    // builder guarantees this by chaining on write, but imported plays do not go
+    // through those ops — Alabama beat 3 carries the same cut twice, flattened and
+    // bent, and playing the second from its own start snapped the player back to
+    // where they began. Nobody teleports mid-beat.
+    if (dist(route[0], held) > CONTINUITY_EPSILON) {
+      route = [held, ...route.slice(1)];
+    }
 
     if (t <= movement.startAt) return held;
 

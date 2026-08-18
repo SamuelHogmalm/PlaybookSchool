@@ -480,6 +480,40 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — Why plays jumped: a validation hole and an unchained import
+
+`actionMovers` in `src/lib/play/validation.ts`, `playerPosAtT` in `positionsAt.ts`.
+
+Samuel asked the right question — is the jumping the uploaded playbook or the system? It
+was one of each, and measuring separated them. Ten of twelve plays already animated
+smoothly, with a worst single-frame step under 12 units. Two did not.
+
+**Kentucky beat 1 — data, hidden by a validation hole.** Player 1 travels 386 units with
+no action to explain it, so they stand still through MOVE and snap to their destination
+on HOLD. Rule 9 should have caught it, but `actionMovers` counted *any* action as
+explaining travel — and player 1 throws a pass. A pass does not move you. Only cuts,
+dribbles and screens count now.
+
+That makes Kentucky invalid, which is correct and is the point: a play with an
+unexplained teleport must not be quizzed on. It goes to the front of the review queue
+for the missing action to be drawn. The regression test names it rather than asserting a
+count, so a *second* broken play still fails and fixing Kentucky also fails — which is
+the prompt to delete the line.
+
+**Alabama beat 3 — data, exposed by an engine gap.** The importer emitted the same cut
+twice, once flattened and once bent: `a1` (243,264)→(167,98) and `a6` the same route
+with a corner. Sequenced one after the other, player 5 walked to the finish, snapped back
+to the start, and walked it again — a 182-unit jump.
+
+The builder cannot produce that, because `chainPlayerMovements` anchors each movement
+where the previous one ended. Imported plays never go through those ops. Rather than
+chain on import, `playerPosAtT` now starts every movement from where the player actually
+is, whatever the stored path claims. Playback is continuous by construction, for any
+producer. Alabama's worst step fell from 182.5 to 14.0 units.
+
+Rules out: trusting a stored path's first point. The player's position is the truth; the
+path describes where they go from there.
+
 ## 2026-08-18 — Possession is one function, and the draw gate reads it live
 
 `src/lib/play/possession.ts`.

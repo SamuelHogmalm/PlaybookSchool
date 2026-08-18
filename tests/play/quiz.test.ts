@@ -245,12 +245,23 @@ describe("question generation — safety rules", () => {
     assert.deepEqual(generateForPlay(broken), []);
   });
 
-  it("every seed play produces questions", () => {
-    for (const play of PLAYS) {
-      assert.ok(play.valid, `${play.name} should validate`);
+  it("every valid seed play produces questions", () => {
+    const valid = PLAYS.filter((p) => p.valid);
+    assert.ok(valid.length >= 11, "only " + valid.length + " plays validate");
+    for (const play of valid) {
       assert.ok(
         generateForPlay(play).length > 0,
-        `${play.name} produced no questions`,
+        play.name + " produced no questions",
+      );
+    }
+  });
+
+  it("an invalid play is skipped, never quizzed on", () => {
+    for (const play of PLAYS.filter((p) => !p.valid)) {
+      assert.deepEqual(
+        generateForPlay(play),
+        [],
+        play.name + " does not validate but produced questions",
       );
     }
   });

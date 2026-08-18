@@ -15,10 +15,20 @@ function err(errors: string[], message: string): void {
   errors.push(message);
 }
 
+/**
+ * Players whose travel this beat is explained by an action.
+ *
+ * Only cuts, dribbles and screens count. A pass does not move you — counting it let a
+ * player be teleported 386 units in Kentucky beat 1 and still validate, because they
+ * happened to also throw the ball.
+ */
 function actionMovers(actions: Action[]): Set<PlayerId> {
   const movers = new Set<PlayerId>();
   for (const a of actions) {
-    if (a.by) movers.add(a.by);
+    if (!a.by) continue;
+    if (a.type === "cut" || a.type === "dribble" || a.type === "screen") {
+      movers.add(a.by);
+    }
   }
   return movers;
 }
