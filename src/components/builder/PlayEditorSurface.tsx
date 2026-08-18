@@ -136,13 +136,28 @@ export function PlayEditorSurface({ editor, showHistoryControls = true }: Props)
           type="button"
           onClick={() => {
             const to = beat.pos[candidate.to] ?? beat.startPos[candidate.to];
+            const added = addDrawnAction(play.beats, beatIndex, {
+              type: "handoff",
+              by: candidate.from,
+              for: candidate.to,
+              path: [candidate.at, to],
+            });
+
+            // The exchange belongs in the runner's step, not after it. On its own step
+            // both players finish running, separate, and only then does the ball move —
+            // which reads as a late pass rather than a handoff.
+            const runnerStep = added[beatIndex].actions.find(
+              (a) =>
+                a.by === candidate.to &&
+                (a.type === "cut" || a.type === "dribble" || a.type === "screen"),
+            )?.step;
+            const handoffId =
+              added[beatIndex].actions[added[beatIndex].actions.length - 1].id;
+
             updateBeats(
-              addDrawnAction(play.beats, beatIndex, {
-                type: "handoff",
-                by: candidate.from,
-                for: candidate.to,
-                path: [candidate.at, to],
-              }),
+              runnerStep === undefined
+                ? added
+                : setActionStep(added, beatIndex, handoffId, runnerStep),
             );
           }}
           className="w-full rounded border border-amber-700/60 bg-amber-500/10 px-4 py-2 text-left text-sm text-amber-100 hover:bg-amber-500/20"

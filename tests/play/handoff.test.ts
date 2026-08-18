@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { handoffCandidates, HANDOFF_RANGE } from "../../src/lib/play/handoff.js";
-import { addDrawnAction } from "../../src/lib/play/actionOps.js";
+import { addDrawnAction, setActionStep } from "../../src/lib/play/actionOps.js";
+import { positionsAt, sequenceBeat } from "../../src/lib/timing/index.js";
 import { createEmptyPlay } from "../../src/lib/play/beatOps.js";
 import type { Beat } from "../../src/lib/play/types.js";
 
@@ -108,5 +109,89 @@ describe("handoff suggestions", () => {
 
   it("the range is shoulder to shoulder, not across the floor", () => {
     assert.ok(HANDOFF_RANGE > 30 && HANDOFF_RANGE < 80);
+  });
+});
+
+describe("handoff timing", () => {
+  it("happens while the runner is passing, not after they have gone", () => {
+    const beat = dribbleHandoffBeat();
+    const [candidate] = handoffCandidates(beat);
+    const runner = beat.actions.find((a) => a.by === candidate.to)!;
+
+    // Same step as the run: the exchange is part of it, not a sequel to it.
+    const withHandoff = addDrawnAction([beat], 0, {
+      type: "handoff",
+      by: candidate.from,
+      for: candidate.to,
+      path: [candidate.at, beat.pos[candidate.to]],
+    });
+    const stepped = setActionStep(
+      withHandoff,
+      0,
+      withHandoff[0].actions[withHandoff[0].actions.length - 1].id,
+      runner.step!,
+    );
+
+    const timed = sequenceBeat(stepped[0]);
+    const handoff = timed.find((a) => a.type === "handoff")!;
+    const run = timed.find((a) => a.by === candidate.to && a.type === "cut")!;
+
+    assert.ok(
+      handoff.startAt >= run.startAt - 1e-9 && handoff.endAt <= run.endAt + 1e-9,
+      `handoff ${handoff.startAt}-${handoff.endAt} outside the run ${run.startAt}-${run.endAt}`,
+    );
+  });
+
+  it("is brief — an exchange, not a journey", () => {
+    const beat = dribbleHandoffBeat();
+    const [candidate] = handoffCandidates(beat);
+    const runner = beat.actions.find((a) => a.by === candidate.to)!;
+
+    const withHandoff = addDrawnAction([beat], 0, {
+      type: "handoff",
+      by: candidate.from,
+      for: candidate.to,
+      path: [candidate.at, beat.pos[candidate.to]],
+    });
+    const stepped = setActionStep(
+      withHandoff,
+      0,
+      withHandoff[0].actions[withHandoff[0].actions.length - 1].id,
+      runner.step!,
+    );
+
+    const handoff = sequenceBeat(stepped[0]).find((a) => a.type === "handoff")!;
+    assert.ok(
+      handoff.endAt - handoff.startAt <= 0.1,
+      `handoff lasts ${(handoff.endAt - handoff.startAt).toFixed(3)} of the beat`,
+    );
+  });
+
+  it("lands at the moment the runner is nearest the handler", () => {
+    const beat = dribbleHandoffBeat();
+    const [candidate] = handoffCandidates(beat);
+    const runner = beat.actions.find((a) => a.by === candidate.to)!;
+
+    const withHandoff = addDrawnAction([beat], 0, {
+      type: "handoff",
+      by: candidate.from,
+      for: candidate.to,
+      path: [candidate.at, beat.pos[candidate.to]],
+    });
+    const stepped = setActionStep(
+      withHandoff,
+      0,
+      withHandoff[0].actions[withHandoff[0].actions.length - 1].id,
+      runner.step!,
+    );
+
+    const play = { ...createEmptyPlay(), beats: [stepped[0], createEmptyPlay().beats[1]] };
+    const timed = sequenceBeat(stepped[0]);
+    const handoff = timed.find((a) => a.type === "handoff")!;
+    const mid = (handoff.startAt + handoff.endAt) / 2;
+
+    const runnerAt = positionsAt(play, 0, mid, "move")!.players[candidate.to];
+    const gap = Math.hypot(runnerAt.x - candidate.at.x, runnerAt.y - candidate.at.y);
+    assert.ok(gap < 60, `runner was ${gap.toFixed(0)} units away at the exchange`);
   });
 });

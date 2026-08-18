@@ -1,4 +1,4 @@
-import type { Action, Beat } from "@/lib/play/types";
+import type { Action, Beat, Vec } from "@/lib/play/types";
 import type { TimedAction } from "./types";
 
 type ActionKind =
@@ -252,11 +252,100 @@ function sequenceBySteps(beat: Beat, steps: number[]): TimedAction[] {
   const actions = beat.actions ?? [];
   const slice = 1 / steps.length;
 
-  return actions.map((action) => {
+  const timed = actions.map((action) => {
     // An action with no step of its own belongs to the first — it predates stepping.
     const index = Math.max(0, steps.indexOf(action.step ?? steps[0]));
     return cloneTimed(action, index * slice, (index + 1) * slice);
   });
+
+  timeHandoffs(beat, timed);
+  return timed;
+}
+
+/** A handoff is an instant, not a journey. */
+const HANDOFF_WINDOW = 0.08;
+
+/** Straight-line fallback when an action carries no drawn path. */
+function routeOf(beat: Beat, action: Action): Vec[] {
+  if (action.path && action.path.length >= 2) return action.path;
+  const from = beat.startPos[action.by];
+  const to = beat.pos[action.by];
+  return from && to ? [from, to] : [];
+}
+
+/**
+ * Put a handoff at the moment the two players are actually together.
+ *
+ * Given its own slice of the beat, a handoff plays *after* both players have finished
+ * running — so they cross, separate, and only then does the ball change hands, which
+ * reads as a late pass rather than an exchange.
+ *
+ * The receiver's route is sampled for its closest approach to the handler, and the
+ * handoff is pinned to a brief window there. It stays inside the receiver's own step, so
+ * the ordering the coach set is untouched.
+ */
+function timeHandoffs(beat: Beat, timed: TimedAction[]): void {
+  for (const handoff of timed) {
+    if (handoff.type !== "handoff" || !handoff.for) continue;
+
+    const receiverMove = timed.find(
+      (a) => a.by === handoff.for && isMovement(a),
+    );
+    if (!receiverMove) continue;
+
+    const at = beat.pos[handoff.by] ?? beat.startPos[handoff.by];
+    const route = routeOf(beat, receiverMove);
+    if (!at || route.length < 2) continue;
+
+    let bestU = 0.5;
+    let bestDist = Infinity;
+    const samples = 40;
+    for (let i = 0; i <= samples; i++) {
+      const u = i / samples;
+      const point = pointAlong(route, u);
+      const d = Math.hypot(point.x - at.x, point.y - at.y);
+      if (d < bestDist) {
+        bestDist = d;
+        bestU = u;
+      }
+    }
+
+    const span = receiverMove.endAt - receiverMove.startAt;
+    const meeting = receiverMove.startAt + bestU * span;
+    const half = Math.min(HANDOFF_WINDOW, span) / 2;
+
+    handoff.startAt = Math.max(receiverMove.startAt, meeting - half);
+    handoff.endAt = Math.min(receiverMove.endAt, meeting + half);
+    if (handoff.endAt <= handoff.startAt) {
+      handoff.endAt = Math.min(receiverMove.endAt, handoff.startAt + 0.02);
+    }
+  }
+}
+
+/** Point at arc-length fraction u along a polyline. */
+function pointAlong(points: Vec[], u: number): Vec {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+  }
+  if (total === 0) return { ...points[0] };
+
+  let target = total * Math.max(0, Math.min(1, u));
+  for (let i = 1; i < points.length; i++) {
+    const seg = Math.hypot(
+      points[i].x - points[i - 1].x,
+      points[i].y - points[i - 1].y,
+    );
+    if (target <= seg) {
+      const f = seg === 0 ? 0 : target / seg;
+      return {
+        x: points[i - 1].x + (points[i].x - points[i - 1].x) * f,
+        y: points[i - 1].y + (points[i].y - points[i - 1].y) * f,
+      };
+    }
+    target -= seg;
+  }
+  return { ...points[points.length - 1] };
 }
 
 /**

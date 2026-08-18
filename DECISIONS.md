@@ -480,6 +480,32 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — A handoff happens as the runner passes, not after they have gone
+
+`timeHandoffs()` in `src/lib/timing/sequence.ts`.
+
+Samuel watched a handoff play back and saw two players run past each other, separate, and
+*then* the ball move — which reads as a late pass, not an exchange.
+
+The steps feature caused it. Every drawn action gets its own step, so the handoff sat
+after both movements had finished. Correct by the rule, wrong as basketball: a handoff is
+the moment two players are together, and it cannot happen once they are apart.
+
+Two changes:
+
+- The suggestion now files the handoff in the **runner's step**, so the exchange is part
+  of their run rather than a sequel to it.
+- Within that step the handoff is pinned to the moment they are actually together. The
+  runner's route is sampled for its closest approach to the handler, and the handoff gets
+  a brief window there — 8% of the beat, an instant rather than a journey.
+
+The general shape is worth keeping in mind: steps say *what order*, but some actions are
+events inside another action rather than things that follow it. A handoff is the first;
+there will be others.
+
+Rules out: giving every action an equal slice regardless of what it is. A player running
+takes time; a ball changing hands does not.
+
 ## 2026-08-18 — The builder offers a handoff instead of waiting to be asked
 
 `handoffCandidates()` in `src/lib/play/handoff.ts`.
