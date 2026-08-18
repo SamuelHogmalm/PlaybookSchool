@@ -13,10 +13,12 @@ import {
   reorderBeat,
 } from "@/lib/play/beatOps";
 import { PRESET_NAMES, type AlignmentPresetName } from "@/lib/play/editor";
+import { splitBeatAtStep, suggestedSplits } from "@/lib/play/splitBeats";
 import { describeSaveFailure, OFFLINE_FAILURE } from "@/lib/play/saveErrors";
 import { PlayAnimator } from "@/components/animator";
 
 import { BeatStrip } from "./BeatStrip";
+import { MoveList } from "./MoveList";
 import { PlayEditorSurface } from "./PlayEditorSurface";
 import { usePlayEditor } from "./usePlayEditor";
 import { ValidationBanner } from "./ValidationBanner";
@@ -61,6 +63,12 @@ export function PlayBuilder() {
   // Bumping the nonce remounts PlayAnimator, which is how it resets (key={play.id}).
   const [preview, setPreview] = useState<number | null>(null);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
+  /**
+   * Coaches draw a play in one pass, not frame by frame — and how many moves belong on
+   * a page is their habit, not our data model. So drawing is continuous, and beats are
+   * cut afterwards, which is a question about quizzing rather than about basketball.
+   */
+  const [mode, setMode] = useState<"draw" | "beats">("draw");
 
   const onSave = async () => {
     setSaveState({ status: "saving" });
@@ -124,6 +132,32 @@ export function PlayBuilder() {
           route to set where they finish. Pass sets possession automatically.
         </p>
       </header>
+
+      <div role="group" aria-label="Builder mode" className="flex gap-2 text-sm">
+        {(
+          [
+            ["draw", "Draw the play"],
+            ["beats", "Edit beat by beat"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={mode === value}
+            onClick={() => {
+              setMode(value);
+              setBeatIndex(0);
+            }}
+            className={`rounded border px-3 py-1.5 ${
+              mode === value
+                ? "border-amber-500 bg-amber-500/20 text-amber-100"
+                : "border-stone-600 text-stone-300 hover:bg-stone-800"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <ValidationBanner result={validation} />
 
@@ -258,6 +292,44 @@ export function PlayBuilder() {
         </section>
       )}
 
+      {mode === "draw" ? (
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-sm font-medium text-stone-400">
+              The play, in order
+            </h2>
+            {suggestedSplits(beat).length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  // Applied back to front so earlier cuts do not shift later ones.
+                  let beats = play.beats;
+                  for (const step of [...suggestedSplits(beat)].reverse()) {
+                    beats = splitBeatAtStep(beats, beatIndex, step);
+                  }
+                  updateBeats(beats);
+                  setMode("beats");
+                }}
+                className="rounded border border-amber-700 px-3 py-1.5 text-sm text-amber-200 hover:bg-amber-950/40"
+              >
+                Break into beats
+              </button>
+            )}
+          </div>
+          <MoveList
+            play={play}
+            beat={beat}
+            beatIndex={beatIndex}
+            selectedActionId={editor.selectedActionId}
+            onSelectAction={setSelectedActionId}
+            updateBeats={updateBeats}
+          />
+          <p className="text-xs text-stone-600">
+            Draw the whole thing first. Breaking it into beats decides where a quiz can
+            stop and ask a question — it changes nothing about the play.
+          </p>
+        </section>
+      ) : (
       <BeatStrip
         beats={play.beats}
         selectedIndex={beatIndex}
@@ -291,6 +363,7 @@ export function PlayBuilder() {
         }}
         canDelete={play.beats.length > 2}
       />
+      )}
     </div>
   );
 }

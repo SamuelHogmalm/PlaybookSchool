@@ -278,3 +278,44 @@ export function isValidDraw(input: DrawnActionInput): boolean {
   if (input.type === "screen" && input.by === input.for) return false;
   return true;
 }
+
+/**
+ * Move an action one place earlier or later in the beat's sequence.
+ *
+ * Swaps its step with the neighbouring one, taking any action grouped alongside it. The
+ * distinction from `setActionStep` matters: that one says "these happen together", this
+ * one says "this happens before that". A coach drawing a play in one pass gets the order
+ * wrong sometimes, and correcting it should not accidentally make two moves simultaneous.
+ */
+export function moveActionInSequence(
+  beats: Beat[],
+  beatIndex: number,
+  actionId: string,
+  direction: -1 | 1,
+): Beat[] {
+  const next = cloneBeats(beats);
+  const beat = next[beatIndex];
+  const action = beat.actions.find((a) => a.id === actionId);
+  if (!action) return next;
+
+  const steps = [
+    ...new Set(
+      beat.actions
+        .map((a) => a.step)
+        .filter((s): s is number => typeof s === "number"),
+    ),
+  ].sort((a, b) => a - b);
+
+  const here = steps.indexOf(action.step ?? steps[0]);
+  const there = here + direction;
+  if (here < 0 || there < 0 || there >= steps.length) return next;
+
+  const from = steps[here];
+  const to = steps[there];
+  for (const a of beat.actions) {
+    if (a.step === from) a.step = to;
+    else if (a.step === to) a.step = from;
+  }
+
+  return next;
+}

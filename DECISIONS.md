@@ -480,6 +480,38 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — Coaches draw a play; the app decides where the beats go
+
+`splitBeatAtStep` / `mergeBeatWithPrevious` in `src/lib/play/splitBeats.ts`, `MoveList`,
+and a draw/beats mode in `PlayBuilder`.
+
+Samuel's proposal, and it corrects a mistake in the builder's shape. Coaches draw a play
+in one pass, and how many moves fit on a page is their own habit — some put a whole
+possession on one diagram, some use six. Making them add a beat, switch to it, draw, add
+another was imposing our storage on their work.
+
+**Beats are a quizzing concern.** Where a play can pause and be asked about is a question
+for the app, not the coach, and it should not be asked while someone is drawing.
+
+So: *draw* mode is continuous — every stroke appends to the sequence, with a move list
+showing the order, reordering, grouping into simultaneous moves, and a break point
+between any two. *Edit beat by beat* keeps the existing per-beat tools untouched.
+
+Both modes, not one, on Samuel's call. Review needs per-beat editing when fixing a single
+frame against a PDF page, and his own reason for wanting continuous drawing — being able
+to redraw part of a play quickly during review — depends on that still existing.
+
+What made it feasible: steps already meant "ordered moves". A beat boundary is just a
+moment, and a moment is a set of positions computable from the moves either side of it.
+`splitBeatAtStep` derives the seam rather than repairing it, so the halves join by
+construction and a movement that now starts a beat is re-anchored to where its player
+actually stands.
+
+Split points are suggested where the ball changes hands: that is how coaches describe a
+play's phases, and it is where a quizzable question lives.
+
+Rules out: asking a coach to think in beats while they are thinking about basketball.
+
 ## 2026-08-18 — A handoff happens as the runner passes, not after they have gone
 
 `timeHandoffs()` in `src/lib/timing/sequence.ts`.

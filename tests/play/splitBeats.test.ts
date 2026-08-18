@@ -7,7 +7,10 @@ import {
   splitBeatAtStep,
   suggestedSplits,
 } from "../../src/lib/play/splitBeats.js";
-import { addDrawnAction } from "../../src/lib/play/actionOps.js";
+import {
+  addDrawnAction,
+  moveActionInSequence,
+} from "../../src/lib/play/actionOps.js";
 import { createEmptyPlay } from "../../src/lib/play/beatOps.js";
 import { validatePlay } from "../../src/lib/play/validation.js";
 import { PLAYER_IDS, type Beat } from "../../src/lib/play/types.js";
@@ -169,5 +172,49 @@ describe("suggested split points", () => {
   it("offers nothing for a short beat", () => {
     const play = createEmptyPlay();
     assert.deepEqual(suggestedSplits(play.beats[0]), []);
+  });
+});
+
+describe("reordering the sequence", () => {
+  it("swaps a move with the one before it", () => {
+    const { beats } = longSequence();
+    const order = () => beats[0].actions.map((a) => `${a.type}:${a.step}`);
+    const before = order();
+    assert.deepEqual(before, ["dribble:1", "pass:2", "cut:3", "cut:4"]);
+
+    const moved = moveActionInSequence(beats, 0, beats[0].actions[2].id, -1);
+    const steps = new Map(moved[0].actions.map((a) => [a.type + a.by, a.step]));
+    assert.equal(steps.get("cut3"), 2, "the cut should have moved earlier");
+    assert.equal(steps.get("pass1"), 3, "the pass should have moved later");
+  });
+
+  it("does not group moves when reordering", () => {
+    const { beats } = longSequence();
+    const moved = moveActionInSequence(beats, 0, beats[0].actions[2].id, -1);
+    const used = moved[0].actions.map((a) => a.step);
+    assert.equal(new Set(used).size, used.length, "two moves ended up sharing a step");
+  });
+
+  it("refuses to move past either end", () => {
+    const { beats } = longSequence();
+    const first = beats[0].actions[0].id;
+    const last = beats[0].actions[beats[0].actions.length - 1].id;
+    assert.deepEqual(
+      moveActionInSequence(beats, 0, first, -1)[0].actions.map((a) => a.step),
+      beats[0].actions.map((a) => a.step),
+    );
+    assert.deepEqual(
+      moveActionInSequence(beats, 0, last, 1)[0].actions.map((a) => a.step),
+      beats[0].actions.map((a) => a.step),
+    );
+  });
+
+  it("a reordered sequence still splits and validates", () => {
+    const { play, beats } = longSequence();
+    const moved = moveActionInSequence(beats, 0, beats[0].actions[2].id, -1);
+    const split = splitBeatAtStep(moved, 0, 2);
+    chainHolds(split);
+    const result = validatePlay({ ...play, beats: split });
+    assert.equal(result.valid, true, result.errors.join("; "));
   });
 });
