@@ -5,7 +5,7 @@ import { ActionLayer } from "./ActionLayer";
 import { CourtMarkers } from "./CourtMarkers";
 import { CourtSurface } from "./CourtSurface";
 import { DestinationRoutes } from "./DestinationRoutes";
-import { PlayerTokens } from "./PlayerTokens";
+import { OriginMarkers, PlayerTokens } from "./PlayerTokens";
 
 export type CourtRendererProps = {
   beat: Beat;
@@ -14,6 +14,18 @@ export type CourtRendererProps = {
   /** Grab rings on every destination — move mode, where they can be dragged. */
   showDestinationHandles?: boolean;
   draggingPlayer?: PlayerId | null;
+  /**
+   * Where the tokens stand.
+   *
+   * `"start"` is the diagram convention — a token at the tail of its own arrow, which is
+   * what a printed play looks like and what the animator shows on frame one.
+   *
+   * `"end"` is for editing. The court then reads as the state the beat leaves behind,
+   * which is exactly the next beat's opening, so stepping between beats no longer makes
+   * everyone jump — and a player standing somewhere new with no arrow into them is
+   * visibly wrong rather than quietly invalid.
+   */
+  tokensAt?: "start" | "end";
   highlightActionId?: string;
   highlightPlayerId?: PlayerId;
   /** Unique suffix when multiple courts share one page (SVG marker ids). */
@@ -29,13 +41,14 @@ export type CourtRendererProps = {
 
 /**
  * Pure presentation: one beat on the half court.
- * Tokens at startPos; actions drawn startPos → pos. No state or derivation.
+ * Actions drawn startPos → pos. No state or derivation.
  */
 export function CourtRenderer({
   beat,
   showDestinations = false,
   showDestinationHandles = false,
   draggingPlayer = null,
+  tokensAt = "start",
   highlightActionId,
   highlightPlayerId,
   markerSuffix = "",
@@ -68,6 +81,7 @@ export function CourtRenderer({
             palette={palette}
             showHandles={showDestinationHandles}
             draggingPlayer={draggingPlayer}
+            labelDestinations={tokensAt === "start"}
           />
         )}
         <ActionLayer
@@ -76,8 +90,10 @@ export function CourtRenderer({
           markerSuffix={markerSuffix}
           highlightActionId={highlightActionId}
         />
+        {/* Where they came from, when the tokens have moved on to the end state. */}
+        {tokensAt === "end" && <OriginMarkers beat={beat} palette={palette} />}
         <PlayerTokens
-          positions={beat.startPos}
+          positions={tokensAt === "end" ? beat.pos : beat.startPos}
           possession={beat.startBall}
           palette={palette}
           highlightPlayerId={highlightPlayerId}

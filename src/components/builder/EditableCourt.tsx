@@ -233,6 +233,7 @@ export function EditableCourt({
   const onDestPointerDown = (playerId: PlayerId) => (e: React.PointerEvent) => {
     if (tool !== "move") return;
     e.preventDefault();
+    onSelectPlayer(playerId);
     (e.target as Element).setPointerCapture(e.pointerId);
     setDraggingPlayer(playerId);
     onSelectAction(null);
@@ -315,6 +316,7 @@ export function EditableCourt({
     <div className="relative w-full max-w-[400px]">
       <CourtRenderer
         beat={beat}
+        tokensAt="end"
         showDestinations
         showDestinationHandles={tool === "move"}
         draggingPlayer={draggingPlayer}
@@ -401,10 +403,15 @@ export function EditableCourt({
               );
             })}
 
-          {PLAYER_IDS.map((id) => {
-            const p = beat.startPos[id];
+          {/*
+            Hit targets follow the tokens, which now stand at their end positions. In
+            move mode they are skipped entirely: the drag handle is in the same place,
+            and a draw target on top of it would swallow the pointer.
+          */}
+          {tool !== "move" && PLAYER_IDS.map((id) => {
+            const p = targets[id];
             if (!p) return null;
-            const drawOk = tool !== "move" && canDrawFrom(id);
+            const drawOk = canDrawFrom(id);
             const holdsBall = beat.startBall === id;
             const isSelected = selectedPlayerId === id;
             return (
@@ -425,7 +432,7 @@ export function EditableCourt({
                 className="focus-visible:outline-none focus-visible:[stroke:#fbbf24] focus-visible:[stroke-width:3]"
                 style={{
                   pointerEvents: "all",
-                  cursor: drawOk ? "crosshair" : tool === "move" ? "default" : "not-allowed",
+                  cursor: drawOk ? "crosshair" : "not-allowed",
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {

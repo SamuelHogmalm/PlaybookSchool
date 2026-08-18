@@ -83,3 +83,39 @@ export function PlayerTokens({
   );
 }
 
+
+type OriginProps = {
+  beat: import("@/lib/play/types").Beat;
+  palette: CourtPalette;
+};
+
+/**
+ * A faint dot where a player began, shown when the tokens sit at their end positions.
+ *
+ * Without it an arrow appears to start from nowhere. With it the beat reads as "they
+ * were here, they went there" — which is the same information a printed diagram gives,
+ * arranged the other way round.
+ */
+export function OriginMarkers({ beat, palette }: OriginProps) {
+  return (
+    <g style={{ pointerEvents: "none" }} opacity={0.5}>
+      {PLAYER_IDS.map((id) => {
+        const from = beat.startPos[id];
+        const to = beat.pos[id];
+        if (!from || !to) return null;
+        if (Math.hypot(from.x - to.x, from.y - to.y) < 1) return null;
+        return (
+          <circle
+            key={`origin-${id}`}
+            cx={from.x}
+            cy={from.y}
+            r="4"
+            fill="none"
+            stroke={palette.muted}
+            strokeWidth="1.5"
+          />
+        );
+      })}
+    </g>
+  );
+}

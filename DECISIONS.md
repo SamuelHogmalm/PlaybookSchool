@@ -480,6 +480,38 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — The builder shows the end of the beat, not the start
+
+`tokensAt` on `CourtRenderer`; `OriginMarkers` in `PlayerTokens.tsx`.
+
+Reverses the position I took an hour earlier, on Samuel's argument, which was better
+than mine.
+
+I had refused to move the token when a cut is drawn, on the grounds that a token belongs
+at the tail of its own arrow — that is what a printed diagram means and what the animator
+shows on frame one. Samuel pointed out what that costs and what moving it buys:
+
+- **The court becomes the next beat's opening.** `beat[N].pos` *is* `beat[N+1].startPos`,
+  so stepping between beats no longer makes every token jump. What you left is what you
+  arrive at.
+- **Unexplained movement becomes visible.** A player standing somewhere new with no arrow
+  into them is obviously wrong, where before it was a silent rule 9 violation — the exact
+  defect that had Kentucky teleporting a player 386 units.
+
+So the renderer takes `tokensAt`. The builder uses `"end"`; the beat strip, `/dev/court`
+and anything showing a play as a diagram keep `"start"`. Faint origin markers show where
+a moved player came from, so an arrow never appears to start from nowhere.
+
+The animator is untouched — it reads `positionsAt`, not the renderer's opinion, so the
+concern about the two disagreeing was never real.
+
+Two things this dragged in: draw hit-targets follow the tokens rather than sitting at
+`startPos`, and in move mode they are skipped entirely, because the drag handle is now in
+the same place and a draw target stacked on it swallowed the pointer.
+
+Rules out: assuming the editing view and the printed view want the same arrangement. One
+is a document; the other is a workspace mid-edit.
+
 ## 2026-08-18 — A pass finds a player where they end up, not where they started
 
 `targetPositions()` in `src/lib/play/drawing.ts`.

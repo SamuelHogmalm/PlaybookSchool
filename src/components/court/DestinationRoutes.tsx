@@ -15,6 +15,8 @@ type Props = {
   /** Show grab rings at each destination — move mode, where they can be dragged. */
   showHandles?: boolean;
   draggingPlayer?: PlayerId | null;
+  /** Off when the tokens already stand at their destinations — the token is the label. */
+  labelDestinations?: boolean;
 };
 
 /**
@@ -34,6 +36,7 @@ export function DestinationRoutes({
   palette,
   showHandles = false,
   draggingPlayer = null,
+  labelDestinations = true,
 }: Props) {
   const routes = unexplainedTravel(beat);
 
@@ -98,7 +101,7 @@ export function DestinationRoutes({
         has already cut needs to see *which* player finishes there — otherwise they aim
         at where the token still is and the pass finds nobody.
       */}
-      {moved.map(({ id, to }) => (
+      {labelDestinations && moved.map(({ id, to }) => (
         <g key={`dest-label-${id}`} opacity={0.75}>
           <circle
             cx={to.x}
