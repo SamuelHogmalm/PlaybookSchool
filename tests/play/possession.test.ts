@@ -121,7 +121,7 @@ describe("passing to a player who has already moved", () => {
   it("finds the receiver at the end of their cut, not where they started", () => {
     const play = createEmptyPlay();
     const start = { ...play.beats[0].startPos["4"] };
-    const corner = { x: 60, y: 60 };
+    const corner = { x: 120, y: 300 };
 
     const beats = addDrawnAction(play.beats, 0, {
       type: "cut",
@@ -140,7 +140,7 @@ describe("passing to a player who has already moved", () => {
     const beats = addDrawnAction(play.beats, 0, {
       type: "cut",
       by: "4",
-      path: [start, { x: 60, y: 60 }],
+      path: [start, { x: 120, y: 300 }],
     });
 
     // The player is not there any more, so aiming at their old spot must not pick them.
@@ -157,7 +157,7 @@ describe("passing to a player who has already moved", () => {
 
   it("a pass drawn to the moved player validates", () => {
     const play = createEmptyPlay();
-    const corner = { x: 60, y: 60 };
+    const corner = { x: 120, y: 300 };
     let beats = addDrawnAction(play.beats, 0, {
       type: "cut",
       by: "4",

@@ -2,10 +2,13 @@ import type { Beat, Play, PlayerId, Vec } from "./types";
 import { PLAYER_IDS } from "./types";
 import {
   ALIGNMENT_PRESETS,
+  clampToCourt,
   copyPositions,
   snapClampPoint,
+  snapPoint,
   type AlignmentPresetName,
 } from "./editor";
+import { stopAtPerimeter } from "./geometry";
 
 function cloneBeat(beat: Beat): Beat {
   return {
@@ -73,7 +76,15 @@ export function updateBeatPlayerPos(
   pos: Vec,
 ): Beat[] {
   const next = cloneBeats(beats);
-  const snapped = snapClampPoint(pos);
+  // Dragged from where they are, and stopped at the edge of anyone already standing
+  // where they were dropped — the same rule a drawn route follows.
+  const from = next[beatIndex].startPos[playerId] ?? pos;
+  const others: Vec[] = PLAYER_IDS.filter((id) => id !== playerId)
+    .map((id) => next[beatIndex].pos[id] ?? next[beatIndex].startPos[id])
+    .filter(Boolean);
+  // Snap to the grid first: snapping *after* the clamp can shove the token back inside
+  // the gap it was just moved out of.
+  const snapped = clampToCourt(stopAtPerimeter(from, snapPoint(pos), others));
   next[beatIndex].pos[playerId] = { ...snapped };
   // Beat 1 has no previous beat to inherit from — its startPos *is* the opening
   // alignment, so an idle player there moves as a whole rather than drifting.

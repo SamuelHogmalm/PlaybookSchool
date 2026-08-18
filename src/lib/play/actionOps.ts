@@ -2,6 +2,8 @@ import type { Action, ActionType, Beat, Play, PlayerId, Vec } from "./types";
 import { holderAfterActions } from "./possession";
 import { cloneBeats, linkBeatBall, linkBeatPositions } from "./beatOps";
 import { pathLength, simplifyPath } from "./drawing";
+import { stopAtPerimeter } from "./geometry";
+import { PLAYER_IDS } from "./types";
 
 /** Next free `aN` id in a beat. Exported so a drag can claim its id up front. */
 export function nextActionId(actions: Action[]): string {
@@ -163,6 +165,17 @@ export function setActionStep(
  * Called after every add and every removal, so deleting the first of two movements
  * re-anchors the second to `startPos` rather than leaving it starting in mid-air.
  */
+/** Where everyone else finishes this beat — the spots a route must not end on. */
+function occupiedBy(beat: Beat, exclude: PlayerId): Vec[] {
+  const out: Vec[] = [];
+  for (const id of PLAYER_IDS) {
+    if (id === exclude) continue;
+    const spot = beat.pos[id] ?? beat.startPos[id];
+    if (spot) out.push(spot);
+  }
+  return out;
+}
+
 function chainPlayerMovements(beat: Beat, playerId: PlayerId): void {
   const movements = beat.actions.filter(
     (a) => a.by === playerId && isMovementType(a.type),
@@ -177,7 +190,18 @@ function chainPlayerMovements(beat: Beat, playerId: PlayerId): void {
   for (const movement of movements) {
     if (movement.path && movement.path.length >= 2) {
       movement.path[0] = { ...anchor };
-      anchor = { ...movement.path[movement.path.length - 1] };
+
+      // Nobody finishes on top of a team-mate: two tokens in one place cannot be told
+      // apart or selected. A screener aiming at the player they are screening for is
+      // the usual way this happens, and stopping at the edge is what they meant anyway.
+      const last = movement.path.length - 1;
+      const settled = stopAtPerimeter(
+        movement.path[last - 1],
+        movement.path[last],
+        occupiedBy(beat, playerId),
+      );
+      movement.path[last] = settled;
+      anchor = { ...settled };
     }
   }
   beat.pos[playerId] = { ...anchor };

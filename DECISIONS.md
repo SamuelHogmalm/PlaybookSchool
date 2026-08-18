@@ -480,6 +480,32 @@ review worklist Phase 5 needs.
 Rules out: treating 12/12 valid as 12/12 correct. Validation proves a play is coherent,
 not that it is the play on the page.
 
+## 2026-08-18 — No two tokens ever occupy the same spot
+
+`stopAtPerimeter()` in `src/lib/play/geometry.ts`.
+
+A screener drawn onto the player they are screening for landed exactly on top of them,
+and two tokens in one place cannot be told apart or selected — the coach loses access to
+both. It comes up constantly, because aiming at the player you are screening for is the
+natural thing to draw.
+
+A route now stops where it *entered* the other player's space, keeping the direction of
+travel. Backing straight away from them instead would bend the route somewhere nobody
+drew it. Applied wherever a destination is written: drawn movements, and dragging a
+destination in move mode.
+
+Running *past* someone is untouched — players do that. Only the endpoint has to be clear.
+
+Two things this turned up:
+
+- **Order matters between snapping and clamping.** `updateBeatPlayerPos` snapped to the
+  grid *after* the perimeter clamp, which could shove the token back inside the gap it
+  had just been moved out of. Snap first, clear second.
+- The gap is two token radii — touching, not overlapping — so a screener still finishes
+  visibly *at* the player they screen for, which is what the diagram means.
+
+Rules out: writing a player's destination without checking who is already standing there.
+
 ## 2026-08-18 — The builder shows the end of the beat, not the start
 
 `tokensAt` on `CourtRenderer`; `OriginMarkers` in `PlayerTokens.tsx`.
