@@ -94,7 +94,10 @@ export function CourtRenderer({
         {tokensAt === "end" && <OriginMarkers beat={beat} palette={palette} />}
         <PlayerTokens
           positions={tokensAt === "end" ? beat.pos : beat.startPos}
-          possession={beat.startBall}
+          // Possession has to match the moment being drawn. Showing end-of-beat
+          // positions with start-of-beat possession put the ball in the hand of a
+          // player who had already passed it.
+          possession={tokensAt === "end" ? beat.ball : beat.startBall}
           palette={palette}
           highlightPlayerId={highlightPlayerId}
         />

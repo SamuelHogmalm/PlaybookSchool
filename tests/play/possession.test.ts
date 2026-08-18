@@ -176,3 +176,50 @@ describe("passing to a player who has already moved", () => {
     assert.equal(result.valid, true, result.errors.join("; "));
   });
 });
+
+describe("possession carries across beats", () => {
+  /** 4 passes to 5 on beat 1; on beat 2 it should be 5 who can act. */
+  function afterCrossBeatPass() {
+    const play = createEmptyPlay();
+    // Give 4 the ball first, the way a real play would.
+    let beats = play.beats.map((b, i) =>
+      i === 0 ? { ...b, startBall: "4" as const, ball: "4" as const } : b,
+    );
+    beats = addDrawnAction(beats, 0, {
+      type: "pass",
+      by: "4",
+      for: "5",
+      path: [beats[0].startPos["4"], beats[0].startPos["5"]],
+    });
+    return beats;
+  }
+
+  it("the receiver holds it at the end of the passing beat", () => {
+    const beats = afterCrossBeatPass();
+    assert.equal(beats[0].ball, "5");
+  });
+
+  it("the next beat starts with the receiver", () => {
+    const beats = afterCrossBeatPass();
+    assert.equal(beats[1].startBall, "5");
+    assert.equal(currentHolder(beats[1]), "5");
+  });
+
+  it("the receiver can pass on the next beat, and the passer cannot", () => {
+    const beats = afterCrossBeatPass();
+    assert.equal(canDrawAction(beats[1], "5", "pass").allowed, true);
+    assert.equal(canDrawAction(beats[1], "4", "pass").allowed, false);
+  });
+
+  it("an unrelated action on the next beat does not disturb possession", () => {
+    let beats = afterCrossBeatPass();
+    beats = addDrawnAction(beats, 1, {
+      type: "screen",
+      by: "4",
+      for: "2",
+      path: [beats[1].startPos["4"], { x: 430, y: 120 }],
+    });
+    assert.equal(currentHolder(beats[1]), "5");
+    assert.equal(canDrawAction(beats[1], "5", "pass").allowed, true);
+  });
+});
