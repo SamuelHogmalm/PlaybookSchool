@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Source playbooks are not ours to commit
 playbooks/*.pdf
+
+# Playbook backups taken before a clear-out
+backups/

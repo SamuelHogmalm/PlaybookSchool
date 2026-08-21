@@ -1101,3 +1101,17 @@ the run should be abandoned there rather than paid for.
 
 Rules out: a per-book script, and adopting a new book's output without the same
 `compare-interpret.ts` check every candidate seed has had.
+
+## 2026-08-21 — Clearing the playbook writes a backup first
+
+Samuel asked for the five saved plays to be cleared so only new ones remain. Two of them
+were plays he had drawn himself days earlier, and `plays` has no soft delete, so the
+literal request and the recoverable one were not the same thing.
+
+`playbook-admin.mjs` now selects every column, writes the full rows to `backups/` before
+any delete, prints the exact `--restore` command, and can read a backup back with an
+upsert. The restore path was exercised end to end before the real clear-out, because an
+untested undo is not an undo. `backups/` is gitignored — those rows are a team's plays.
+
+Rules out: a delete flag that only prints a warning, and treating "clear it out" as
+needing a follow-up question when the answer is to make the action reversible instead.

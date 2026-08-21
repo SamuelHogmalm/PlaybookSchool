@@ -6,10 +6,12 @@
  *   node scripts/playbook-admin.mjs --delete-all    # remove them all
  *   node scripts/playbook-admin.mjs --delete <id>   # remove one
  *   node scripts/playbook-admin.mjs --keep <id,id>  # remove all except these
+ *   node scripts/playbook-admin.mjs --restore <file> # put a backup back
  *
- * Listing is the default because deleting a playbook is not reversible from here —
- * `plays` has no soft delete, and the app's own delete button exists for one-at-a-time
- * work. This is for clearing the decks.
+ * Listing is the default because `plays` has no soft delete and the app's own delete
+ * button exists for one-at-a-time work. This is for clearing the decks — so every
+ * delete writes the full rows to backups/ first, and --restore reads one back. A
+ * playbook is somebody's season; it should not be one typo away from gone.
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local. The
  * service key bypasses row-level security, which is exactly why this is a script a
@@ -17,7 +19,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -63,9 +65,23 @@ const valueOf = (flag) => {
   return i === -1 ? null : argv[i + 1];
 };
 
+const restorePath = valueOf("--restore");
+if (restorePath) {
+  const rows = JSON.parse(readFileSync(resolve(root, restorePath), "utf8"));
+  const { error: upErr } = await supabase
+    .from("plays")
+    .upsert(rows, { onConflict: "id" });
+  if (upErr) {
+    console.error("Restore failed:", upErr.message);
+    process.exit(1);
+  }
+  console.log(`Restored ${rows.length} play(s) from ${restorePath}.`);
+  process.exit(0);
+}
+
 const { data: plays, error } = await supabase
   .from("plays")
-  .select("id, name, team_id, version, updated_at, beats")
+  .select("*")
   .order("updated_at", { ascending: false });
 
 if (error) {
@@ -107,7 +123,13 @@ if (!doomed.length) {
   process.exit(0);
 }
 
-console.log(`\nDeleting ${doomed.length}: ${doomed.map((p) => p.name).join(", ")}`);
+const backupDir = resolve(root, "backups");
+mkdirSync(backupDir, { recursive: true });
+const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+const backup = resolve(backupDir, `plays-${stamp}.json`);
+writeFileSync(backup, JSON.stringify(doomed, null, 2), "utf8");
+console.log(`\nBacked up ${doomed.length} play(s) to ${backup}`);
+console.log(`Deleting: ${doomed.map((p) => p.name).join(", ")}`);
 
 const { error: delError } = await supabase
   .from("plays")
@@ -123,3 +145,4 @@ if (delError) {
 }
 
 console.log(`Done. ${plays.length - doomed.length} play(s) left.`);
+console.log(`Undo with: node scripts/playbook-admin.mjs --restore ${backup}`);
