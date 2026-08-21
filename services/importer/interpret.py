@@ -43,6 +43,7 @@ This frame positions: {positions_json}
 
 Ball at START of this frame (circled number): {start_ball}
 Next frame START possession (circled number, for cross-frame check): {next_start_ball}
+{final_frame_note}
 
 Return strict JSON matching the Output section in the skill — no prose, no markdown fences.
 Do not output ball possession — only actions. Run the self-check before returning."""
@@ -140,6 +141,11 @@ def normalize_actions(raw_actions: list[dict[str, Any]] | None) -> list[dict[str
         via = normalize_via(action.get("via"))
         if via:
             entry["via"] = via
+        # One arrowhead, normalized by the same rules as a via point: off-court or
+        # unparseable is dropped rather than trusted.
+        to = normalize_via([action.get("to")] if action.get("to") is not None else [])
+        if to and atype in {"cut", "dribble", "screen"}:
+            entry["to"] = to[0]
         order = action.get("order")
         if order is not None:
             try:
@@ -175,7 +181,18 @@ async def interpret_one_frame(
 ) -> tuple[dict[str, Any], dict[str, int]]:
     prev_pos = prev_beat.get("startPos") or prev_beat.get("pos", {}) if prev_beat else {}
     next_start = next_beat.get("startBall", "— (last frame)") if next_beat else "— (last frame)"
+    # Only the final frame gets asked for arrowheads. Every earlier frame has the next
+    # frame's drawn positions, which are exact; an estimate there could only make it
+    # worse. See "The last frame" in the skill.
+    final_note = (
+        "THIS IS THE FINAL FRAME of the play. There is no next frame to say where these "
+        'arrows point, so give every movement a "to": [x, y] arrowhead as the skill '
+        "describes. Without it the move is lost."
+        if next_beat is None
+        else ""
+    )
     prompt = PROMPT_TEMPLATE.format(
+        final_frame_note=final_note,
         skill=skill,
         play_name=play_name,
         category=category or "Set",

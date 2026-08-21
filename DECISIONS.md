@@ -1165,3 +1165,24 @@ DICE and Kick up were imported this way after the seed book was cleared.
 
 Rules out: appending imported books to the seed, and a `--force` flag that would let an
 invalid play into a playbook.
+
+## 2026-08-21 — The last frame's arrows are read off the arrowhead
+
+Every beat but the last gets its end positions from the next frame, where the players
+are already drawn — exact, free, and the reason the skill file says the model reads
+arrows and never estimates positions. The last frame has no next frame, so the parser
+left `pos == startPos`, every movement in it measured zero travel, and the whole frame
+was dropped as jitter.
+
+On the original book that lost one frame in four and nobody noticed. On a two-frame play
+it loses half: DICE's second frame is a ball screen, a roll to the rim and a cut to the
+corner, and the pipeline kept none of them.
+
+So the final frame — and only the final frame — is asked for a `to` arrowhead per
+movement. It is an estimate, so every action it moves is marked `needsReview`, and it is
+ignored under the jitter floor or over the teleport cap. DICE went 5 → 8 actions kept,
+Kick up 8 → 11, both still valid, and the endpoints were checked against the source
+crops by eye.
+
+Rules out: letting the model estimate positions on frames where the parser already knows
+them, and reading a frame's silence as "nobody moved".

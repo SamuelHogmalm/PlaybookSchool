@@ -16,6 +16,9 @@ MAX_BEAT_MOVE = 500  # flag for review, never split path
 MAX_SCREENER_MOVE = 60
 SPLIT_SCREEN_ENDPOINT_MAX = 40  # N-1 cut endpoint ≈ screener pos on beat N
 ZERO_TRAVEL_SCREEN_REASON = "Screen has no movement — verify against your playbook"
+FINAL_FRAME_REASON = (
+    "Last frame — where this ends was read off the arrowhead, not a drawn position"
+)
 HOLDER_CUT_REASON = "Ball handler has a cut — should this be a dribble?"
 PASS_AND_CUT_REASON = (
     "Player passes and cuts on the same beat — should the cut be a dribble, "
@@ -85,6 +88,56 @@ def _beat_positions(beat: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any
     start_pos = beat.get("startPos") or beat.get("pos") or {}
     end_pos = beat.get("pos") or start_pos
     return start_pos, end_pos
+
+
+def apply_final_frame_endpoints(beats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Give the last beat real end positions, taken from the arrowheads.
+
+    Every other beat gets its `pos` from the next frame's drawn positions, which are
+    exact. The last beat has no next frame, so the parser leaves `pos == startPos` and
+    every movement in it measures zero travel and is dropped as jitter. On a three-frame
+    play that silently loses a third of what the coach drew.
+
+    The `to` the model reads off the arrowhead is an estimate, so it is used only here,
+    only where the parser has nothing, and every action it moves is flagged for review.
+    """
+    applied: list[dict[str, Any]] = []
+    if not beats:
+        return applied
+
+    beat = beats[-1]
+    start_pos = beat.get("startPos") or beat.get("pos") or {}
+    end_pos = dict(beat.get("pos") or start_pos)
+
+    for action in beat.get("actions") or []:
+        to = action.pop("to", None)
+        if not isinstance(to, dict) or action.get("type") not in {"cut", "dribble", "screen"}:
+            continue
+        pid = str(action.get("by") or "")
+        here = start_pos.get(pid)
+        if pid not in PLAYER_IDS or not here:
+            continue
+        travel = _dist(here, to)
+        if travel < JITTER_MAX or travel > MAX_BEAT_MOVE:
+            continue
+        end_pos[pid] = {"x": to["x"], "y": to["y"]}
+        action["needsReview"] = True
+        action.setdefault("reason", FINAL_FRAME_REASON)
+        applied.append(
+            {
+                "beat": beat.get("id"),
+                "action": action.get("id"),
+                "by": pid,
+                "travel": round(travel, 1),
+            }
+        )
+
+    # Anyone with no arrow stays put, which is what the frame shows.
+    for pid in PLAYER_IDS:
+        if pid not in end_pos and pid in start_pos:
+            end_pos[pid] = dict(start_pos[pid])
+    beat["pos"] = end_pos
+    return applied
 
 
 def _next_action_id(actions: list[dict[str, Any]]) -> str:
@@ -723,6 +776,7 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
     actions_before = count_actions(beats)
 
     sanitize_removed = sanitize_actions(beats)
+    final_endpoints = apply_final_frame_endpoints(beats)
     short_dropped = drop_short_movement_actions(beats)
     jitter_snapped = snap_jitter_positions(beats)
     ball_repairs = derive_ball(beats)
@@ -746,6 +800,7 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
     for beat in beats:
         for action in beat.get("actions") or []:
             action.pop("via", None)
+            action.pop("to", None)
             if len(action.get("path") or []) >= 3:
                 bent_paths += 1
 
@@ -775,6 +830,7 @@ def finalize_beats(beats: list[dict[str, Any]]) -> dict[str, Any]:
         "sanitize_removed": sanitize_removed,
         "jitter_snapped": jitter_snapped,
         "short_dropped": short_dropped,
+        "final_endpoints": final_endpoints,
     }
 
 

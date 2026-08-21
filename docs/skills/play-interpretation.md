@@ -40,8 +40,9 @@ one geometric thing nothing else can supply: **where an arrow turns.**
 
 ## Arrows that change direction
 
-The start and end of every movement are already known. What is not known is whether the
-player went there in a straight line or took a corner on the way.
+The start and end of every movement are already known — except in the last frame of a
+play, which is covered below. What is not known is whether the player went there in a
+straight line or took a corner on the way.
 
 A player who steps toward the ball and then cuts backdoor has drawn **one arrow with a
 bend in it**, not two arrows. If you report only that they moved, the pipeline draws a
@@ -194,6 +195,23 @@ When emitting multiple actions, order them as they occur:
 
 Actions on opposite sides of the floor are concurrent; list ball-side first.
 
+## The last frame
+
+Every other frame's arrows are checked against the next frame: the players are already
+drawn where they ended up, so the arrow only has to say what *kind* of move it was and
+whether it bent.
+
+The last frame has no next frame. Nothing else in the pipeline knows where those arrows
+point, so if you do not say, the moves are dropped and the play stops one frame early.
+
+**Only when the context above says this is the final frame**, give every movement an
+`"to": [x, y]` — the point of the arrowhead, in the 500x470 system. Not the general
+area: the tip of the arrow. Omit `to` on every other frame and on passes and handoffs,
+where the receiver's own position already says where the ball went.
+
+If an arrow's head is genuinely ambiguous, still give your best `to` and mark the action
+`uncertain` with a reason. A flagged estimate is reviewable; a missing move is invisible.
+
 ## Output
 
 Strict JSON. No prose, no markdown fences.
@@ -206,6 +224,7 @@ Strict JSON. No prose, no markdown fences.
       "by": "1-5",
       "for": "1-5 or null",
       "via": [[x, y]],
+      "to": [x, y],
       "uncertain": false,
       "reason": "present only when uncertain"
     }
@@ -219,6 +238,9 @@ Strict JSON. No prose, no markdown fences.
 `via` holds the turning points of a movement arrow that bends — corners only, in travel
 order, omitting the start and end. Omit the field entirely for a straight arrow, and for
 passes and handoffs, which travel in a line.
+
+`to` is the arrowhead of a movement, required on the final frame of a play and omitted
+everywhere else. See "The last frame".
 
 `logicErrors` lists any hard constraint you could not satisfy, in plain language.
 **Never return an empty `logicErrors` array to make the output look clean.** A frame
