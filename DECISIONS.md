@@ -1149,3 +1149,19 @@ was written for. Four seed warnings withdrawn; the seed is still 11/12 valid.
 Rules out: raising the threshold instead, which would have hidden real misreads. A
 review test that asserted "no seed play is clean yet" was rewritten rather than the
 change reverted — Kickup's only flag was this false positive.
+
+## 2026-08-21 — Importing a book into a playbook is a script, not the seed file
+
+The pipeline writes a JSON file; `src/data/plays-interpreted.json` is the seed the app
+falls back to when the database is empty. Adding new books to that file would make every
+team's demo grow whenever anyone imported anything.
+
+`scripts/import-plays.ts` takes a candidate file and upserts it into one team's `plays`
+table, validating each play first and refusing the ones that fail. That check matters
+more here than in the app: the script uses the service key, so it bypasses the API route
+that normally enforces "never save a play where `valid` is false".
+
+DICE and Kick up were imported this way after the seed book was cleared.
+
+Rules out: appending imported books to the seed, and a `--force` flag that would let an
+invalid play into a playbook.
