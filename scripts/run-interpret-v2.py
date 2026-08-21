@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "services" / "importer"))
 
-from crops import encode_crops_from_dir  # noqa: E402
+from crops import encode_crops_from_dir, extract_crops_base64  # noqa: E402
 from derive import TRANSFERS, finalize_beats, migrate_legacy_ball_field  # noqa: E402
 from interpret import interpret_plays  # noqa: E402
 from parser import parse  # noqa: E402
@@ -178,6 +178,28 @@ async def main() -> None:
         help=f"Output JSON path (default: {DEFAULT_OUT.name})",
     )
     parser.add_argument(
+        "--pdf",
+        type=Path,
+        default=PDF_PATH,
+        help="Source playbook PDF. Drop new books in playbooks/.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Parse and crop only. Costs nothing — use it to check a new book first.",
+    )
+    parser.add_argument(
+        "--crops-dir",
+        type=Path,
+        default=CROPS_DIR,
+        help="Where frame PNGs live. Missing ones are rendered from the PDF.",
+    )
+    parser.add_argument(
+        "--all-plays",
+        action="store_true",
+        help="Import every play in the PDF, not just ones already in the seed.",
+    )
+    parser.add_argument(
         "--plays",
         default=None,
         help="Comma-separated play names — run a couple before spending the whole book.",
@@ -194,13 +216,18 @@ async def main() -> None:
         )
         sys.exit(1)
 
-    if not PDF_PATH.is_file():
-        print(f"ERROR: PDF not found at {PDF_PATH}", file=sys.stderr)
+    pdf_path: Path = args.pdf
+    if not pdf_path.is_file():
+        print(f"ERROR: PDF not found at {pdf_path}", file=sys.stderr)
         sys.exit(1)
 
     print("=== Stage 1: Parse PDF ===")
-    parser_plays = parse(str(PDF_PATH))
+    parser_plays = parse(str(pdf_path))
     seed_names = {p["name"] for p in json.loads(V1_JSON.read_text(encoding="utf-8"))}
+    if args.all_plays:
+        # A book we have never imported has none of its plays in the seed, so matching
+        # against the seed would filter every one of them out.
+        seed_names = {p["name"] for p in parser_plays}
     if args.plays:
         wanted = {n.strip() for n in args.plays.split(",") if n.strip()}
         unknown = wanted - seed_names
@@ -213,20 +240,39 @@ async def main() -> None:
     print(f"  {len(plays)} plays, {frame_count} frames (matching seed book)")
 
     print("\n=== Stage 2: Load crops ===")
-    crops = encode_crops_from_dir(plays, str(CROPS_DIR))
-    print(f"  {len(crops)} crops loaded from {CROPS_DIR}")
-    missing = []
-    for play in plays:
-        for i in range(len(play["beats"])):
-            from interpret import crop_key  # noqa: WPS433
+    from interpret import crop_key  # noqa: WPS433
 
-            key = crop_key(play["name"], i)
-            if key not in crops:
-                missing.append(f"{play['name']} {play['beats'][i]['id']} ({key})")
+    crops_dir: Path = args.crops_dir
+
+    def missing_crops(loaded: dict) -> list[str]:
+        gaps = []
+        for play in plays:
+            for i in range(len(play["beats"])):
+                if crop_key(play["name"], i) not in loaded:
+                    gaps.append(f"{play['name']} {play['beats'][i]['id']}")
+        return gaps
+
+    crops = encode_crops_from_dir(plays, str(crops_dir))
+    print(f"  {len(crops)} crops loaded from {crops_dir}")
+
+    if missing_crops(crops):
+        # A book we have not imported before has no crops on disk. Render them rather
+        # than sending the model a page it cannot see.
+        print(f"  rendering missing crops from {pdf_path.name} ...")
+        crops = extract_crops_base64(str(pdf_path), plays, str(crops_dir))
+        print(f"  {len(crops)} crops after rendering")
+
+    missing = missing_crops(crops)
     if missing:
         print(f"  WARN: {len(missing)} missing crops:", file=sys.stderr)
         for m in missing:
             print(f"    {m}", file=sys.stderr)
+
+    if args.dry_run:
+        print("\nDry run — stopping before the AI pass.")
+        for play in plays:
+            print(f"  {play['name']}  {len(play['beats'])} frames")
+        return
 
     print(f"\n=== Stage 3: AI interpretation ({frame_count} frames) ===")
     plays_copy = copy.deepcopy(plays)

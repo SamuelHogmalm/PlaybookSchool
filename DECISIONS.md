@@ -1082,3 +1082,22 @@ It is now a full panel with `role="status"`, matching the weight of the error pa
 it distinguishes a first save from a new version — a version bump means players who
 already learned the play will be asked to re-learn it, which is a consequence worth
 stating rather than implying with a number.
+
+## 2026-08-21 — Any playbook can be imported, and a dry run comes first
+
+`scripts/run-interpret-v2.py` hardcoded one PDF path and filtered the parsed plays down
+to names already in the seed. That was fine while there was exactly one book; it made a
+second book impossible to import, because none of its plays are in the seed and every
+one of them got filtered out.
+
+It now takes `--pdf` (defaulting to the original book), `--all-plays` to keep everything
+the parser found, `--crops-dir`, and `--dry-run`. Missing frame crops are rendered from
+the PDF instead of being warned about — a crop that is not on disk is a frame the model
+would have been asked to read blind.
+
+`--dry-run` stops after parsing and cropping. Parsing is deterministic and free; the AI
+pass is neither. If the parser does not find the right plays with the right frame counts,
+the run should be abandoned there rather than paid for.
+
+Rules out: a per-book script, and adopting a new book's output without the same
+`compare-interpret.ts` check every candidate seed has had.

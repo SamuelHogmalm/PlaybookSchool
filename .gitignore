@@ -47,3 +47,6 @@ next-env.d.ts
 
 # local scratch diagnostics
 /tmp/
+
+# Source playbooks are not ours to commit
+playbooks/*.pdf
