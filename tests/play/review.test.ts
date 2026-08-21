@@ -125,13 +125,14 @@ describe("review scoring", () => {
     assert.equal(isClean(review), review.valid);
   });
 
-  it("no seed play is clean yet — the whole book needs a human", () => {
-    const clean = PLAYS.map(reviewPlay).filter(isClean);
-    assert.equal(
-      clean.length,
-      0,
-      `unexpectedly clean: ${clean.map((c) => c.name).join(", ")}`,
-    );
+  it("the book still needs a human — most of it is not clean", () => {
+    // This used to assert nothing was clean. Kickup became clean when the long-pass
+    // warning stopped measuring to where the receiver started rather than where the
+    // pass actually goes; it was a false positive, not review that had been done.
+    // What the review queue needs is work in it, not an empty book.
+    const clean = PLAYS.map(reviewPlay).filter(isClean).map((c) => c.name);
+    assert.deepEqual(clean, ["Kickup"]);
+    assert.ok(PLAYS.length - clean.length >= 10, "the queue should still be full");
   });
 });
 

@@ -20,11 +20,20 @@ import pdfplumber
 COURT_W, COURT_H = 500, 470
 DIGITS = set("12345")
 
-# FastDraw geometry, in PDF points
-COURT_MIN_W, COURT_MAX_W = 130, 150
-COURT_MIN_H, COURT_MAX_H = 120, 145
-BALL_RING_SIZE = 12.5
-BALL_RING_TOL = 2.0
+# FastDraw geometry, in PDF points.
+#
+# A diagram is a court rect inside a slightly taller frame rect. Both are found by
+# shape, not size: FastDraw exports the same half-court at whatever scale fits the
+# frames-per-page setting, so a book with two diagrams per page draws them at twice
+# the width of a book with six. The court's aspect ratio does not change with scale —
+# the frame around it (~1.15) and the play-name box (~0.62) sit clear of this window.
+COURT_MIN_ASPECT, COURT_MAX_ASPECT = 1.02, 1.11
+COURT_MIN_WIDTH = 80
+
+# The possession ring scales with the diagram too, so it is measured as a fraction of
+# the court width rather than in points. 12.5pt on a 139pt court.
+BALL_RING_RATIO = 12.5 / 139
+BALL_RING_TOL = 0.35
 
 
 def pdftoppm_bin():
@@ -37,13 +46,19 @@ def pdftoppm_bin():
 
 def find_courts(page):
     """Court boundary = the inner rect of each diagram. Returns them in reading order."""
-    rects = [
-        r for r in page.rects
-        if COURT_MIN_W < (r["x1"] - r["x0"]) < COURT_MAX_W
-        and COURT_MIN_H < (r["bottom"] - r["top"]) < COURT_MAX_H
-    ]
+    rects = []
+    for r in page.rects:
+        w = r["x1"] - r["x0"]
+        h = r["bottom"] - r["top"]
+        if h <= 0 or w < COURT_MIN_WIDTH:
+            continue
+        if COURT_MIN_ASPECT < w / h < COURT_MAX_ASPECT:
+            rects.append(r)
+
+    # Row-major, and one court per position: FastDraw draws the boundary twice.
+    row_height = min((r["bottom"] - r["top"]) for r in rects) if rects else 20
     out, seen = [], set()
-    for r in sorted(rects, key=lambda r: (round(r["top"] / 20), r["x0"])):
+    for r in sorted(rects, key=lambda r: (round(r["top"] / row_height), r["x0"])):
         key = (round(r["x0"]), round(r["top"]))
         if key in seen:
             continue
@@ -52,37 +67,81 @@ def find_courts(page):
     return out
 
 
-def ball_rings(page):
-    """The possession ring is a ~12.5pt circle drawn around the ball handler's number."""
+def ball_rings(page, court_width):
+    """The possession ring is a small circle drawn around the ball handler's number."""
+    size = court_width * BALL_RING_RATIO
+    tol = size * BALL_RING_TOL
     rings = []
     for c in page.curves:
         w = c["x1"] - c["x0"]
         h = c["bottom"] - c["top"]
-        if (abs(w - BALL_RING_SIZE) < BALL_RING_TOL
-                and abs(h - BALL_RING_SIZE) < BALL_RING_TOL):
+        if abs(w - size) < tol and abs(h - size) < tol:
             rings.append(((c["x0"] + c["x1"]) / 2, (c["top"] + c["bottom"]) / 2))
     return rings
+
+
+def title_lines(page):
+    """Text above the diagrams, with words on the same line joined back together.
+
+    `extract_words` splits on spaces, so a play called "Kick up" arrives as two words
+    and picking the nearest one names the play "up".
+    """
+    words = [w for w in page.extract_words() if w["text"] not in DIGITS]
+    lines = []
+    for w in sorted(words, key=lambda w: (round(w["top"]), w["x0"])):
+        prev = lines[-1] if lines else None
+        if (
+            prev
+            and abs(prev["top"] - w["top"]) < 3
+            and w["x0"] - prev["x1"] < 12
+        ):
+            prev["parts"].append(w["text"])
+            prev["x1"] = w["x1"]
+            prev["bottom"] = max(prev["bottom"], w["bottom"])
+            continue
+        lines.append(
+            {
+                "parts": [w["text"]],
+                "x0": w["x0"],
+                "x1": w["x1"],
+                "top": w["top"],
+                "bottom": w["bottom"],
+            }
+        )
+
+    out = []
+    for line in lines:
+        # "DICE PLAY" is the label FastDraw prints; the play is called DICE.
+        parts = [p for p in line["parts"] if p != "PLAY"]
+        if not parts:
+            continue
+        line["text"] = " ".join(parts)
+        out.append(line)
+    return out
 
 
 def parse_page(page):
     """Return a list of beat dicts for one page."""
     courts = find_courts(page)
     words = page.extract_words()
-    rings = ball_rings(page)
-    titles = [w for w in words if w["text"] not in DIGITS and w["text"] != "PLAY"]
+    titles = title_lines(page)
     beats = []
+    court_w = min((r["x1"] - r["x0"]) for r in courts) if courts else 139
+    rings = ball_rings(page, court_w)
 
     for r in courts:
         x0, x1, y0, y1 = r["x0"], r["x1"], r["top"], r["bottom"]
         pos, raw = {}, {}
+        # Players are sometimes drawn on or just outside the line. The allowance is a
+        # share of the diagram, not a fixed 14pt, or it shrinks as the export grows.
+        margin = 0.1 * (x1 - x0)
 
         for w in words:
             if w["text"] not in DIGITS:
                 continue
             cx = (w["x0"] + w["x1"]) / 2
             cy = (w["top"] + w["bottom"]) / 2
-            # margin: players are sometimes drawn on or just outside the line
-            if x0 - 14 <= cx <= x1 + 14 and y0 - 14 <= cy <= y1 + 14:
+            if x0 - margin <= cx <= x1 + margin and y0 - margin <= cy <= y1 + margin:
                 raw[w["text"]] = (cx, cy)
                 pos[w["text"]] = {
                     "x": max(12, min(COURT_W - 12, round((cx - x0) / (x1 - x0) * COURT_W))),
@@ -93,15 +152,16 @@ def parse_page(page):
         ball = None
         best = 999
         for rx, ry in rings:
-            if not (x0 - 14 <= rx <= x1 + 14 and y0 - 14 <= ry <= y1 + 14):
+            if not (x0 - margin <= rx <= x1 + margin and y0 - margin <= ry <= y1 + margin):
                 continue
             for pid, (cx, cy) in raw.items():
                 d = ((cx - rx) ** 2 + (cy - ry) ** 2) ** 0.5
                 if d < best:
                     best, ball = d, pid
 
+        reach = max(90, 0.65 * (x1 - x0))
         cand = [t for t in titles
-                if t["bottom"] < y0 and abs((t["x0"] + t["x1"]) / 2 - (x0 + x1) / 2) < 90]
+                if t["bottom"] < y0 and abs((t["x0"] + t["x1"]) / 2 - (x0 + x1) / 2) < reach]
         name = sorted(cand, key=lambda t: y0 - t["bottom"])[0]["text"] if cand else "Untitled"
 
         beats.append({

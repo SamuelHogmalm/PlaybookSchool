@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { normalizeSeedPlay } from "../src/lib/play/normalize.js";
@@ -8,11 +8,14 @@ import { validatePlay } from "../src/lib/play/validation.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
+// Defaults to the seed, but takes any candidate file — a new book has to clear the
+// same bar as the seed before it goes anywhere near a quiz.
+const file = process.argv[2] ?? "src/data/plays-interpreted.json";
 const raw = JSON.parse(
-  readFileSync(join(root, "src/data/plays-interpreted.json"), "utf8"),
+  readFileSync(isAbsolute(file) ? file : join(root, file), "utf8"),
 );
 
-console.log("=== Seed play validation (plays-interpreted.json) ===\n");
+console.log(`=== Play validation (${file}) ===\n`);
 
 let validCount = 0;
 let warningCount = 0;

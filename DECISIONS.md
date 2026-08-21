@@ -1115,3 +1115,37 @@ untested undo is not an undo. `backups/` is gitignored — those rows are a team
 
 Rules out: a delete flag that only prints a warning, and treating "clear it out" as
 needing a follow-up question when the answer is to make the action reversible instead.
+
+## 2026-08-21 — Diagrams are found by shape, not by size
+
+The parser looked for a rect between 130–150pt wide and 120–145pt tall. That is the
+court as FastDraw draws it with six diagrams to a page. Samuel's coach sent two books
+exported at two and three diagrams per page — 258pt and 154pt courts — and the parser
+found zero plays in both, silently.
+
+Courts are now matched on aspect ratio (1.02–1.11) with a minimum width. The frame drawn
+around each diagram is ~1.15 and the play-name box ~0.62, so they stay clear of the
+window at any scale. Everything else that was measured in points — the off-court margin
+for a player drawn on the line, the possession ring — is now a fraction of the court
+width. Positions were already normalized to the rect, so nothing downstream changed.
+
+Verified by parsing the original book before and after: byte-identical output, 12 plays,
+36 frames. `services/importer/test_parser.py` covers both scales with synthetic rects,
+since the PDFs themselves are not in the repo.
+
+Rules out: per-book size constants, and reading "0 plays" as an empty book.
+
+## 2026-08-21 — A long pass is measured to where the ball lands
+
+`suspectTransfers` measured a pass from the passer's start to the *receiver's* start, and
+warned past 320 units. But the receiver is usually cutting to get open — that is what the
+pass is for — so the warning fired on plays that were read correctly. Both new books
+tripped it; so did Kickup in the seed.
+
+It now takes the shorter of the receiver's start and end positions. A pass is suspect
+when nobody is near it at either end, which is the misread-circled-number case the rule
+was written for. Four seed warnings withdrawn; the seed is still 11/12 valid.
+
+Rules out: raising the threshold instead, which would have hidden real misreads. A
+review test that asserted "no seed play is clean yet" was rewritten rather than the
+change reverted — Kickup's only flag was this false positive.

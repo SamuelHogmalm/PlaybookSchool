@@ -275,9 +275,13 @@ export function suspectTransfers(play: Play): SuspectTransfer[] {
       if (a.type !== "pass" && a.type !== "handoff") continue;
       if (!a.for) continue;
       const from = beat.startPos[a.by];
-      const to = beat.startPos[a.for];
-      if (!from || !to) continue;
-      const length = Math.round(dist(from, to));
+      if (!from) continue;
+      // A receiver who cuts to get open is not where the frame started them, and most
+      // plays are exactly that: the pass goes to where they arrive. Measuring only the
+      // start would flag every play that works. Suspicious means far at both ends.
+      const ends = [beat.startPos[a.for], beat.pos[a.for]].filter(Boolean);
+      if (!ends.length) continue;
+      const length = Math.round(Math.min(...ends.map((to) => dist(from, to!))));
       if (length > IMPLAUSIBLE_PASS_UNITS) {
         out.push({
           beatIdx,
